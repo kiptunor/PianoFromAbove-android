@@ -1005,6 +1005,7 @@ void UI::Render(SDL_Renderer *r)
                         ImGui::Checkbox("Loop colors *", &loop_colors);
                         live_conf.loop_colors = loop_colors;
                         
+                        /*
                         ImGui::Checkbox("Use Background image", &use_bg_image);
                         ImGui::SameLine();
                         if(!use_bg_image)
@@ -1031,6 +1032,7 @@ void UI::Render(SDL_Renderer *r)
                             ImGui::Text("Load the new selected image");
                             ImGui::EndTooltip();
                         }
+                        */
                         //live_conf.use_bg_img = use_bg_image;
                         //is_image_loaded = use_bg_image;
                         //RenderImageList(image_textures);
