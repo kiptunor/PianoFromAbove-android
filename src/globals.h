@@ -13,6 +13,8 @@
 
 inline Config::configuration loaded_config;
 inline Config::configuration live_conf;
+inline std::vector<std::string> live_midi_list;
+inline std::vector<std::string> loaded_midi_list;
 inline u32 Playback::main_stream;
 inline std::vector<Playback::AudioDevice> availableAudioDevices;
 inline int _WinH;

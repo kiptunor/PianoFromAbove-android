@@ -28,6 +28,7 @@
 
 #include "logger.h"
 #include "config/config.h"
+#include "config/midi_list.h"
 #include "globals.h"
 #include "audio/playback.h"
 #include "render/render.h"
@@ -118,6 +119,15 @@ int APP_ENTRY(int argc, char *argv[])
     /* - - - - Soundfont List Handling - - - - */
     if(std::filesystem::exists(SOUNDFONT_LIST_PATH))
         loaded_soundfont_list = SoundfontList::Load();
+    
+    
+    /* - - - - MIDI List Handling - - - - */
+    if(std::filesystem::exists(MIDI_LIST_PATH))
+    {
+        loaded_midi_list = MidiList::load();
+        live_midi_list = loaded_midi_list;
+    }
+    
     
     /* - - - - Graphics Rendering Setup - - - - */
     RenderWin = new Render();

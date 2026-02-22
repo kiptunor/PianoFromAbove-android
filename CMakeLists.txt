@@ -98,6 +98,7 @@ add_executable(nvi-pfa
     src/nv_midi/MIDI.cpp
     src/nv_midi/list.cpp
     src/config/soundfont_list.cpp
+    src/config/midi_list.cpp
     src/logger.cpp
     src/file_helpers.cpp
     src/main.cpp

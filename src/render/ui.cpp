@@ -7,6 +7,7 @@
 #include "../nv_midi/utils.h"
 #include "render.h"
 #include "../config/soundfont_list.h"
+#include "../config/midi_list.h"
 #include "../audio/playback.h"
 #include "../logger.h"
 #include "../../assets/FA6FreeSolidFontData.h"
@@ -287,6 +288,14 @@ std::string FilenameOnly(const std::string& path)
 {
     size_t slash = path.find_last_of("/\\");
     return (slash == std::string::npos) ? path : path.substr(slash + 1);
+}
+
+bool searchDuplicatedItem(const std::vector<std::string>& items, const std::string& item)
+{
+    for(const auto& i : items)
+        if(i == item)
+            return true;
+    return false;
 }
 
 void RenderMidiList(const std::vector<std::string>& items, int& selectedIndex, std::string find_item)
@@ -731,6 +740,11 @@ void UI::Render(SDL_Renderer *r)
                         Config::Save(live_conf);
                         Playback::CloseMidi(); // Close previous MIDI file
                         Playback::loadMidiFile(filePathName);
+                        if(!searchDuplicatedItem(live_midi_list, filePathName))
+                        {
+                            live_midi_list.emplace_back(filePathName);
+                            MidiList::save(live_midi_list);
+                        }
                     }
                     
                     // close
@@ -763,7 +777,7 @@ void UI::Render(SDL_Renderer *r)
                     ImGui::EndTooltip();
                 }
                 // Simple demo
-                //RenderMidiList(live_midi_list, selIndex, midi_search_text);
+                RenderMidiList(live_midi_list, selIndex, midi_search_text);
                 ImGui::EndTabItem();
             }
             
@@ -826,7 +840,7 @@ void UI::Render(SDL_Renderer *r)
                 {
                     if(ImGui::BeginTabItem("General"))
                     {
-                        if(ImGui::Checkbox("* Enable vsync", &vsync))
+                        if(ImGui::Checkbox("Enable vsync *", &vsync))
                             live_conf.vsync = vsync;
                         
                         if(ImGui::CollapsingHeader("Custom media paths"))
