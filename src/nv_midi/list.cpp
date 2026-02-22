@@ -89,7 +89,6 @@ void NVnoteList::list_seek(double T)
 
 void NVnoteList::update_to(double T)
 {
-    //std::cout << "Update\n";
     while(Evt_sequencer.event().track < MIDI_File.tracks)
     {
         const NVseq_event  &Evt  =  Evt_sequencer.event();

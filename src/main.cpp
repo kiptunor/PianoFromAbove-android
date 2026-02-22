@@ -63,6 +63,7 @@ void Exit()
         SDL_Log("SDL Error: %s", sdl_err);
     }
     delete RenderWin;
+    Log::closeFile();
     exit(0);
 }
 
@@ -250,5 +251,6 @@ int APP_ENTRY(int argc, char *argv[])
 			Playback::Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
     }
     
+    Log::closeFile();
     return 0;
 }

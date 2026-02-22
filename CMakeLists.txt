@@ -51,7 +51,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 if(EXE_TYPE)
     message(STATUS "Building as executable")
-    set(CMAKE_CXX_FLAGS "-Ofast")
+    set(CMAKE_CXX_FLAGS "-O0")
     set(CMAKE_CXX_FLAGS "-Os")
     set(CMAKE_CXX_FLAGS "-march=native")
     set(CMAKE_CXX_FLAGS "-ffast-math")              # Fast math

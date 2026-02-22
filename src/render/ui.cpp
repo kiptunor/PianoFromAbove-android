@@ -792,7 +792,7 @@ void UI::Render(SDL_Renderer *r)
                 {
                     //current_file_info = NVFileUtils::GetFileInfo(live_midi_list[selIndex]);
                     //file_info_window = true;
-                    Log::info(SRC_STRING.c_str(), "Not implemented");
+                    Log::info(SRC_STRING, "Not implemented");
                 }
                 if(ImGui::BeginItemTooltip())
                 {

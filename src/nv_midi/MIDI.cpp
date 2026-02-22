@@ -25,14 +25,12 @@ bool NVmidiFile::mid_open(const char *name)
 
     if(fread(&tmp, 4, 1, fp) != 1)
     {
-        //NVMidi::log_error("MIDI", "'%s' : MIDI File is corrupt !\n", name);
         Log::error("MIDI File is corrupt !");
         return (fclose(fp), false);
     }
 
     if(tmp != "MThd"_u64be)
     {
-        //NVMidi::log_error("MIDI", "'%s:' Incompatible MIDI File type !\n", name);
         Log::error("Incompatible MIDI file type !");
         return (fclose(fp), false);
     }
@@ -62,7 +60,6 @@ bool NVmidiFile::mid_open(const char *name)
     trk_ptr  = new NVMidi::nv_byte* [tracks];
     grp_code = new NVMidi::nv_byte  [tracks];
     
-    //NVMidi::log_info("MIDI", "Total trk count: %d\n", tracks);
     Log::info("", "Total track count: %d", tracks);
     
     total_track_count = tracks;
@@ -75,13 +72,10 @@ bool NVmidiFile::mid_open(const char *name)
         if(tmp != "MTrk"_u64be)
         {
             tracks = trk, mid_close();
-            //NVMidi::log_error("MIDI", "Track corrupted !\n");
             Log::error("", "Track %hd corrupted", trk);
-            //NVMidi::log_info("MIDI", "@Track%hd\n", trk);
             return (fclose(fp), false);
         }
         else
-            //NVMidi::log_info("MIDI", "Loaded Track: %hd\n", trk);
             Log::info("", "Loaded track: %hd", trk);
 
         tmp = 0; NVMidi::revU32(size);
@@ -138,8 +132,6 @@ bool NVmidiEvent::get(NVMidi::u16_t track, NVmidiFile &midi)
         return false;
     }
     
-    //NVi::info("MIDI", "Track: %hd\n", midi.trk_over[track]);
-
     NVMidi::nv_byte code, **p = midi.trk_ptr + track;
 
     tick = getVLi_U32(p);
@@ -189,8 +181,6 @@ bool NVmidiEvent::get(NVMidi::u16_t track, NVmidiFile &midi)
         break;
 
         default:
-            //NVMidi::log_warn("MIDI", "Unknown event type on track%hd !\n", track);
-            //NVMidi::log_info("MIDI", "@%08x\n", *p - midi.trk_data[track]);
             Log::warn("", "Unknown MIDI event type found on track: %hd", track);
             Log::info("", "@%08x", *p - midi.trk_data[track]);
         return false;
