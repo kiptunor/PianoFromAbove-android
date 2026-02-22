@@ -49,6 +49,7 @@ Config::configuration Config::Load()
     in_conf.last_midi_file = general_obj.value("lastMidiFilePath", "");
     
     nlohmann::json visual_obj = json_in.value("visual", nlohmann::json::object());
+    in_conf.vsync = visual_obj.value("vsync", default_settings.vsync);
     in_conf.note_speed = visual_obj.value("noteSpeed", default_settings.note_speed);
     in_conf.loop_colors = visual_obj.value("loopNoteColors", default_settings.loop_colors);
     int count = std::min(visual_obj["channelColors"].size(), (size_t)16);
@@ -95,6 +96,7 @@ void Config::Save(configuration config)
     nlohmann::ordered_json json_out;
         
     nlohmann::json visual = {
+        { "vsync", config.vsync },
         { "noteSpeed", config.note_speed },
         { "loopNoteColors", config.loop_colors },
         { "backgroundImage", {

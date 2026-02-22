@@ -77,7 +77,7 @@ Render::Render()
     const char *backend = SDL_GetRendererName(Ren);
     printf("SDL_GetRendererName(): %s\n", backend);
     
-    SDL_SetRenderVSync(Ren, 1); // Todo: Add to config and UI settings
+    SDL_SetRenderVSync(Ren, live_conf.vsync); // Todo: Add to config and UI settings
 	//SDL_GL_SetSwapInterval(0); // Throws OpenGL contex error at exit
 	SDL_SetWindowPosition(Win, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 	

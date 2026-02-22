@@ -98,6 +98,7 @@ void UI::UpdateWidgetValues()
     UI::max_velocity = live_conf.vel_max;
     UI::last_midi_path = live_conf.last_midi_path;
     UI::last_midi_file = live_conf.last_midi_file;
+    UI::vsync = live_conf.vsync;
     live_soundfont_list = loaded_soundfont_list;
 }
 

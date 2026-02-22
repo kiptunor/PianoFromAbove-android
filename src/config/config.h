@@ -45,6 +45,7 @@ class Config
             bool use_default_colors; // Only for internal use!!!
             bool use_bg_img;
             bool loop_colors;
+            bool vsync;
             //bool auto_refresh;
             bool OR; // Overlap remover
             std::string last_midi_path;
@@ -99,6 +100,7 @@ inline Config::configuration default_settings =
     .use_default_paths = true,
     .use_bg_img = true,
     .loop_colors = false,
+    .vsync = true,
     .OR = false,
 };
 

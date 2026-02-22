@@ -54,6 +54,7 @@ bool UI::velocity_filter = true;
 bool UI::loop_colors = false;
 bool UI::overlap_remover = true;
 bool UI::use_bg_image = false;
+bool UI::vsync;
 bool UI::use_default_media_paths = true;
 int  UI::min_velocity;
 int  UI::max_velocity;
@@ -823,13 +824,16 @@ void UI::Render(SDL_Renderer *r)
                 
                 if(ImGui::BeginTabBar("sub-tabs", ImGuiTabBarFlags_None))
                 {
-                    if (ImGui::BeginTabItem("General"))
+                    if(ImGui::BeginTabItem("General"))
                     {
+                        if(ImGui::Checkbox("* Enable vsync", &vsync))
+                            live_conf.vsync = vsync;
+                        
                         if(ImGui::CollapsingHeader("Custom media paths"))
                         {
                             ImGui::Checkbox("Include default paths", &use_default_media_paths);
                             live_conf.use_default_paths = use_default_media_paths;
-                            if (ImGui::BeginItemTooltip())
+                            if(ImGui::BeginItemTooltip())
                             {
                                 ImGui::Text("Use the preincluded media paths to scan for midi and soundfont files\nDefault path: /sdcard/Download/");
                                 ImGui::EndTooltip();
