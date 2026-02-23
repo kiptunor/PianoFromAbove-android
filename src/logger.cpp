@@ -199,7 +199,7 @@ void Log::trace(const char *src_dbg_str, const char *fmt, ...)
 
 
 // ------------------------------------ //
-// - - - - [No source logging - - - - ] //
+// - - - - [No source logging] - - - -  //
 // ------------------------------------ //
 
 

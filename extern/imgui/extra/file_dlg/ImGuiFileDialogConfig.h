@@ -44,7 +44,7 @@
 // so uncomment these line for prevent the creation of implementation of these libs again
 // #define DONT_DEFINE_AGAIN__STB_IMAGE_IMPLEMENTATION
 // #define DONT_DEFINE_AGAIN__STB_IMAGE_RESIZE_IMPLEMENTATION
-// #define IMGUI_RADIO_BUTTON RadioButton
+//#define IMGUI_RADIO_BUTTON RadioButton
 // #define DisplayMode_ThumbailsList_ImageHeight 32.0f
 // #define tableHeaderFileThumbnailsString "Thumbnails"
 // #define DisplayMode_FilesList_ButtonString "FL"

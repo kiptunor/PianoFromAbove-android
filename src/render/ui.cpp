@@ -78,6 +78,7 @@ void SetupIconFonts()
     icons_config.MergeMode = true;
     icons_config.PixelSnapH = true;
     icons_config.FontDataOwnedByAtlas = false;
+    float size = FONT_AWESOME_ICON_SIZE;
     
     icons_config.GlyphMaxAdvanceX = std::numeric_limits<float>::max();
     icons_config.RasterizerMultiply = 1.0f;
@@ -87,8 +88,6 @@ void SetupIconFonts()
     icons_config.GlyphRanges = icons_ranges;
     
     ImGuiIO& io = ImGui::GetIO();
-    
-    float size = FONT_AWESOME_ICON_SIZE;
     io.Fonts->AddFontFromMemoryCompressedTTF((void*)fa_solid_900_compressed_data, fa_solid_900_compressed_size, size, &icons_config, icons_ranges);
 }
 
@@ -719,11 +718,17 @@ void UI::Render(SDL_Renderer *r)
                     ImGui::EndTooltip();
                 }
                 
-                if(ImGui::Button("Open Midi"))
+
+                if(ImGui::Button(ICON_FA_FOLDER_OPEN))
                 {
                     IGFD::FileDialogConfig config;
 					config.path = last_midi_path;
                     ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".mid,.midi,.smf", config);
+                }
+                if(ImGui::BeginItemTooltip())
+                {
+                    ImGui::Text("Open and play a MIDI file");
+                    ImGui::EndTooltip();
                 }
                   // display
                 ImGui::PushFont(FONT_icon_set);
@@ -754,7 +759,23 @@ void UI::Render(SDL_Renderer *r)
                 
                 ImGui::SameLine();
                 
-                if(ImGui::Button("Close"))
+                if(ImGui::Button(ICON_FA_PLAY))
+                {
+                    Playback::CloseMidi();
+                    live_conf.last_midi_file = live_midi_list[selIndex];
+                    Config::Save(live_conf);
+                    Playback::loadMidiFile(live_midi_list[selIndex]);
+                }
+                
+                if(ImGui::BeginItemTooltip())
+                {
+                    ImGui::Text("Play the previous MIDI file");
+                    ImGui::EndTooltip();
+                }
+                
+                ImGui::SameLine();
+                
+                if(ImGui::Button(ICON_FA_SQUARE))
                     Playback::CloseMidi();
                 
                 if(ImGui::BeginItemTooltip())
@@ -765,7 +786,7 @@ void UI::Render(SDL_Renderer *r)
                 
                 ImGui::SameLine();
                 
-                if(ImGui::Button("File info"))
+                if(ImGui::Button(ICON_FA_CIRCLE_INFO))
                 {
                     //current_file_info = FileHelpers::GetFileInfo(live_midi_list[selIndex]);
                     // Not yet
@@ -990,7 +1011,6 @@ void UI::Render(SDL_Renderer *r)
                         
                         if(ImGui::Button("Reset"))
                         {
-                            //NVi::info("Gui", "Reset action\n");
                             for(int i = 0; i < 16; i++)
                             {
                                 ui_chcolors[i] = UIntToImVec4(NoteColors[i]);
