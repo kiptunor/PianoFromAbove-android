@@ -23,5 +23,6 @@ class FileHelpers
         
         
         static std::vector<std::string> GetFilesByExtension(const std::string& path, const std::string& extensions);
+        static FileInfo GetFileInfo(const std::string& path);
 };
 #endif

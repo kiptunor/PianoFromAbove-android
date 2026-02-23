@@ -387,7 +387,6 @@ void Render::DrawNote(NVMidi::u16_t k, const NVnote &n, int pps)
             // Default color array
             if(!live_conf.is_custom_ch_colors)
             {
-                std::cout << "Custom colors applied\n";
                 note_color = NoteColors[trackChannelColorMap.size()];
             }
                 // Or use the user defined channel color array

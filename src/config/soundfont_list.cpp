@@ -8,20 +8,25 @@
 
 
 
-
+/*
 std::vector<std::string> SoundfontList::GetSoundFontFiles()
 {
     std::vector<std::string> soundfont_files;
     soundfont_files = FileHelpers::GetFilesByExtension("/home/andre/disks/1_TB_1/bm/soundfonts", ".sf2|.sfz");
     return soundfont_files;
 }
+*/
 
-std::vector<UI::SoundfontItem> SoundfontList::Get()
+std::vector<UI::SoundfontItem> SoundfontList::Get(std::vector<std::string> paths)
 {
+    std::vector<std::string> soundfont_files;
     std::vector<UI::SoundfontItem> soundfonts;
-    std::vector<std::string> files = GetSoundFontFiles();
-    for(size_t i = 0; i < files.size(); ++i)
-        soundfonts.push_back({files[i], false});
+    for(size_t i = 0; i < paths.size(); i++)
+    {
+        soundfont_files = FileHelpers::GetFilesByExtension(paths[i], ".sf2|.sfz");
+        for(size_t i = 0; i < soundfont_files.size(); ++i)
+            soundfonts.push_back({soundfont_files[i], false});
+    }
     
     return soundfonts;
 }
@@ -59,7 +64,7 @@ std::vector<UI::SoundfontItem> SoundfontList::Load()
     return soundfonts;
 }
 
-void SoundfontList::Refresh()
-{
-    std::vector<std::string> files = GetSoundFontFiles();
-}
+//void SoundfontList::Refresh()
+//{
+//    std::vector<std::string> files = GetSoundFontFiles();
+//}

@@ -16,11 +16,11 @@
 class SoundfontList
 {
     public:
-        static std::vector<std::string> GetSoundFontFiles();
+        //static std::vector<std::string> GetSoundFontFiles();
         static void Save(std::vector<UI::SoundfontItem> sf_list);
-        static std::vector<UI::SoundfontItem> Get();
+        static std::vector<UI::SoundfontItem> Get(std::vector<std::string> paths);
         static std::vector<UI::SoundfontItem> Load();
-        static void Refresh();
+        //static void Refresh();
         static void Clear();
 };
 #endif

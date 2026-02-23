@@ -2,8 +2,37 @@
 
 #include <filesystem>
 
+#include <sys/stat.h>
+
 
 #include "file_helpers.h"
+#include "logger.h"
+
+
+
+
+
+
+
+
+
+
+std::string human_readable_size(uint64_t bytes)
+{
+    const char* units[] = {"B", "KB", "MB", "GB", "TB", "PB"};
+    int unit_index = 0;
+    double size = static_cast<double>(bytes);
+
+    while(size >= 1024 && unit_index < 5)
+    {
+        size /= 1024;
+        ++unit_index;
+    }
+
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(2) << size << " " << units[unit_index];
+    return oss.str();
+}
 
 
 // Don't forget to link -lstdc++fs
@@ -59,4 +88,35 @@ std::vector<std::string> FileHelpers::GetFilesByExtension(const std::string& pat
     }
         
     return result;
+}
+
+FileHelpers::FileInfo FileHelpers::GetFileInfo(const std::string& path)
+{
+    FileHelpers::FileInfo res;
+    
+    struct stat f_stat;
+    std::time_t t;
+    std::tm* tm_ptr;
+    
+    // Get basic file information and populate the the struct members
+    if(stat(path.c_str(), &f_stat) == 0)
+    {
+        t = f_stat.st_mtime;
+        tm_ptr = std::localtime(&t);
+        res.file_name = path;
+        
+        std::ostringstream temp;
+        temp << std::put_time(tm_ptr, "D: %Y-%m-%d | T: %H:%M:%S");
+        res.last_mod  = temp.str();
+        res.size      = human_readable_size(f_stat.st_size);
+        res.success = true;
+    }
+    else
+    {
+        res.success = false;
+        res.err << "File does not exist !!\n";
+        Log::error("File to get file information: %s", res.err.str().c_str());
+    }
+    
+    return res;
 }

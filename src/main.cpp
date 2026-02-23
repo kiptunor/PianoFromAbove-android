@@ -100,6 +100,7 @@ void UI::UpdateWidgetValues()
     UI::last_midi_path = live_conf.last_midi_path;
     UI::last_midi_file = live_conf.last_midi_file;
     UI::vsync = live_conf.vsync;
+    UI::soundfont_paths = live_conf.extra_sf_paths;
     live_soundfont_list = loaded_soundfont_list;
 }
 
@@ -227,6 +228,9 @@ int APP_ENTRY(int argc, char *argv[])
 	    		        case SDLK_RIGHT:
 				        	Playback::seek_playback(Playback::seek_amount);
 				        	break;
+						case SDLK_D:
+						    UI::show_demo_window = true;
+							break;
 	    		        case SDLK_Q:
 						    Exit();
 				        	break;

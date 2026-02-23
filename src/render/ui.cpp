@@ -1,4 +1,5 @@
 #include <string>
+#include <filesystem>
 #include <iostream>
 //#include <SDL3_image/SDL_image.h>
 
@@ -12,6 +13,7 @@
 #include "../logger.h"
 #include "../../assets/FA6FreeSolidFontData.h"
 #include "../../assets/IconsFontAwesome6.h"
+#include "../file_helpers.h"
 
 
 #include <imgui.h>
@@ -23,7 +25,7 @@
 
 
 
-bool show_demo_window = true;
+bool UI::show_demo_window = false;
 bool file_info_window = false;
 bool allow_audio_dev_ssave;
 static char midi_search[128];
@@ -40,10 +42,12 @@ static char file_info_text[1500 * 50];
 int selected_midi_path_entry;
 int selected_soundfont_path_etry;
 int selected_img_path_entry;
+int selected_soundfont = 0;
 ImFont* FONT_icon_set;
 std::string temp_widget_id;
 std::ostringstream file_info_fields;
 std::vector <std::string> current_soundfonts;
+FileHelpers::FileInfo current_file_info;
 
 float image_size = 80.0f;
 float padding = 8.0f;
@@ -65,6 +69,8 @@ ImVec4 UI::clear_color;
 UI::RGBAint UI::liveColor;
 ImVec4 UI::ui_chcolors[16];
 int UI::current_audio_dev;
+std::vector<std::string> UI::soundfont_paths;
+std::vector<std::string> UI::prev_images;
 
 
 
@@ -232,26 +238,7 @@ void UI::Setup(SDL_Window *w, SDL_Renderer *r)
 }
 
 
-/*
-Functions for internal use only
-*/
 
-
-int LoadMidiThreadFunc(void *data)
-{
-    LoadMidiArgs *args = (LoadMidiArgs*)data;
-    // Optionally set high priority
-    SDL_SetCurrentThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-    Playback::loadMidiFile(args->midi_path);
-    delete args;
-    return 0;
-}
-
-void startLoadMidiThread(const std::string& midi_path)
-{
-    LoadMidiArgs *args = new LoadMidiArgs{midi_path};
-    SDL_CreateThread(LoadMidiThreadFunc, "LoadMidiThread", args);
-}
 
 
 
@@ -278,6 +265,12 @@ ImVec4 UI::Irgba2ImVec4(int r, int g, int b, int a)
         a / 255.0f
     );
 }
+
+
+/*
+Functions for internal use only
+*/
+
 
 // So many of you wanted this
 // And I can relate to such a problem
@@ -339,6 +332,12 @@ void RenderSoundfontList(std::vector<UI::SoundfontItem>& items, std::string find
             
         // Store previous checkbox state
         bool previous_state = items[i].checked;
+        
+        std::string temp = "##" + std::to_string(i);
+        if(ImGui::Selectable(temp.c_str(), selected_soundfont == i, ImGuiSelectableFlags_AllowOverlap, ImVec2(0, 28)))
+            selected_soundfont = i;
+        
+        ImGui::SameLine();
     
         // Unique ID to avoid conflicts
         ImGui::Checkbox((sf_filename + "##" + std::to_string(i)).c_str(), &items[i].checked);
@@ -377,49 +376,11 @@ std::vector<std::string> UI::GetCheckedSoundfonts(const std::vector<SoundfontIte
     return checkedItems;
 }
 
-void RenderMidiPathsList(const std::vector<std::string>& items, int& selectedIndex)
-{
-    ImGui::BeginChild("##midipathls", ImVec2(0, 300), true, ImGuiWindowFlags_HorizontalScrollbar);
-    
-    for(int i = 0; i < items.size(); ++i)
-    {
-        bool isSelected = (i == selectedIndex);
-    
-        if(ImGui::Selectable((items[i] + "##" + std::to_string(i)).c_str(), isSelected))
-        {
-            selectedIndex = i;
-        }
-    
-        if (isSelected)
-            ImGui::SetItemDefaultFocus();
-    }
-    
-    ImGui::EndChild();
-}
+
 
 void RenderSoundfontsPathsList(const std::vector<std::string>& items, int& selectedIndex)
 {
     ImGui::BeginChild("##soundfontspathls", ImVec2(0, 300), true, ImGuiWindowFlags_HorizontalScrollbar);
-    
-    for(int i = 0; i < items.size(); ++i)
-    {
-        bool isSelected = (i == selectedIndex);
-    
-        if(ImGui::Selectable((items[i] + "##" + std::to_string(i)).c_str(), isSelected))
-        {
-            selectedIndex = i;
-        }
-    
-        if(isSelected)
-            ImGui::SetItemDefaultFocus();
-    }
-    
-    ImGui::EndChild();
-}
-
-void RenderImgPathsList(const std::vector<std::string>& items, int& selectedIndex)
-{
-    ImGui::BeginChild("##imgpathls", ImVec2(0, 300), true, ImGuiWindowFlags_HorizontalScrollbar);
     
     for(int i = 0; i < items.size(); ++i)
     {
@@ -466,16 +427,6 @@ void ShowAudioDeviceList(const std::vector<Playback::AudioDevice>& audioDevices)
         {
             // Render a placeholder item when no devices are available
             ImGui::Selectable("No devices available", false);
-    
-            // Avoid spamming warnings
-            /*
-            if(!call_once)
-            {
-                call_once = true;
-                //NVi::warn("Gui", "No audio devices available\n");
-                Log::warn("No audio devices available");
-            }
-            */
         }
         else
         {
@@ -596,10 +547,10 @@ void UI::Render(SDL_Renderer *r)
     const float longClickThreshold = 0.5f;
     
     // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-    //if (show_demo_window)
-    //{
-    //    ImGui::ShowDemoWindow(&show_demo_window);
-    //}
+    if(show_demo_window)
+    {
+        ImGui::ShowDemoWindow(&show_demo_window);
+    }
     
     // Reserved for future use
     //ImGui::Text("%.1f FPS", nvg.io.Framerate);
@@ -676,10 +627,10 @@ void UI::Render(SDL_Renderer *r)
         ImGui::SetNextWindowPos(center, ImGuiCond_Once, ImVec2(0.5f, 0.5f)); // Pivot 0.5 = center
 #ifndef PLATFORM_ANDROID
         ImGui::SetNextWindowSizeConstraints(ImVec2(700, 380), ImVec2(FLT_MAX, FLT_MAX));
-        ImGui::Begin("NVi PFA", &main_gui_window);
+        ImGui::Begin("PFA Android", &main_gui_window);
 #else   // Setting up a different ui layout for mobile users
         ImGui::SetNextWindowSize(ImVec2(964.0f, 600.0f));
-        ImGui::Begin("NVi PFA", &main_gui_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+        ImGui::Begin("PFA Android", &main_gui_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 #endif
 
         velocity_filter = live_conf.vel_filter;
@@ -700,25 +651,13 @@ void UI::Render(SDL_Renderer *r)
         {
             if(ImGui::BeginTabItem("Play MIDI Files"))
             {
-                ImGui::SetNextItemWidth(200);
+                ImGui::SetNextItemWidth(300);
                 ImGui::InputTextWithHint("##EHE", "Search midis", midi_search, IM_ARRAYSIZE(midi_search));
                 
                 midi_search_text = midi_search;
                 
                 ImGui::SameLine();
                 
-                /*if(ImGui::Button("Refresh List"))
-                {
-                    //NVi::CreateMidiList(); // It simply overwrites to the present midi list
-                    Log::debug("Nothing");
-                }*/
-                if(ImGui::BeginItemTooltip())
-                {
-                    ImGui::Text("Synchronize the midi file list with the new files created");
-                    ImGui::EndTooltip();
-                }
-                
-
                 if(ImGui::Button(ICON_FA_FOLDER_OPEN))
                 {
                     IGFD::FileDialogConfig config;
@@ -788,8 +727,7 @@ void UI::Render(SDL_Renderer *r)
                 
                 if(ImGui::Button(ICON_FA_CIRCLE_INFO))
                 {
-                    //current_file_info = FileHelpers::GetFileInfo(live_midi_list[selIndex]);
-                    // Not yet
+                    current_file_info = FileHelpers::GetFileInfo(live_midi_list[selIndex]);
                     file_info_window = true;
                 }
                 if(ImGui::BeginItemTooltip())
@@ -797,7 +735,20 @@ void UI::Render(SDL_Renderer *r)
                     ImGui::Text("Show file information");
                     ImGui::EndTooltip();
                 }
-                // Simple demo
+                
+                ImGui::SameLine();
+                
+                if(ImGui::Button("X"))
+                {
+                    live_midi_list.clear();
+                    MidiList::save(live_midi_list);
+                }
+                if(ImGui::BeginItemTooltip())
+                {
+                    ImGui::Text("Clear midi list");
+                    ImGui::EndTooltip();
+                }
+                
                 RenderMidiList(live_midi_list, selIndex, midi_search_text);
                 ImGui::EndTabItem();
             }
@@ -811,24 +762,59 @@ void UI::Render(SDL_Renderer *r)
                 
                 ImGui::SameLine();
                 
-                if(ImGui::Button("Refresh List"))
+                if(ImGui::Button("+"))
                 {
-                    live_soundfont_list = SoundfontList::Get();
-                    SoundfontList::Save(live_soundfont_list);
+                    Log::debug("Add soundfont: todo...");
                 }
                 if(ImGui::BeginItemTooltip())
                 {
-                    ImGui::Text("Synchronize the soundfont file list with the new files created");
+                    ImGui::Text("Add new soundfont to the list");
                     ImGui::EndTooltip();
                 }
                 
                 ImGui::SameLine();
                 
-                if(ImGui::Button("File info"))
+                if(ImGui::Button("-"))
                 {
-                    //current_file_info = NVFileUtils::GetFileInfo(live_midi_list[selIndex]);
-                    //file_info_window = true;
-                    Log::info(SRC_STRING, "Not implemented");
+                    Log::debug("Remove soundfont: todo...");
+                }
+                if(ImGui::BeginItemTooltip())
+                {
+                    ImGui::Text("Remove soundfont from the list");
+                    ImGui::EndTooltip();
+                }
+                
+                ImGui::SameLine();
+                
+                if(ImGui::Button(ICON_FA_ARROW_ROTATE_RIGHT))
+                {
+                    live_soundfont_list = SoundfontList::Get(soundfont_paths);
+                    SoundfontList::Save(live_soundfont_list);
+                }
+                if(ImGui::BeginItemTooltip())
+                {
+                    ImGui::Text("Refresh soundfont list");
+                    ImGui::EndTooltip();
+                }
+                
+                ImGui::SameLine();
+                
+                if(ImGui::Button("X"))
+                {
+                    Log::debug("Clear soundfont list");
+                }
+                if(ImGui::BeginItemTooltip())
+                {
+                    ImGui::Text("Clear soundfont list");
+                    ImGui::EndTooltip();
+                }
+                
+                ImGui::SameLine();
+                
+                if(ImGui::Button(ICON_FA_CIRCLE_INFO))
+                {
+                    current_file_info = FileHelpers::GetFileInfo(live_soundfont_list[selected_soundfont].label);
+                    file_info_window = true;
                 }
                 if(ImGui::BeginItemTooltip())
                 {
@@ -837,6 +823,8 @@ void UI::Render(SDL_Renderer *r)
                 }
                 
                 RenderSoundfontList(live_soundfont_list, sf_search_text);
+                
+                //Log::debug("Selected soundfont: %s", live_soundfont_list[selected_soundfont].label.c_str());
                     
                 ImGui::EndTabItem();
             }
@@ -864,123 +852,74 @@ void UI::Render(SDL_Renderer *r)
                         if(ImGui::Checkbox("Enable vsync *", &vsync))
                             live_conf.vsync = vsync;
                         
-                        if(ImGui::CollapsingHeader("Custom media paths"))
+                       
+                        //ImGui::Checkbox("Include default paths", &use_default_media_paths);
+                        //live_conf.use_default_paths = use_default_media_paths;
+                            
+                        ImGui::Text("Add directories to scan for soundfonts");
+                        ImGui::InputTextWithHint("##idk", "New entry", soundfons_path_entry, IM_ARRAYSIZE(soundfons_path_entry));
+                        ImGui::SameLine();
+                        if(ImGui::Button("+##sf"))
                         {
-                            ImGui::Checkbox("Include default paths", &use_default_media_paths);
-                            live_conf.use_default_paths = use_default_media_paths;
-                            if(ImGui::BeginItemTooltip())
+                            if(strlen(soundfons_path_entry) > 0)
                             {
-                                ImGui::Text("Use the preincluded media paths to scan for midi and soundfont files\nDefault path: /sdcard/Download/");
-                                ImGui::EndTooltip();
-                            }
-                            ImGui::Text("Add directories to scan for midis");
-                            ImGui::InputTextWithHint("##XD", "New entry", midi_path_entry, IM_ARRAYSIZE(midi_path_entry));
-                            
-                            ImGui::SameLine();
-                            
-                            if(ImGui::Button("+"))
-                            {
-                                if(strlen(midi_path_entry) > 0)
+                                //live_conf.extra_sf_paths.push_back(soundfons_path_entry);
+                                if(std::filesystem::exists(soundfons_path_entry))
                                 {
-                                    live_conf.extra_midi_paths.push_back(midi_path_entry); // Add the input text to the list
-                                    midi_path_entry[0] = '\0';
-                                }
-                            }
-                            if(ImGui::BeginItemTooltip())
-                            {
-                                ImGui::Text("Add new midi path entry");
-                                ImGui::EndTooltip();
-                            }
-                            
-                            ImGui::SameLine();
-                        
-                            if(ImGui::Button("-"))
-                            {
-                                if(selected_midi_path_entry >= 0 && selected_midi_path_entry < live_conf.extra_midi_paths.size())
-                                {
-                                    live_conf.extra_midi_paths.erase(live_conf.extra_midi_paths.begin() + selected_midi_path_entry);
-                                    selected_midi_path_entry = -1;
-                                }
-                            }
-                            if(ImGui::BeginItemTooltip())
-                            {
-                                ImGui::Text("Remove midi path entry");
-                                ImGui::EndTooltip();
-                            }
-                        
-                            RenderSoundfontsPathsList(live_conf.extra_midi_paths, selected_midi_path_entry);
-                            
-                            ImGui::Text("Add directories to scan for soundfonts");
-                            ImGui::InputTextWithHint("##idk", "New entry", soundfons_path_entry, IM_ARRAYSIZE(soundfons_path_entry));
-                            ImGui::SameLine();
-                            if(ImGui::Button("+##sf"))
-                            {
-                                if(strlen(soundfons_path_entry) > 0)
-                                {
-                                    live_conf.extra_sf_paths.push_back(soundfons_path_entry);
+                                    soundfont_paths.emplace_back(soundfons_path_entry);
                                     soundfons_path_entry[0] = '\0';
                                 }
+                                else
+                                    ImGui::OpenPopup("Directory Error");
                             }
-                            if(ImGui::BeginItemTooltip())
-                            {
-                                ImGui::Text("Add new soundfonts path entry");
-                                ImGui::EndTooltip();
-                            }
-                            
-                            ImGui::SameLine();
-                            
-                            if(ImGui::Button("-##sf1"))
-                            {
-                                if(selected_soundfont_path_etry >= 0 && selected_soundfont_path_etry < live_conf.extra_sf_paths.size())
-                                {
-                                    live_conf.extra_sf_paths.erase(live_conf.extra_sf_paths.begin() + selected_soundfont_path_etry);
-                                    selected_soundfont_path_etry = -1;
-                                }
-                            }
-                            if(ImGui::BeginItemTooltip())
-                            {
-                                ImGui::Text("Remove soundfonts path entry");
-                                ImGui::EndTooltip();
-                            }
-                        
-                            RenderMidiPathsList(live_conf.extra_sf_paths, selected_soundfont_path_etry);
-                            
-                            
-                            ImGui::Text("Add directories to scan for images");
-                            ImGui::InputTextWithHint("##images", "New entry", soundfons_path_entry, IM_ARRAYSIZE(soundfons_path_entry));
-                            ImGui::SameLine();
-                            if(ImGui::Button("+##img"))
-                            {
-                                if(strlen(soundfons_path_entry) > 0)
-                                {
-                                    live_conf.extra_img_paths.push_back(soundfons_path_entry);
-                                    soundfons_path_entry[0] = '\0';
-                                }
-                            }
-                            if(ImGui::BeginItemTooltip())
-                            {
-                                ImGui::Text("Add new image path entry");
-                                ImGui::EndTooltip();
-                            }
-                            
-                            ImGui::SameLine();
-                            
-                            if(ImGui::Button("-##img1"))
-                            {
-                                if(selected_img_path_entry >= 0 && selected_img_path_entry < live_conf.extra_sf_paths.size())
-                                {
-                                    live_conf.extra_img_paths.erase(live_conf.extra_img_paths.begin() + selected_img_path_entry);
-                                    selected_img_path_entry = -1;
-                                }
-                            }
-                            if(ImGui::BeginItemTooltip())
-                            {
-                                ImGui::Text("Remove image path entry");
-                                ImGui::EndTooltip();
-                            }
-                            
-                            RenderImgPathsList(live_conf.extra_img_paths, selected_img_path_entry);
                         }
+                        if(ImGui::BeginItemTooltip())
+                        {
+                            ImGui::Text("Add new soundfonts path entry");
+                            ImGui::EndTooltip();
+                        }
+                        
+                        live_conf.extra_sf_paths = soundfont_paths; // Dont forger to update config lol
+                        
+                        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+                        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+                        
+                        if(ImGui::BeginPopupModal("Directory Error", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+                        {
+                            ImGui::Text("Failed to add directory entry to the list !");
+                            ImGui::Text("Please make sure the directory path is correct.");
+                            
+                            float button_width = 120.0f;
+                            
+                            float window_width = ImGui::GetContentRegionAvail().x;
+                            float button_pos_x = (window_width - button_width) * 0.5f;
+                            
+                            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + button_pos_x);
+                            
+                            if(ImGui::Button("OK", ImVec2(button_width, 0)))
+                                ImGui::CloseCurrentPopup();
+                            
+                            ImGui::EndPopup();
+                        }
+                        
+                        ImGui::SameLine();
+                            
+                        if(ImGui::Button("-##sf1"))
+                        {
+                            if(selected_soundfont_path_etry >= 0 && selected_soundfont_path_etry < soundfont_paths.size())
+                            {
+                                soundfont_paths.erase(soundfont_paths.begin() + selected_soundfont_path_etry);
+                                selected_soundfont_path_etry = -1;
+                            }
+                        }
+                        if(ImGui::BeginItemTooltip())
+                        {
+                            ImGui::Text("Remove soundfonts path entry");
+                            ImGui::EndTooltip();
+                        }
+                        
+                        RenderSoundfontsPathsList(soundfont_paths, selected_soundfont_path_etry);
+                        
                         ImGui::EndTabItem();
                     }
                     
@@ -1165,7 +1104,7 @@ void UI::Render(SDL_Renderer *r)
     {
         ImVec2 center = ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f);
         ImGui::SetNextWindowPos(center, ImGuiCond_Once, ImVec2(0.5f, 0.5f)); // Pivot 0.5 = center
-#ifdef PLATFORM_ANDROID
+#ifndef PLATFORM_ANDROID
         ImGui::SetNextWindowSizeConstraints(ImVec2(500, 380), ImVec2(FLT_MAX, FLT_MAX));
         ImGui::Begin("File Information", &file_info_window);
 #else   // Setting up a different ui layout for mobile users
@@ -1173,31 +1112,26 @@ void UI::Render(SDL_Renderer *r)
         ImGui::Begin("File Information", &file_info_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 #endif
 
-        file_info_fields.str("");
-        file_info_fields.clear();
-     
-        file_info_fields << "- - - - Midi File - - - -\n\n";
-        //file_info_fields << "File Name:         " << current_file_info.file_name << "\n";
-        //file_info_fields << "Last Modified:   " << current_file_info.last_mod << "\n";
-        //file_info_fields << "Size:                    " << current_file_info.size << "\n";
-        
-        // AAHHHH Stupid soundfont file information
-        file_info_fields << "\n\n- - - - Loaded SoundFonts - - - -\n\n";
-        
-        //for(int i = 0; i < sf_file_info_text_arr.size(); i++)
-        //{
-        //    file_info_fields << sf_file_info_text_arr[i];
-        //    file_info_fields << "\n";
-        //}
-        
-        strncpy(file_info_text, file_info_fields.str().c_str(), sizeof(file_info_text) - 1);
-        file_info_text[sizeof(file_info_text) - 1] = '\0';
-        
-        
-        ImVec2 avail = ImGui::GetContentRegionAvail();
-        
-        ImGui::InputTextMultiline("##source", file_info_text, IM_ARRAYSIZE(file_info_text), avail, ImGuiInputTextFlags_ReadOnly);
-    
+        if(ImGui::BeginTable("File Info table", 3, ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_BordersOuterV | ImGuiTableFlags_BordersInnerV))
+        {
+            ImGui::TableSetupColumn("File");
+            ImGui::TableSetupColumn("Size");
+            ImGui::TableSetupColumn("Last modification");
+            ImGui::TableHeadersRow();
+            
+            ImGui::TableNextRow();
+            
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("%s", current_file_info.file_name.c_str());
+            
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%s", current_file_info.size.c_str());
+            
+            ImGui::TableSetColumnIndex(2);
+            ImGui::Text("%s", current_file_info.last_mod.c_str());
+            
+            ImGui::EndTable();
+        }
         ImGui::End();  
     }
     

@@ -147,7 +147,7 @@ void Playback::updateBassVoiceCount(int voiceCount)
         
         // Optional: Log the change
         //NVi::info("Player", "Voice count updated to %d\n", voiceCount);
-        Log::info("", "Voice count updated to: %d");
+        Log::info("Voice count updated to: %d");
     }
 }
 
@@ -163,7 +163,7 @@ void Playback::loadMidiFile(const std::string& midi_path)
     if(!std::filesystem::exists(midi_path))
     {
         //std::cerr << "MIDI file does not exist: " << midi_path << std::endl;
-        Log::error("", "MIDI File does not exists ! '%s'", midi_path.c_str());
+        Log::error("MIDI File does not exists ! '%s'", midi_path.c_str());
         SDL_UnlockMutex(bass_mutex);
         return;
     }
