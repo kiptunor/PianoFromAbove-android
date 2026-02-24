@@ -59,6 +59,8 @@ bool UI::velocity_filter = true;
 bool UI::loop_colors = false;
 bool UI::overlap_remover = true;
 bool UI::use_bg_image = false;
+bool UI::no_midi_duplicates;
+bool UI::no_soundfont_duplicates;
 bool UI::vsync;
 bool UI::use_default_media_paths = true;
 int  UI::min_velocity;
@@ -283,10 +285,18 @@ std::string FilenameOnly(const std::string& path)
     return (slash == std::string::npos) ? path : path.substr(slash + 1);
 }
 
-bool searchDuplicatedItem(const std::vector<std::string>& items, const std::string& item)
+bool searchDuplicatedMidiItem(const std::vector<std::string>& items, const std::string& item)
 {
     for(const auto& i : items)
         if(i == item)
+            return true;
+    return false;
+}
+
+bool searchDuplicatedSoundfontItem(const std::vector<UI::SoundfontItem>& items, const std::string& item)
+{
+    for(const auto& i : items)
+        if(i.label == item)
             return true;
     return false;
 }
@@ -319,6 +329,9 @@ void RenderMidiList(const std::vector<std::string>& items, int& selectedIndex, s
 
 void RenderSoundfontList(std::vector<UI::SoundfontItem>& items, std::string find_item)
 {
+    /*
+   Keep previous enabled soundfonts before updating the list 
+    */
     ImGui::BeginChild("##sfls", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
     
     bool soundfont_changed = false;
@@ -584,7 +597,6 @@ void UI::Render(SDL_Renderer *r)
     float ps_col_w = ImGui::GetColumnWidth();
     float ps_btn_h = ImGui::GetContentRegionAvail().y;
     if(ImGui::InvisibleButton(Playback::is_paused ? "|>" : "||" , ImVec2(ps_col_w, ps_btn_h)))
-        //toggle_pause();
         Playback::pause();
         
     if(ImGui::IsItemActive())
@@ -685,7 +697,19 @@ void UI::Render(SDL_Renderer *r)
                         Config::Save(live_conf);
                         Playback::CloseMidi(); // Close previous MIDI file
                         Playback::loadMidiFile(filePathName);
-                        if(!searchDuplicatedItem(live_midi_list, filePathName))
+                        
+                        
+                        if(no_midi_duplicates)
+                        {
+                            if(!searchDuplicatedMidiItem(live_midi_list, filePathName))
+                            {
+                                live_midi_list.emplace_back(filePathName);
+                                MidiList::save(live_midi_list);
+                            }
+                            else
+                                Log::info("Same midi already exists");
+                        }
+                        else
                         {
                             live_midi_list.emplace_back(filePathName);
                             MidiList::save(live_midi_list);
@@ -741,13 +765,35 @@ void UI::Render(SDL_Renderer *r)
                 
                 if(ImGui::Button("X"))
                 {
-                    live_midi_list.clear();
-                    MidiList::save(live_midi_list);
+                    ImGui::OpenPopup("Clear Midi List Confirmation");
                 }
                 if(ImGui::BeginItemTooltip())
                 {
                     ImGui::Text("Clear midi list");
                     ImGui::EndTooltip();
+                }
+                
+                ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+                ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+                
+                if(ImGui::BeginPopupModal("Clear Midi List Confirmation", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+                {
+                    ImGui::Text("Prevous MIDI list is about to be cleared. This operation has no undo !!");
+                    ImGui::Text("Are you sure you want to proceed?");
+                    
+                    if(ImGui::Button("No", ImVec2(120.0f, 0)))
+                        ImGui::CloseCurrentPopup();
+                    
+                    ImGui::SameLine();
+                    
+                    if(ImGui::Button("Yes", ImVec2(120.0f, 0)))
+                    {
+                        live_midi_list.clear();
+                        MidiList::save(live_midi_list);
+                        ImGui::CloseCurrentPopup();
+                    }
+                    
+                    ImGui::EndPopup();
                 }
                 
                 RenderMidiList(live_midi_list, selIndex, midi_search_text);
@@ -765,7 +811,6 @@ void UI::Render(SDL_Renderer *r)
                 
                 if(ImGui::Button("+"))
                 {
-                    //Log::debug("Add soundfont: todo...");
                     IGFD::FileDialogConfig config;
 					config.path = last_sf_path;
                     ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".sf2,.sfz", config);
@@ -785,8 +830,22 @@ void UI::Render(SDL_Renderer *r)
                         live_conf.last_sf_path = last_sf_path;
                         Config::Save(live_conf);
                         
-                        live_soundfont_list.emplace_back(SoundfontItem{filePathName, false});
-                        SoundfontList::Save(live_soundfont_list);
+                        if(no_soundfont_duplicates)
+                        {
+                        
+                            if(!searchDuplicatedSoundfontItem(live_soundfont_list, filePathName))
+                            {
+                                live_soundfont_list.emplace_back(SoundfontItem{filePathName, false});
+                                SoundfontList::Save(live_soundfont_list);
+                            }
+                            else
+                                Log::info("Same soundfont already exists");
+                        }
+                        else
+                        {
+                            live_soundfont_list.emplace_back(SoundfontItem{filePathName, false});
+                            SoundfontList::Save(live_soundfont_list);
+                        }
                     }
                     ImGuiFileDialog::Instance()->Close();
                 }
@@ -795,7 +854,8 @@ void UI::Render(SDL_Renderer *r)
                 
                 if(ImGui::Button("-"))
                 {
-                    Log::debug("Remove soundfont: todo...");
+                    live_soundfont_list.erase(live_soundfont_list.begin() + selected_soundfont);
+                    SoundfontList::Save(live_soundfont_list);
                 }
                 if(ImGui::BeginItemTooltip())
                 {
@@ -820,7 +880,7 @@ void UI::Render(SDL_Renderer *r)
                 
                 if(ImGui::Button("X"))
                 {
-                    Log::debug("Clear soundfont list");
+                    ImGui::OpenPopup("Confirm clearance");
                 }
                 if(ImGui::BeginItemTooltip())
                 {
@@ -841,9 +901,30 @@ void UI::Render(SDL_Renderer *r)
                     ImGui::EndTooltip();
                 }
                 
-                RenderSoundfontList(live_soundfont_list, sf_search_text);
+                ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+                ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
                 
-                //Log::debug("Selected soundfont: %s", live_soundfont_list[selected_soundfont].label.c_str());
+                if(ImGui::BeginPopupModal("Confirm clearance", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+                {
+                    ImGui::Text("Are you sure you want to clear the soundfont list ?");
+                    ImGui::Text("This action has no undo !!");
+                    
+                    if(ImGui::Button("No", ImVec2(120.0f, 0)))
+                        ImGui::CloseCurrentPopup();
+                    
+                    ImGui::SameLine();
+                    
+                    if(ImGui::Button("Yes", ImVec2(120.0f, 0)))
+                    {
+                        live_soundfont_list.clear();
+                        SoundfontList::Save(live_soundfont_list);
+                        ImGui::CloseCurrentPopup();
+                    }
+                    
+                    ImGui::EndPopup();
+                }
+                
+                RenderSoundfontList(live_soundfont_list, sf_search_text);
                     
                 ImGui::EndTabItem();
             }
@@ -868,21 +949,30 @@ void UI::Render(SDL_Renderer *r)
                 {
                     if(ImGui::BeginTabItem("General"))
                     {
-                        if(ImGui::Checkbox("Enable vsync *", &vsync))
-                            live_conf.vsync = vsync;
+                        ImGui::Checkbox("No MIDI duplicates", &no_midi_duplicates);
+                        if(ImGui::BeginItemTooltip())
+                        {
+                            ImGui::Text("Don't add the same previous MIDI to the list");
+                            ImGui::EndTooltip();
+                        }
                         
-                       
-                        //ImGui::Checkbox("Include default paths", &use_default_media_paths);
-                        //live_conf.use_default_paths = use_default_media_paths;
-                            
-                        ImGui::Text("Add directories to scan for soundfonts");
+                        ImGui::Checkbox("No Soundfont duplicates", &no_soundfont_duplicates);
+                        if(ImGui::BeginItemTooltip())
+                        {
+                            ImGui::Text("Don't add the same Soundfont to the list");
+                            ImGui::EndTooltip();
+                        }
+                        
+                        live_conf.no_midi_duplicates = no_midi_duplicates;
+                        live_conf.no_soundfont_duplicates = no_soundfont_duplicates;
+                        
+                        ImGui::Text("Add directories to scan and create soundfont lists");
                         ImGui::InputTextWithHint("##idk", "New entry", soundfons_path_entry, IM_ARRAYSIZE(soundfons_path_entry));
                         ImGui::SameLine();
                         if(ImGui::Button("+##sf"))
                         {
                             if(strlen(soundfons_path_entry) > 0)
                             {
-                                //live_conf.extra_sf_paths.push_back(soundfons_path_entry);
                                 if(std::filesystem::exists(soundfons_path_entry))
                                 {
                                     soundfont_paths.emplace_back(soundfons_path_entry);
@@ -944,6 +1034,9 @@ void UI::Render(SDL_Renderer *r)
                     
                     if(ImGui::BeginTabItem("Visual"))
                     {
+                        if(ImGui::Checkbox("Enable vsync *", &vsync))
+                            live_conf.vsync = vsync;
+                        
                         ImGui::Checkbox("Overlap Remover *", &overlap_remover);
                         if(ImGui::BeginItemTooltip())
                         {
@@ -1050,8 +1143,11 @@ void UI::Render(SDL_Renderer *r)
 		                if(ImGui::InputInt("##LOL", &live_conf.bass_voice_count))
 						{
 			                // Ensure value is within reasonable limits
-			                if (live_conf.bass_voice_count < 1) live_conf.bass_voice_count = 1;
-			                if (live_conf.bass_voice_count > 5000) live_conf.bass_voice_count = 5000;
+			                if(live_conf.bass_voice_count < 1)
+								live_conf.bass_voice_count = 1;
+																			
+			                if(live_conf.bass_voice_count > 5000)
+								live_conf.bass_voice_count = 5000;
 			
 			                // Apply the change in real-time if the value has changed
 			                if(prev_voice_count != live_conf.bass_voice_count)
@@ -1099,7 +1195,7 @@ void UI::Render(SDL_Renderer *r)
 
                 ImGui::EndTabItem();
             }
-            if (ImGui::BeginTabItem("About"))
+            if(ImGui::BeginTabItem("About"))
             {
                 ImGui::BeginChild("ScrollRegion", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
                 ImGui::Text("A clone of the original Piano From Above for mobile based on Qishipai's midi processing library.");

@@ -44,6 +44,8 @@ class Config
             bool is_custom_ch_colors; // Only for internal use!!!
             bool use_default_colors; // Only for internal use!!!
             bool use_bg_img;
+            bool no_midi_duplicates;
+            bool no_soundfont_duplicates;
             bool loop_colors;
             bool vsync;
             //bool auto_refresh;
@@ -100,6 +102,8 @@ inline Config::configuration default_settings =
     .vel_filter = false,
     .use_default_paths = true,
     .use_bg_img = true,
+    .no_midi_duplicates = false,
+    .no_soundfont_duplicates = false,
     .loop_colors = false,
     .vsync = true,
     .OR = false,

@@ -105,6 +105,8 @@ void UI::UpdateWidgetValues()
     UI::vsync = live_conf.vsync;
     UI::soundfont_paths = live_conf.extra_sf_paths;
     UI::last_sf_path = live_conf.last_sf_path;
+    UI::no_midi_duplicates = live_conf.no_midi_duplicates;
+    UI::no_soundfont_duplicates = live_conf.no_soundfont_duplicates;
     live_soundfont_list = loaded_soundfont_list;
 }
 

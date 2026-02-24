@@ -44,7 +44,7 @@ class UI
 {
     public:
     
-        struct SoundfontItem 
+        struct SoundfontItem
         {
             std::string label;
             bool checked = false;
@@ -68,6 +68,8 @@ class UI
         static bool loop_colors;
         static bool overlap_remover;
         static bool use_bg_image;
+        static bool no_midi_duplicates;
+        static bool no_soundfont_duplicates;
         static bool vsync;
         static bool use_default_media_paths;
         static ImVec4 ui_chcolors[16];
