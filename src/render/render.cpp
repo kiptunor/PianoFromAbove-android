@@ -145,12 +145,15 @@ Render::~Render()
 void DrawRect(SDL_Renderer* renderer, float x, float y, float cx, float cy, u32 c1, u32 c2, u32 c3, u32 c4)
 {
     // Converts color from DWORD to SDL_Color
+    // Alpha: if 0 (no alpha in color), treat as 255 (opaque)
+    auto getAlpha = [](u32 c) { float a = ((c&0xFF000000)>>24)/255.0f; return a > 0 ? a : 1.0f; };
+    
     vert[0].position.x = x;
     vert[0].position.y = y;
     vert[0].color.r = (c1&0xFF)/255.0f;
     vert[0].color.g = ((c1&0xFF00)>>8)/255.0f;
     vert[0].color.b = ((c1&0xFF0000)>>16)/255.0f;
-    vert[0].color.a = 1.0;
+    vert[0].color.a = getAlpha(c1);
 
     // left
     vert[1].position.x = x+cx;
@@ -158,7 +161,7 @@ void DrawRect(SDL_Renderer* renderer, float x, float y, float cx, float cy, u32 
     vert[1].color.r = (c2&0xFF)/255.0f;
     vert[1].color.g = ((c2&0xFF00)>>8)/255.0f;
     vert[1].color.b = ((c2&0xFF0000)>>16)/255.0f;
-    vert[1].color.a = 1.0;
+    vert[1].color.a = getAlpha(c2);
 
     // right
     vert[2].position.x = x+cx;
@@ -166,13 +169,13 @@ void DrawRect(SDL_Renderer* renderer, float x, float y, float cx, float cy, u32 
     vert[2].color.r = (c3&0xFF)/255.0f;
     vert[2].color.g = ((c3&0xFF00)>>8)/255.0f;
     vert[2].color.b = ((c3&0xFF0000)>>16)/255.0f;
-    vert[2].color.a = 1.0;
+    vert[2].color.a = getAlpha(c3);
     vert[3].position.x = x;
     vert[3].position.y = y+cy;
     vert[3].color.r = (c4&0xFF)/255.0f;
     vert[3].color.g = ((c4&0xFF00)>>8)/255.0f;
     vert[3].color.b = ((c4&0xFF0000)>>16)/255.0f;
-    vert[3].color.a = 1.0;
+    vert[3].color.a = getAlpha(c4);
     int indices[] = {0, 1, 2, 2, 3, 0};
     // Call SDL_RenderGeometry to draw the quadrilateral.
     SDL_RenderGeometry(renderer, NULL, vert, 4, indices, 6);
@@ -181,12 +184,14 @@ void DrawRect(SDL_Renderer* renderer, float x, float y, float cx, float cy, u32 
 void DrawSkew(SDL_Renderer* renderer, float x1, float y1, float x2, float y2,float x3, float y3,float x4, float y4, u32 c1, u32 c2, u32 c3, u32 c4)
 {
     // Converts color from DWORD to SDL_Color
+    auto getAlpha = [](u32 c) { float a = ((c&0xFF000000)>>24)/255.0f; return a > 0 ? a : 1.0f; };
+    
     vert[0].position.x = x1;
     vert[0].position.y = y1;
     vert[0].color.r = (c1&0xFF)/255.0f;
     vert[0].color.g = ((c1&0xFF00)>>8)/255.0f;
     vert[0].color.b = ((c1&0xFF0000)>>16)/255.0f;
-    vert[0].color.a = 1.0;
+    vert[0].color.a = getAlpha(c1);
 
     // left
     vert[1].position.x = x2;
@@ -194,7 +199,7 @@ void DrawSkew(SDL_Renderer* renderer, float x1, float y1, float x2, float y2,flo
     vert[1].color.r = (c2&0xFF)/255.0f;
     vert[1].color.g = ((c2&0xFF00)>>8)/255.0f;
     vert[1].color.b = ((c2&0xFF0000)>>16)/255.0f;
-    vert[1].color.a = 1.0;
+    vert[1].color.a = getAlpha(c2);
 
     // right
     vert[2].position.x = x3;
@@ -202,13 +207,13 @@ void DrawSkew(SDL_Renderer* renderer, float x1, float y1, float x2, float y2,flo
     vert[2].color.r = (c3&0xFF)/255.0f;
     vert[2].color.g = ((c3&0xFF00)>>8)/255.0f;
     vert[2].color.b = ((c3&0xFF0000)>>16)/255.0f;
-    vert[2].color.a = 1.0;
+    vert[2].color.a = getAlpha(c3);
     vert[3].position.x = x4;
     vert[3].position.y = y4;
     vert[3].color.r = (c4&0xFF)/255.0f;
     vert[3].color.g = ((c4&0xFF00)>>8)/255.0f;
     vert[3].color.b = ((c4&0xFF0000)>>16)/255.0f;
-    vert[3].color.a = 1.0;
+    vert[3].color.a = getAlpha(c4);
     int indices[] = {0, 1, 2, 2, 3, 0};
     // Call SDL_RenderGeometry to draw the quadrilateral.
     SDL_RenderGeometry(renderer, NULL, vert, 4, indices, 6);
@@ -436,33 +441,15 @@ bool IsSharp(int note)
     return (n == 1 || n == 3 || n == 6 || n == 8 || n == 10);
 }
 
-int WhiteCount(int start, int end)
-{
-    int count = 0;
-    for (int i = start; i < end; ++i)
-        if (!IsSharp(i))
-            count++;
-    return count;
-}
-
 void Render::DrawBackgroundGrid()
 {
-    for (int i = 1; i <= 127; ++i)
+    for(int i = 1; i <= 127; ++i)
     {
-        if (!IsSharp(i - 1) && !IsSharp(i))
+        if(!IsSharp(i - 1) && !IsSharp(i))
         {
             float x = KeyX[i - 1] + _KeyWidth[i - 1];
             x = floorf(x + 0.5f);
-
-            DrawRect(Ren,
-                     x - 1.0f,
-                     0.0f,
-                     1.8f,
-                     WinH,
-                     0x402A2A2A,  // 50% transparent dark gray
-                     0x601F1F1F,  // 60% transparent slightly lighter
-                     0x601F1F1F,
-                     0x402A2A2A);
+            DrawRect(Ren, x - 1.0f, 0.0f, 1.8f, WinH, 0x402A2A2A, 0x601F1F1F, 0x601F1F1F, 0x402A2A2A);
         }
     }
 }
