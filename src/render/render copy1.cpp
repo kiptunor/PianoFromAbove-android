@@ -459,10 +459,10 @@ void Render::DrawBackgroundGrid()
                      0.0f,
                      1.8f,
                      WinH,
-                     0x402A2A2A,  // 50% transparent dark gray
-                     0x601F1F1F,  // 60% transparent slightly lighter
-                     0x601F1F1F,
-                     0x402A2A2A);
+                     0x802A2A2A,
+                     0x801F1F1F,
+                     0x801F1F1F,
+                     0x802A2A2A);
         }
     }
 }

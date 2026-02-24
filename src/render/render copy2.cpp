@@ -150,7 +150,7 @@ void DrawRect(SDL_Renderer* renderer, float x, float y, float cx, float cy, u32 
     vert[0].color.r = (c1&0xFF)/255.0f;
     vert[0].color.g = ((c1&0xFF00)>>8)/255.0f;
     vert[0].color.b = ((c1&0xFF0000)>>16)/255.0f;
-    vert[0].color.a = 1.0;
+    vert[0].color.a = ((c1&0xFF000000)>>24)/255.0f;
 
     // left
     vert[1].position.x = x+cx;
@@ -158,7 +158,7 @@ void DrawRect(SDL_Renderer* renderer, float x, float y, float cx, float cy, u32 
     vert[1].color.r = (c2&0xFF)/255.0f;
     vert[1].color.g = ((c2&0xFF00)>>8)/255.0f;
     vert[1].color.b = ((c2&0xFF0000)>>16)/255.0f;
-    vert[1].color.a = 1.0;
+    vert[1].color.a = ((c2&0xFF000000)>>24)/255.0f;
 
     // right
     vert[2].position.x = x+cx;
@@ -166,13 +166,13 @@ void DrawRect(SDL_Renderer* renderer, float x, float y, float cx, float cy, u32 
     vert[2].color.r = (c3&0xFF)/255.0f;
     vert[2].color.g = ((c3&0xFF00)>>8)/255.0f;
     vert[2].color.b = ((c3&0xFF0000)>>16)/255.0f;
-    vert[2].color.a = 1.0;
+    vert[2].color.a = ((c3&0xFF000000)>>24)/255.0f;
     vert[3].position.x = x;
     vert[3].position.y = y+cy;
     vert[3].color.r = (c4&0xFF)/255.0f;
     vert[3].color.g = ((c4&0xFF00)>>8)/255.0f;
     vert[3].color.b = ((c4&0xFF0000)>>16)/255.0f;
-    vert[3].color.a = 1.0;
+    vert[3].color.a = ((c4&0xFF000000)>>24)/255.0f;
     int indices[] = {0, 1, 2, 2, 3, 0};
     // Call SDL_RenderGeometry to draw the quadrilateral.
     SDL_RenderGeometry(renderer, NULL, vert, 4, indices, 6);
@@ -186,7 +186,7 @@ void DrawSkew(SDL_Renderer* renderer, float x1, float y1, float x2, float y2,flo
     vert[0].color.r = (c1&0xFF)/255.0f;
     vert[0].color.g = ((c1&0xFF00)>>8)/255.0f;
     vert[0].color.b = ((c1&0xFF0000)>>16)/255.0f;
-    vert[0].color.a = 1.0;
+    vert[0].color.a = ((c1&0xFF000000)>>24)/255.0f;
 
     // left
     vert[1].position.x = x2;
@@ -194,7 +194,7 @@ void DrawSkew(SDL_Renderer* renderer, float x1, float y1, float x2, float y2,flo
     vert[1].color.r = (c2&0xFF)/255.0f;
     vert[1].color.g = ((c2&0xFF00)>>8)/255.0f;
     vert[1].color.b = ((c2&0xFF0000)>>16)/255.0f;
-    vert[1].color.a = 1.0;
+    vert[1].color.a = ((c2&0xFF000000)>>24)/255.0f;
 
     // right
     vert[2].position.x = x3;
@@ -202,13 +202,13 @@ void DrawSkew(SDL_Renderer* renderer, float x1, float y1, float x2, float y2,flo
     vert[2].color.r = (c3&0xFF)/255.0f;
     vert[2].color.g = ((c3&0xFF00)>>8)/255.0f;
     vert[2].color.b = ((c3&0xFF0000)>>16)/255.0f;
-    vert[2].color.a = 1.0;
+    vert[2].color.a = ((c3&0xFF000000)>>24)/255.0f;
     vert[3].position.x = x4;
     vert[3].position.y = y4;
     vert[3].color.r = (c4&0xFF)/255.0f;
     vert[3].color.g = ((c4&0xFF00)>>8)/255.0f;
     vert[3].color.b = ((c4&0xFF0000)>>16)/255.0f;
-    vert[3].color.a = 1.0;
+    vert[3].color.a = ((c4&0xFF000000)>>24)/255.0f;
     int indices[] = {0, 1, 2, 2, 3, 0};
     // Call SDL_RenderGeometry to draw the quadrilateral.
     SDL_RenderGeometry(renderer, NULL, vert, 4, indices, 6);

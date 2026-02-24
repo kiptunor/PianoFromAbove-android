@@ -256,6 +256,8 @@ int APP_ENTRY(int argc, char *argv[])
 		// Set the background color again but with live color changes
 		SDL_SetRenderDrawColor(RenderWin->Ren, UI::liveColor.r, UI::liveColor.g, UI::liveColor.b, UI::liveColor.a);
 		
+		RenderWin->DrawBackgroundGrid();
+		
 		// Always draw notes
 		for(int i = 0; i != 128; ++i)
 		{

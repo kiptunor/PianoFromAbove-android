@@ -72,6 +72,7 @@ public:
     unsigned int GenerateRandomColor();
     void DrawNote(NVMidi::u16_t k, const NVnote &n, int pps);
     void ClearTrackChannelColors();
+    void DrawBackgroundGrid();
 
     void CreateNote(int k, int yb, int ye, unsigned int c);
 
