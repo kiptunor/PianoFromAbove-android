@@ -9,16 +9,15 @@
 class CLI
 {
     public:
-        typedef struct
-        {
-            int fps;
-            int voice_count;
-            bool vsync;
-            bool ignore_config_file;
-            std::string midi_file;
-            std::string soundfont_file;
-        }options;
+        
+        static int fps;
+        static int voice_count;
+        static bool vsync;
+        static bool ignore_config_file;
+        static bool no_text_dbg;
+        static std::string midi_file;
+        static std::string soundfont_file;
+        
         static void parseArgs(int ac, char** av);
-        options getOptions();
 };
 #endif

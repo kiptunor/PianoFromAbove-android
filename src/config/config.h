@@ -49,6 +49,7 @@ class Config
             //bool auto_refresh;
             bool OR; // Overlap remover
             std::string last_midi_path;
+            std::string last_sf_path;
             std::string last_midi_file;
             std::string bg_img;
             std::vector<std::string> current_soundfonts;

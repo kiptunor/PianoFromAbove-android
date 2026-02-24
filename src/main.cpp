@@ -33,6 +33,9 @@
 #include "audio/playback.h"
 #include "render/render.h"
 #include "render/ui.h"
+#ifndef PLATFORM_ANDROID
+    #include "cli.h"
+#endif
 
 
 
@@ -101,11 +104,19 @@ void UI::UpdateWidgetValues()
     UI::last_midi_file = live_conf.last_midi_file;
     UI::vsync = live_conf.vsync;
     UI::soundfont_paths = live_conf.extra_sf_paths;
+    UI::last_sf_path = live_conf.last_sf_path;
     live_soundfont_list = loaded_soundfont_list;
 }
 
 int APP_ENTRY(int argc, char *argv[])
 {
+#ifndef PLATFORM_ANDROID
+    // CLI Parsing
+    if(argc > 1)
+        CLI::parseArgs(argc, argv);
+#endif
+    
+    
     /*
     - - - - Configuration Handling - - - -
     */

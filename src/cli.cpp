@@ -1,4 +1,5 @@
-
+#include <iostream>
+#include <clipp.h>
 
 
 #include "cli.h"
@@ -7,29 +8,28 @@
 
 
 
-// Define optional arguments with defaults
-#define OPTIONAL_ARGS \
-    OPTIONAL_INT_ARG(fps, 1, "-fps", "Set custom FPS") \
-    OPTIONAL_INT_ARG(voice_count, 1, "-vc", "Set custom voice count") \
-    OPTIONAL_STRING_ARG(midi_file, "mf", "Midi input file path") \
-    OPTIONAL_STRING_ARG(soundfont_file, "sf", "Soundfont file path")
 
-// Define boolean flags
-#define BOOLEAN_ARGS \
-    BOOLEAN_ARG(help, "-h", "Show help") \
-    BOOLEAN_ARG(vsync, "-vsync", "Enable vertical synchronization") \
-    BOOLEAN_ARG(ignore_config_file, "-icf", "Ignore config file (Default settings will be used)")
-
-#include <easyargs.h>
+int CLI::fps;
+int CLI::voice_count;
+bool CLI::vsync;
+bool CLI::ignore_config_file;
+bool CLI::no_text_dbg;
+std::string CLI::midi_file;
+std::string CLI::soundfont_file;
 
 
 void CLI::parseArgs(int ac, char** av)
 {
-    args_t args = make_default_args();
+    auto cli = (
+        clipp::option("-imf", "--input-midi-file").set(midi_file).doc("Specify a midi file"),
+        clipp::option("-isf", "--input-soundfont-file").set(soundfont_file).doc("Specify a soundfont file file (.sf2 / .sfz)"),
+        clipp::option("-fps").set(fps).doc("Set FPS"),
+        clipp::option("-vsync").set(vsync).doc("Enable vertical sync"),
+        clipp::option("-vc", "--voice-count").set(voice_count).doc("Set voice count"),
+        clipp::option("-icf", "--ignore-config-file").set(ignore_config_file).doc("Ignore config file"),
+        clipp::option("-ntd", "--no-text-debug").set(no_text_dbg).doc("Avoid debug logging to text file")
+    );
     
-    if(!parse_args(ac, av, &args) || args.help)
-    {
-        print_help(av[0]);
-        //return 1;
-    }
+    clipp::parse(ac, av, cli);
+    std::cout << clipp::make_man_page(cli, av[0]);
 }

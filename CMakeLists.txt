@@ -92,6 +92,7 @@ add_executable(nvi-pfa
     extern/imgui/imgui_draw.cpp
     extern/imgui/extra/imgui_styles.cpp
     extern/imgui/extra/file_dlg/ImGuiFileDialog.cpp
+    src/cli.cpp
     src/audio/audio_effects.cpp
     src/audio/playback.cpp
     src/config/config.cpp

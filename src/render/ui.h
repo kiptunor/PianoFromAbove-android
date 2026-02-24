@@ -74,6 +74,7 @@ class UI
         static ImVec4 clear_color;
         static RGBAint liveColor;
         static std::string last_midi_path;
+        static std::string last_sf_path;
         static std::string last_midi_file;
         static std::vector<std::string> soundfont_paths;
         static std::vector<std::string> prev_images;

@@ -47,6 +47,7 @@ Config::configuration Config::Load()
     in_conf.use_default_paths = general_obj.value("useDefaultPaths", default_settings.use_default_paths);
     in_conf.last_midi_path = general_obj.value("lastMidiPath", "");
     in_conf.last_midi_file = general_obj.value("lastMidiFilePath", "");
+    in_conf.last_sf_path = general_obj.value("lastSoundfontPath", "");
     in_conf.extra_sf_paths = general_obj.value("soundfontPaths", std::vector<std::string>{});
     
     nlohmann::json visual_obj = json_in.value("visual", nlohmann::json::object());
@@ -124,6 +125,7 @@ void Config::Save(configuration config)
             { "defaultPaths", config.use_default_paths },
             { "lastMidiPath", config.last_midi_path },
             { "lastMidiFilePath", config.last_midi_file },
+            { "lastSoundfontPath", config.last_sf_path },
             { "soundfontPaths", config.extra_sf_paths }
         }},
         { "visual", visual },

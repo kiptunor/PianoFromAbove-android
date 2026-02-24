@@ -65,6 +65,7 @@ int  UI::min_velocity;
 int  UI::max_velocity;
 std::string UI::last_midi_path;
 std::string UI::last_midi_file;
+std::string UI::last_sf_path;
 ImVec4 UI::clear_color;
 UI::RGBAint UI::liveColor;
 ImVec4 UI::ui_chcolors[16];
@@ -764,12 +765,30 @@ void UI::Render(SDL_Renderer *r)
                 
                 if(ImGui::Button("+"))
                 {
-                    Log::debug("Add soundfont: todo...");
+                    //Log::debug("Add soundfont: todo...");
+                    IGFD::FileDialogConfig config;
+					config.path = last_sf_path;
+                    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".sf2,.sfz", config);
                 }
                 if(ImGui::BeginItemTooltip())
                 {
                     ImGui::Text("Add new soundfont to the list");
                     ImGui::EndTooltip();
+                }
+                
+                if(ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+                {
+                    if(ImGuiFileDialog::Instance()->IsOk())
+                    {
+                        std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                        last_sf_path = ImGuiFileDialog::Instance()->GetCurrentPath();
+                        live_conf.last_sf_path = last_sf_path;
+                        Config::Save(live_conf);
+                        
+                        live_soundfont_list.emplace_back(SoundfontItem{filePathName, false});
+                        SoundfontList::Save(live_soundfont_list);
+                    }
+                    ImGuiFileDialog::Instance()->Close();
                 }
                 
                 ImGui::SameLine();
