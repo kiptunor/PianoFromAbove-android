@@ -47,6 +47,7 @@ class Config
             bool no_midi_duplicates;
             bool no_soundfont_duplicates;
             bool loop_colors;
+            bool draw_vertical_lines;
             bool vsync;
             //bool auto_refresh;
             bool OR; // Overlap remover
@@ -105,6 +106,7 @@ inline Config::configuration default_settings =
     .no_midi_duplicates = false,
     .no_soundfont_duplicates = false,
     .loop_colors = false,
+    .draw_vertical_lines = true,
     .vsync = true,
     .OR = false,
 };

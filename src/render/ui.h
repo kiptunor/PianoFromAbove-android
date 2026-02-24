@@ -69,6 +69,7 @@ class UI
         static bool overlap_remover;
         static bool use_bg_image;
         static bool no_midi_duplicates;
+        static bool vertical_lines;
         static bool no_soundfont_duplicates;
         static bool vsync;
         static bool use_default_media_paths;

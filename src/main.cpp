@@ -106,6 +106,7 @@ void UI::UpdateWidgetValues()
     UI::soundfont_paths = live_conf.extra_sf_paths;
     UI::last_sf_path = live_conf.last_sf_path;
     UI::no_midi_duplicates = live_conf.no_midi_duplicates;
+    UI::vertical_lines = live_conf.draw_vertical_lines;
     UI::no_soundfont_duplicates = live_conf.no_soundfont_duplicates;
     live_soundfont_list = loaded_soundfont_list;
 }
@@ -256,7 +257,8 @@ int APP_ENTRY(int argc, char *argv[])
 		// Set the background color again but with live color changes
 		SDL_SetRenderDrawColor(RenderWin->Ren, UI::liveColor.r, UI::liveColor.g, UI::liveColor.b, UI::liveColor.a);
 		
-		RenderWin->DrawBackgroundGrid();
+		if(live_conf.draw_vertical_lines)
+		    RenderWin->DrawBackgroundGrid();
 		
 		// Always draw notes
 		for(int i = 0; i != 128; ++i)

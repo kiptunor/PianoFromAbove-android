@@ -62,6 +62,7 @@ bool UI::use_bg_image = false;
 bool UI::no_midi_duplicates;
 bool UI::no_soundfont_duplicates;
 bool UI::vsync;
+bool UI::vertical_lines;
 bool UI::use_default_media_paths = true;
 int  UI::min_velocity;
 int  UI::max_velocity;
@@ -1056,6 +1057,9 @@ void UI::Render(SDL_Renderer *r)
                             ImGui::EndTooltip();
                         }
                         liveColor = UI::Frgba2Irgba(clear_color);
+                        
+                        ImGui::Checkbox("Vertical Lines", &vertical_lines);
+                        live_conf.draw_vertical_lines = vertical_lines;
                         
                         ImGui::Text("");
                         ImGui::Text("Custom Channel Colors *");

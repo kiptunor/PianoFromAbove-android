@@ -56,6 +56,7 @@ Config::configuration Config::Load()
     in_conf.vsync = visual_obj.value("vsync", default_settings.vsync);
     in_conf.note_speed = visual_obj.value("noteSpeed", default_settings.note_speed);
     in_conf.loop_colors = visual_obj.value("loopNoteColors", default_settings.loop_colors);
+    in_conf.draw_vertical_lines = visual_obj.value("drawVerticalLines", default_settings.draw_vertical_lines);
     int count = std::min(visual_obj["channelColors"].size(), (size_t)16);
     if(count != 0)
         in_conf.is_custom_ch_colors = true;
@@ -103,6 +104,7 @@ void Config::Save(configuration config)
         { "vsync", config.vsync },
         { "noteSpeed", config.note_speed },
         { "loopNoteColors", config.loop_colors },
+        { "drawVerticalLines", config.draw_vertical_lines },
         { "backgroundImage", {
             { "enabled", config.use_bg_img },
             { "path", config.bg_img }
