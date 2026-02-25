@@ -108,6 +108,7 @@ void UI::UpdateWidgetValues()
     UI::no_midi_duplicates = live_conf.no_midi_duplicates;
     UI::vertical_lines = live_conf.draw_vertical_lines;
     UI::no_soundfont_duplicates = live_conf.no_soundfont_duplicates;
+    UI::background_image = live_conf.background_image;
     live_soundfont_list = loaded_soundfont_list;
 }
 

@@ -71,6 +71,7 @@ class UI
         static bool no_midi_duplicates;
         static bool vertical_lines;
         static bool no_soundfont_duplicates;
+        static bool background_image;
         static bool vsync;
         static bool use_default_media_paths;
         static ImVec4 ui_chcolors[16];

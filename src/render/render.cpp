@@ -1,4 +1,5 @@
 #include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
 #include <cmath>
 #include <algorithm>
 #include <random>
@@ -56,6 +57,7 @@ static const short GenKeyX[] =
 Render::Render()
 {
     SDL_Init(SDL_INIT_VIDEO);
+    // IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG); // Things are more simple than last time
     
     #ifdef PLATFORM_ANDROID
         Win = SDL_CreateWindow("PFA Android", 1920, 1080, 0);

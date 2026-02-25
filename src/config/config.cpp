@@ -68,8 +68,8 @@ Config::configuration Config::Load()
     }
     
     nlohmann::json background_image_obj = visual_obj.value("backgroundImage", nlohmann::json::object());
-    in_conf.use_bg_img = background_image_obj.value("enabled", default_settings.use_bg_img);
-    in_conf.bg_img = background_image_obj.value("path", default_settings.bg_img);
+    in_conf.background_image = background_image_obj.value("enabled", default_settings.background_image);
+    in_conf.background_image_path = background_image_obj.value("path", default_settings.background_image_path);
     
     nlohmann::json background_color_obj = visual_obj.value("backgroundColor", nlohmann::json::object());
     in_conf.bg_R = background_color_obj.value("R", default_settings.bg_R);
@@ -106,8 +106,8 @@ void Config::Save(configuration config)
         { "loopNoteColors", config.loop_colors },
         { "drawVerticalLines", config.draw_vertical_lines },
         { "backgroundImage", {
-            { "enabled", config.use_bg_img },
-            { "path", config.bg_img }
+            { "enabled", config.background_image },
+            { "path", config.background_image_path }
         }},
         { "backgroundColor", {
             { "R", config.bg_R },
@@ -160,8 +160,8 @@ void Config::PrintLoadedConfig(configuration c)
 {
     std::cout << "Loaded Configuration:" << std::endl;
     std::cout << "Default Paths: " << c.use_default_paths << std::endl;
-    std::cout << "Background Image Enabled: " << c.use_bg_img << std::endl;
-    std::cout << "Background Image Path: " << c.bg_img << std::endl;
+    std::cout << "Background Image Enabled: " << c.background_image << std::endl;
+    std::cout << "Background Image Path: " << c.background_image_path << std::endl;
     std::cout << "Background Color: (" << c.bg_R << ", " << c.bg_G << ", " << c.bg_B << ", " << c.bg_A << ")" << std::endl;
     std::cout << "Note Speed: " << c.note_speed << std::endl;
     std::cout << "Loop Note Colors: " << c.loop_colors << std::endl;

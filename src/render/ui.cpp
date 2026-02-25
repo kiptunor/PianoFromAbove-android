@@ -64,6 +64,7 @@ bool UI::no_soundfont_duplicates;
 bool UI::vsync;
 bool UI::vertical_lines;
 bool UI::use_default_media_paths = true;
+bool UI::background_image;
 int  UI::min_velocity;
 int  UI::max_velocity;
 std::string UI::last_midi_path;
@@ -395,7 +396,7 @@ std::vector<std::string> UI::GetCheckedSoundfonts(const std::vector<SoundfontIte
 
 void RenderSoundfontsPathsList(const std::vector<std::string>& items, int& selectedIndex)
 {
-    ImGui::BeginChild("##soundfontspathls", ImVec2(0, 300), true, ImGuiWindowFlags_HorizontalScrollbar);
+    ImGui::BeginChild("##soundfontspathls", ImVec2(0, 190), true, ImGuiWindowFlags_HorizontalScrollbar);
     
     for(int i = 0; i < items.size(); ++i)
     {
@@ -1130,6 +1131,38 @@ void UI::Render(SDL_Renderer *r)
                         //is_image_loaded = use_bg_image;
                         //RenderImageList(image_textures);
                         //live_conf.bg_img = all_image_files[selected_image];
+                        
+                        ImGui::Checkbox("Background image", &background_image);
+                        live_conf.background_image = background_image;
+                        
+                        ImGui::SameLine();
+                        
+                        if(ImGui::Button(ICON_FA_FOLDER_OPEN))
+                        {
+                            IGFD::FileDialogConfig config;
+					        config.path = last_midi_path;
+                            ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".png,.jpg,.jpeg,.webp,.bmp,.svg", config);
+                        }
+                        if(ImGui::BeginItemTooltip())
+                        {
+                            ImGui::Text("Load a background image");
+                            ImGui::EndTooltip();
+                        }
+                        
+                        ImGui::PushFont(FONT_icon_set);
+                        if(ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+                        {
+                            if(ImGuiFileDialog::Instance()->IsOk())
+                            { // action if OK
+                                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                                std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+                                
+                            }
+                            
+                            // close
+                            ImGuiFileDialog::Instance()->Close();
+                        }
+                        ImGui::PopFont();
                     
                         ImGui::EndTabItem();
                     }

@@ -43,7 +43,7 @@ class Config
             bool use_default_paths;
             bool is_custom_ch_colors; // Only for internal use!!!
             bool use_default_colors; // Only for internal use!!!
-            bool use_bg_img;
+            bool background_image;
             bool no_midi_duplicates;
             bool no_soundfont_duplicates;
             bool loop_colors;
@@ -54,7 +54,7 @@ class Config
             std::string last_midi_path;
             std::string last_sf_path;
             std::string last_midi_file;
-            std::string bg_img;
+            std::string background_image_path;
             std::vector<std::string> current_soundfonts;
             std::vector<std::string> extra_midi_paths;
             std::vector<std::string> extra_sf_paths;
@@ -102,7 +102,7 @@ inline Config::configuration default_settings =
     .audio_limiter = true,
     .vel_filter = false,
     .use_default_paths = true,
-    .use_bg_img = true,
+    .background_image = true,
     .no_midi_duplicates = false,
     .no_soundfont_duplicates = false,
     .loop_colors = false,
