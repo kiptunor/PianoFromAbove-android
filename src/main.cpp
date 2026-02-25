@@ -78,7 +78,7 @@ void AudioSetup()
     BASS_SetConfig(BASS_CONFIG_UPDATEPERIOD, 10);
     BASS_SetConfig(BASS_CONFIG_MIDI_AUTOFONT, 0);
     
-    BASS_Init(-1, 44100, 0, 0, nullptr); // Initialize default device for now
+    BASS_Init(1, 44100, 0, 0, nullptr); // Initialize default device for now
 }
 
 void UI::UpdateWidgetValues()

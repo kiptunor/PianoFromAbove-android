@@ -109,7 +109,7 @@ inline Config::configuration default_settings =
     .loop_colors = false,
     .draw_vertical_lines = true,
     .vsync = true,
-    .OR = false,
+    .OR = true,
 };
 
 #endif
