@@ -55,6 +55,7 @@ class Config
             std::string last_sf_path;
             std::string last_midi_file;
             std::string background_image_path;
+            std::string last_image_path;
             std::vector<std::string> current_soundfonts;
             std::vector<std::string> extra_midi_paths;
             std::vector<std::string> extra_sf_paths;

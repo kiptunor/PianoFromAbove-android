@@ -139,6 +139,7 @@ Render::~Render()
     //SDL_DestroyTexture(Bk1);
     //SDL_DestroyTexture(Wk);
     //SDL_DestroyTexture(bg_img);
+    SDL_DestroyTexture(background_img);
     SDL_DestroyRenderer(Ren);
     SDL_DestroyWindow(Win);
     SDL_Quit();
@@ -430,6 +431,17 @@ void Render::DrawNote(NVMidi::u16_t k, const NVnote &n, int pps)
     }
     
     RenderWin->CreateNote(k, y_0, y_1, note_color);
+}
+
+void Render::LoadBackgroundImage(std::string file)
+{
+    background_img = IMG_LoadTexture(Ren, file.c_str());
+    
+    if(!background_img)
+    {
+        Log::error("Failed to load background image: %s", SDL_GetError());
+        return;
+    }
 }
 
 void Render::ClearTrackChannelColors()

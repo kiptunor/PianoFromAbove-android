@@ -183,6 +183,9 @@ int APP_ENTRY(int argc, char *argv[])
         }
     }
     
+    if(live_conf.background_image)
+        RenderWin->LoadBackgroundImage(live_conf.background_image_path);
+    
     /*
     - - - - Mainloop - - - -
     */
@@ -257,6 +260,9 @@ int APP_ENTRY(int argc, char *argv[])
 		
 		// Set the background color again but with live color changes
 		SDL_SetRenderDrawColor(RenderWin->Ren, UI::liveColor.r, UI::liveColor.g, UI::liveColor.b, UI::liveColor.a);
+		
+		if(live_conf.background_image)
+		    SDL_RenderTexture(RenderWin->Ren, RenderWin->background_img, NULL, NULL);
 		
 		if(live_conf.draw_vertical_lines)
 		    RenderWin->DrawBackgroundGrid();

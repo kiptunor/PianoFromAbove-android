@@ -47,6 +47,8 @@ Config::configuration Config::Load()
     in_conf.use_default_paths = general_obj.value("useDefaultPaths", default_settings.use_default_paths);
     in_conf.last_midi_path = general_obj.value("lastMidiPath", "");
     in_conf.last_midi_file = general_obj.value("lastMidiFilePath", "");
+    in_conf.last_image_path = general_obj.value("lastImagePath", "");
+    in_conf.background_image_path = general_obj.value("lastBackgroundImage", "");
     in_conf.last_sf_path = general_obj.value("lastSoundfontPath", "");
     in_conf.extra_sf_paths = general_obj.value("soundfontPaths", std::vector<std::string>{});
     in_conf.no_soundfont_duplicates = general_obj.value("noSoundfontDuplicates", default_settings.no_soundfont_duplicates);
@@ -130,6 +132,8 @@ void Config::Save(configuration config)
             { "lastMidiPath", config.last_midi_path },
             { "lastMidiFilePath", config.last_midi_file },
             { "lastSoundfontPath", config.last_sf_path },
+            { "lastImagePath", config.last_image_path },
+            { "lastBackgroundImage", config.background_image_path },
             { "soundfontPaths", config.extra_sf_paths },
             { "noMidiDuplicates", config.no_midi_duplicates },
             { "noSoundfontDuplicates", config.no_soundfont_duplicates }

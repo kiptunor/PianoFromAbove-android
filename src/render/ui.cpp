@@ -1140,7 +1140,7 @@ void UI::Render(SDL_Renderer *r)
                         if(ImGui::Button(ICON_FA_FOLDER_OPEN))
                         {
                             IGFD::FileDialogConfig config;
-					        config.path = last_midi_path;
+					        config.path = live_conf.last_image_path;
                             ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".png,.jpg,.jpeg,.webp,.bmp,.svg", config);
                         }
                         if(ImGui::BeginItemTooltip())
@@ -1157,6 +1157,12 @@ void UI::Render(SDL_Renderer *r)
                                 std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
                                 std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
                                 
+                                live_conf.background_image_path = filePathName;
+                                live_conf.last_image_path = filePath;
+                                
+                                Config::Save(live_conf);
+                                
+                                RenderWin->LoadBackgroundImage(filePathName);
                             }
                             
                             // close
