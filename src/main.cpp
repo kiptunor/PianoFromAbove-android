@@ -93,23 +93,23 @@ void UI::UpdateWidgetValues()
     for(int i = 0; i < 16; i++)
         ui_chcolors[i] = UI::UIntToImVec4(live_conf.channel_colors[i]);
     
-    UI::current_audio_dev = live_conf.audio_device_index;
-    UI::loop_colors = live_conf.loop_colors;
-    UI::overlap_remover = live_conf.OR;
-    UI::velocity_filter = live_conf.vel_filter;
-    UI::live_note_speed = live_conf.note_speed;
-    UI::min_velocity = live_conf.vel_min;
-    UI::max_velocity = live_conf.vel_max;
-    UI::last_midi_path = live_conf.last_midi_path;
-    UI::last_midi_file = live_conf.last_midi_file;
-    UI::vsync = live_conf.vsync;
-    UI::soundfont_paths = live_conf.extra_sf_paths;
-    UI::last_sf_path = live_conf.last_sf_path;
-    UI::no_midi_duplicates = live_conf.no_midi_duplicates;
-    UI::vertical_lines = live_conf.draw_vertical_lines;
+    UI::current_audio_dev       = live_conf.audio_device_index;
+    UI::loop_colors             = live_conf.loop_colors;
+    UI::overlap_remover         = live_conf.OR;
+    UI::velocity_filter         = live_conf.vel_filter;
+    UI::live_note_speed         = live_conf.note_speed;
+    UI::min_velocity            = live_conf.vel_min;
+    UI::max_velocity            = live_conf.vel_max;
+    UI::last_midi_path          = live_conf.last_midi_path;
+    UI::last_midi_file          = live_conf.last_midi_file;
+    UI::vsync                   = live_conf.vsync;
+    UI::soundfont_paths         = live_conf.extra_sf_paths;
+    UI::last_sf_path            = live_conf.last_sf_path;
+    UI::no_midi_duplicates      = live_conf.no_midi_duplicates;
+    UI::vertical_lines          = live_conf.draw_vertical_lines;
     UI::no_soundfont_duplicates = live_conf.no_soundfont_duplicates;
-    UI::background_image = live_conf.background_image;
-    live_soundfont_list = loaded_soundfont_list;
+    UI::background_image        = live_conf.background_image;
+    live_soundfont_list         = loaded_soundfont_list;
 }
 
 int APP_ENTRY(int argc, char *argv[])

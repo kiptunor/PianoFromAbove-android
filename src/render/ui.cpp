@@ -469,70 +469,6 @@ void ShowAudioDeviceList(const std::vector<Playback::AudioDevice>& audioDevices)
     }
 }
 
-/*
-// Temporarly disabled
-void RenderImageList(std::vector<SDL_Texture*> img)
-{
-#ifndef PLATFORM_ANDROID
-    ImGui::BeginChild("##imgs", ImVec2(300, 400), true, ImGuiWindowFlags_HorizontalScrollbar);
-#else
-    ImGui::BeginChild("##imgs", ImVec2(500, 430), true, ImGuiWindowFlags_HorizontalScrollbar);
-#endif
-    for (size_t i = 0; i < img.size(); ++i)
-    {
-        int w = (int)image_size, h = (int)image_size;
-        // If you have per-image size, use SDL_GetTextureSize(img[i], &w, &h);
-        
-        ImGui::PushID((int)i);
-        
-        // Set the height of the selectable to fit the image
-        ImVec2 selectable_size(0, image_size);
-        
-        // Make the whole row selectable
-        bool is_selected = (selected_image == (int)i);
-        if (ImGui::Selectable("##selectable", is_selected, 0, selectable_size))
-        {
-            selected_image = (int)i;
-        }
-        
-        // Allow drawing over the selectable
-        ImGui::SetItemAllowOverlap();
-        
-        // Get the rectangle of the selectable
-        ImVec2 min = ImGui::GetItemRectMin();
-        ImVec2 max = ImGui::GetItemRectMax();
-        
-        // Vertically center the image in the selectable
-        float image_y = min.y + (selectable_size.y - h) * 0.5f;
-        ImGui::GetWindowDrawList()->AddImage((ImTextureID)img[i], ImVec2(min.x, image_y), ImVec2(min.x + w, image_y + h));
-        
-        // Vertically center the text in the selectable
-        float text_height = ImGui::GetFontSize();
-        float text_y = min.y + (selectable_size.y - text_height) * 0.5f;
-        ImGui::SetCursorScreenPos(ImVec2(min.x + w + padding, text_y));
-        img_filename = FilenameOnly(all_image_files[i]);
-        ImGui::Text("%s", img_filename.c_str());
-        
-        // Item spacing
-        if (i + 1 < img.size())
-            ImGui::Dummy(ImVec2(0, 37.0f));
-        
-        ImGui::PopID();
-    }
-    ImGui::EndChild();
-    
-    ImGui::SameLine();
-    // Render preview image in the main window, using ImGui::Image for correct placement
-    if (selected_image >= 0 && selected_image < img.size())
-    {
-        ImGui::BeginGroup();
-        ImGui::Text("Preview:");
-        ImGui::Image((ImTextureID)img[selected_image], ImVec2(390, 390));
-        ImGui::EndGroup();
-    }
-}
-*/
-
 unsigned int UI::ImVec4ToUInt(const ImVec4& color)
 {
     unsigned int r = static_cast<unsigned int>(color.x * 255.0f);
@@ -677,7 +613,7 @@ void UI::Render(SDL_Renderer *r)
                 {
                     IGFD::FileDialogConfig config;
 					config.path = last_midi_path;
-                    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".mid,.midi,.smf", config);
+                    ImGuiFileDialog::Instance()->OpenDialog("MidiFileFD", "Choose a MIDI File", ".mid,.midi,.smf,.MID,.MIDI,.SMF", config);
                 }
                 if(ImGui::BeginItemTooltip())
                 {
@@ -686,7 +622,7 @@ void UI::Render(SDL_Renderer *r)
                 }
                   // display
                 ImGui::PushFont(FONT_icon_set);
-                if(ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+                if(ImGuiFileDialog::Instance()->Display("MidiFileFD"))
                 {
                     if(ImGuiFileDialog::Instance()->IsOk())
                     { // action if OK
@@ -815,7 +751,7 @@ void UI::Render(SDL_Renderer *r)
                 {
                     IGFD::FileDialogConfig config;
 					config.path = last_sf_path;
-                    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".sf2,.sfz", config);
+                    ImGuiFileDialog::Instance()->OpenDialog("SoundfontFD", "Choose Soundfont File", ".sf2,.sfz,.SF2,.SFZ", config);
                 }
                 if(ImGui::BeginItemTooltip())
                 {
@@ -823,7 +759,7 @@ void UI::Render(SDL_Renderer *r)
                     ImGui::EndTooltip();
                 }
                 
-                if(ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+                if(ImGuiFileDialog::Instance()->Display("SoundfontFD"))
                 {
                     if(ImGuiFileDialog::Instance()->IsOk())
                     {
@@ -1099,39 +1035,6 @@ void UI::Render(SDL_Renderer *r)
                         ImGui::Checkbox("Loop colors *", &loop_colors);
                         live_conf.loop_colors = loop_colors;
                         
-                        /*
-                        ImGui::Checkbox("Use Background image", &use_bg_image);
-                        ImGui::SameLine();
-                        if(!use_bg_image)
-                        {
-                            ImGui::BeginDisabled();
-                            if(ImGui::Button("Reload Background Image"))
-                            {
-                                //RenderWin->bg_img = IMG_LoadTexture(RenderWin->Ren, all_image_files[selected_image].c_str());
-                                
-                            }
-                            ImGui::EndDisabled();
-                        }
-                        else
-                        {
-                            if(ImGui::Button("Reload Background Image"))
-                            {
-                                is_image_loaded = true;
-                                //RenderWin->bg_img = IMG_LoadTexture(RenderWin->Ren, all_image_files[selected_image].c_str());
-                                Log::info(SRC_STRING.c_str(), "Not yet");
-                            }
-                        }
-                        if(ImGui::BeginItemTooltip())
-                        {
-                            ImGui::Text("Load the new selected image");
-                            ImGui::EndTooltip();
-                        }
-                        */
-                        //live_conf.use_bg_img = use_bg_image;
-                        //is_image_loaded = use_bg_image;
-                        //RenderImageList(image_textures);
-                        //live_conf.bg_img = all_image_files[selected_image];
-                        
                         ImGui::Checkbox("Background image", &background_image);
                         live_conf.background_image = background_image;
                         
@@ -1141,7 +1044,7 @@ void UI::Render(SDL_Renderer *r)
                         {
                             IGFD::FileDialogConfig config;
 					        config.path = live_conf.last_image_path;
-                            ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".png,.jpg,.jpeg,.webp,.bmp,.svg", config);
+                            ImGuiFileDialog::Instance()->OpenDialog("ImageFileFD", "Choose Image File", ".png,.jpg,.jpeg,.webp,.bmp,.svg", config);
                         }
                         if(ImGui::BeginItemTooltip())
                         {
@@ -1149,11 +1052,13 @@ void UI::Render(SDL_Renderer *r)
                             ImGui::EndTooltip();
                         }
                         
+                        ImGui::Text("Image file: %s", FilenameOnly(live_conf.background_image_path).c_str());
+                        
                         ImGui::PushFont(FONT_icon_set);
-                        if(ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+                        if(ImGuiFileDialog::Instance()->Display("ImageFileFD"))
                         {
                             if(ImGuiFileDialog::Instance()->IsOk())
-                            { // action if OK
+                            {
                                 std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
                                 std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
                                 
@@ -1165,7 +1070,6 @@ void UI::Render(SDL_Renderer *r)
                                 RenderWin->LoadBackgroundImage(filePathName);
                             }
                             
-                            // close
                             ImGuiFileDialog::Instance()->Close();
                         }
                         ImGui::PopFont();

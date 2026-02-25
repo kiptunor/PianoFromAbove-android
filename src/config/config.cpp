@@ -43,21 +43,21 @@ Config::configuration Config::Load()
         
     Config::configuration in_conf;
     
-    nlohmann::json general_obj = json_in.value("general", nlohmann::json::object());
-    in_conf.use_default_paths = general_obj.value("useDefaultPaths", default_settings.use_default_paths);
-    in_conf.last_midi_path = general_obj.value("lastMidiPath", "");
-    in_conf.last_midi_file = general_obj.value("lastMidiFilePath", "");
-    in_conf.last_image_path = general_obj.value("lastImagePath", "");
-    in_conf.background_image_path = general_obj.value("lastBackgroundImage", "");
-    in_conf.last_sf_path = general_obj.value("lastSoundfontPath", "");
-    in_conf.extra_sf_paths = general_obj.value("soundfontPaths", std::vector<std::string>{});
+    nlohmann::json general_obj      = json_in.value("general", nlohmann::json::object());
+    in_conf.use_default_paths       = general_obj.value("useDefaultPaths", default_settings.use_default_paths);
+    in_conf.last_midi_path          = general_obj.value("lastMidiPath", "");
+    in_conf.last_midi_file          = general_obj.value("lastMidiFilePath", "");
+    in_conf.last_image_path         = general_obj.value("lastImagePath", "");
+    in_conf.background_image_path   = general_obj.value("lastBackgroundImage", "");
+    in_conf.last_sf_path            = general_obj.value("lastSoundfontPath", "");
+    in_conf.extra_sf_paths          = general_obj.value("soundfontPaths", std::vector<std::string>{});
     in_conf.no_soundfont_duplicates = general_obj.value("noSoundfontDuplicates", default_settings.no_soundfont_duplicates);
-    in_conf.no_midi_duplicates = general_obj.value("noMidiDuplicates", default_settings.no_midi_duplicates);
+    in_conf.no_midi_duplicates      = general_obj.value("noMidiDuplicates", default_settings.no_midi_duplicates);
     
-    nlohmann::json visual_obj = json_in.value("visual", nlohmann::json::object());
-    in_conf.vsync = visual_obj.value("vsync", default_settings.vsync);
-    in_conf.note_speed = visual_obj.value("noteSpeed", default_settings.note_speed);
-    in_conf.loop_colors = visual_obj.value("loopNoteColors", default_settings.loop_colors);
+    nlohmann::json visual_obj   = json_in.value("visual", nlohmann::json::object());
+    in_conf.vsync               = visual_obj.value("vsync", default_settings.vsync);
+    in_conf.note_speed          = visual_obj.value("noteSpeed", default_settings.note_speed);
+    in_conf.loop_colors         = visual_obj.value("loopNoteColors", default_settings.loop_colors);
     in_conf.draw_vertical_lines = visual_obj.value("drawVerticalLines", default_settings.draw_vertical_lines);
     int count = std::min(visual_obj["channelColors"].size(), (size_t)16);
     if(count != 0)
@@ -70,7 +70,7 @@ Config::configuration Config::Load()
     }
     
     nlohmann::json background_image_obj = visual_obj.value("backgroundImage", nlohmann::json::object());
-    in_conf.background_image = background_image_obj.value("enabled", default_settings.background_image);
+    in_conf.background_image      = background_image_obj.value("enabled", default_settings.background_image);
     in_conf.background_image_path = background_image_obj.value("path", default_settings.background_image_path);
     
     nlohmann::json background_color_obj = visual_obj.value("backgroundColor", nlohmann::json::object());
@@ -81,14 +81,14 @@ Config::configuration Config::Load()
     in_conf.OR = visual_obj.value("overlapRemover", default_settings.OR);
     
     nlohmann::json audio_obj = json_in.value("audio", nlohmann::json::object());
-    in_conf.bass_voice_count = audio_obj.value("voiceCount", default_settings.bass_voice_count);
+    in_conf.bass_voice_count   = audio_obj.value("voiceCount", default_settings.bass_voice_count);
     in_conf.audio_device_index = audio_obj.value("audioDeviceIndex", default_settings.audio_device_index);
     
     nlohmann::json effects_obj = audio_obj.value("effects", nlohmann::json::object());
     nlohmann::json vel_filter_obj = effects_obj.value("velocityFilter", nlohmann::json::object());
     in_conf.vel_filter = vel_filter_obj.value("enabled", default_settings.vel_filter);
-    in_conf.vel_min = vel_filter_obj.value("lowVel", default_settings.vel_min);
-    in_conf.vel_max = vel_filter_obj.value("hiVel", default_settings.vel_max);
+    in_conf.vel_min    = vel_filter_obj.value("lowVel", default_settings.vel_min);
+    in_conf.vel_max    = vel_filter_obj.value("hiVel", default_settings.vel_max);
     
     nlohmann::json limiter_obj = effects_obj.value("audioLimiter", nlohmann::json::object());
     in_conf.audio_limiter = limiter_obj.value("enabled", default_settings.audio_limiter);
@@ -128,25 +128,25 @@ void Config::Save(configuration config)
         
     json_out = {
         { "general", {
-            { "defaultPaths", config.use_default_paths },
-            { "lastMidiPath", config.last_midi_path },
-            { "lastMidiFilePath", config.last_midi_file },
-            { "lastSoundfontPath", config.last_sf_path },
-            { "lastImagePath", config.last_image_path },
-            { "lastBackgroundImage", config.background_image_path },
-            { "soundfontPaths", config.extra_sf_paths },
-            { "noMidiDuplicates", config.no_midi_duplicates },
+            { "defaultPaths",          config.use_default_paths       },
+            { "lastMidiPath",          config.last_midi_path          },
+            { "lastMidiFilePath",      config.last_midi_file          },
+            { "lastSoundfontPath",     config.last_sf_path            },
+            { "lastImagePath",         config.last_image_path         },
+            { "lastBackgroundImage",   config.background_image_path   },
+            { "soundfontPaths",        config.extra_sf_paths          },
+            { "noMidiDuplicates",      config.no_midi_duplicates      },
             { "noSoundfontDuplicates", config.no_soundfont_duplicates }
         }},
         { "visual", visual },
         { "audio", {
-            { "voiceCount", config.bass_voice_count },
+            { "voiceCount",       config.bass_voice_count   },
             { "audioDeviceIndex", config.audio_device_index },
             { "effects", {
                 { "velocityFilter", {
                     { "enabled", config.vel_filter },
-                    { "lowVel", config.vel_min },
-                    { "hiVel", config.vel_max }
+                    { "lowVel",  config.vel_min    },
+                    { "hiVel",   config.vel_max    }
                 }},
                 { "audioLimiter", {
                     { "enabled", config.audio_limiter }
