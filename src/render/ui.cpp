@@ -1,7 +1,7 @@
 #include <string>
 #include <filesystem>
 #include <iostream>
-//#include <SDL3_image/SDL_image.h>
+
 
 
 #include "ui.h"
@@ -331,9 +331,6 @@ void RenderMidiList(const std::vector<std::string>& items, int& selectedIndex, s
 
 void RenderSoundfontList(std::vector<UI::SoundfontItem>& items, std::string find_item)
 {
-    /*
-   Keep previous enabled soundfonts before updating the list 
-    */
     ImGui::BeginChild("##sfls", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
     
     bool soundfont_changed = false;
@@ -434,7 +431,7 @@ void ShowAudioDeviceList(const std::vector<Playback::AudioDevice>& audioDevices)
         UI::current_audio_dev = 0; // Reset to the first device if the index is out of bounds
     }
     
-        // Display the combo box
+    // Display the combo box
     const char* currentDeviceName = (deviceNames.empty() ? "No devices available" : deviceNames[UI::current_audio_dev]);
     
     if(ImGui::BeginCombo("Audio Devices *", currentDeviceName))
@@ -573,7 +570,6 @@ void UI::Render(SDL_Renderer *r)
     // Show the main GUI window
     if(main_gui_window)
     {
-        //selIndex = live_conf.midi_index;
         ImVec2 center = ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f);
         ImGui::SetNextWindowPos(center, ImGuiCond_Once, ImVec2(0.5f, 0.5f)); // Pivot 0.5 = center
 #ifndef PLATFORM_ANDROID
@@ -620,12 +616,12 @@ void UI::Render(SDL_Renderer *r)
                     ImGui::Text("Open and play a MIDI file");
                     ImGui::EndTooltip();
                 }
-                  // display
+                
                 ImGui::PushFont(FONT_icon_set);
                 if(ImGuiFileDialog::Instance()->Display("MidiFileFD"))
                 {
                     if(ImGuiFileDialog::Instance()->IsOk())
-                    { // action if OK
+                    {
                         std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
                         std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
                         last_midi_path = filePath;
@@ -654,7 +650,6 @@ void UI::Render(SDL_Renderer *r)
                         }
                     }
                     
-                    // close
                     ImGuiFileDialog::Instance()->Close();
                 }
                 ImGui::PopFont();
@@ -805,7 +800,19 @@ void UI::Render(SDL_Renderer *r)
                 
                 if(ImGui::Button(ICON_FA_ARROW_ROTATE_RIGHT))
                 {
+                    std::vector<std::string> prev_enabled_soundfonts = GetCheckedSoundfonts(live_soundfont_list);
                     live_soundfont_list = SoundfontList::Get(soundfont_paths);
+                    
+                    // Re-enable previous enabled soundfonts
+                    for(size_t i = 0; i < live_soundfont_list.size(); i++)
+                    {
+                        for(size_t j = 0; j < prev_enabled_soundfonts.size(); j++)
+                        {
+                            if(prev_enabled_soundfonts[j] == live_soundfont_list[i].label)
+                                live_soundfont_list[i].checked = true;
+                        }
+                    }
+                    
                     SoundfontList::Save(live_soundfont_list);
                 }
                 if(ImGui::BeginItemTooltip())
@@ -975,6 +982,12 @@ void UI::Render(SDL_Renderer *r)
                         if(ImGui::Checkbox("Enable vsync *", &vsync))
                             live_conf.vsync = vsync;
                         
+                        if(ImGui::BeginItemTooltip())
+                        {
+                            ImGui::Text("Enable or disable vertical synchronization for a smoother frame rate");
+                            ImGui::EndTooltip();
+                        }
+                        
                         ImGui::Checkbox("Overlap Remover *", &overlap_remover);
                         if(ImGui::BeginItemTooltip())
                         {
@@ -997,6 +1010,12 @@ void UI::Render(SDL_Renderer *r)
                         
                         ImGui::Checkbox("Vertical Lines", &vertical_lines);
                         live_conf.draw_vertical_lines = vertical_lines;
+                        
+                        if(ImGui::BeginItemTooltip())
+                        {
+                            ImGui::Text("Show the vertical lines in between the white keys");
+                            ImGui::EndTooltip();
+                        }
                         
                         ImGui::Text("");
                         ImGui::Text("Custom Channel Colors *");
@@ -1034,6 +1053,12 @@ void UI::Render(SDL_Renderer *r)
                         
                         ImGui::Checkbox("Loop colors *", &loop_colors);
                         live_conf.loop_colors = loop_colors;
+                        
+                        if(ImGui::BeginItemTooltip())
+                        {
+                            ImGui::Text("The colors will be applied if track count exceeds 16");
+                            ImGui::EndTooltip();
+                        }
                         
                         ImGui::Checkbox("Background image", &background_image);
                         live_conf.background_image = background_image;
