@@ -20,7 +20,11 @@
     #define IMGUI_INI_FILE_PATH "imgui.ini"
 #endif
 
-#define FONT_AWESOME_ICON_SIZE 24
+#ifdef PLATFORM_ANDROID
+    #define FONT_AWESOME_ICON_SIZE 33
+#else
+    #define FONT_AWESOME_ICON_SIZE 18
+#endif
 
 
 
@@ -36,9 +40,6 @@ ImVec4 UIntToImVec4(unsigned int rgb);
 
 
 
-struct LoadMidiArgs {
-    std::string midi_path;
-};
 
 class UI
 {

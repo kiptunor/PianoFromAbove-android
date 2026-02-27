@@ -62,8 +62,8 @@ Render::Render()
     #ifdef PLATFORM_ANDROID
         Win = SDL_CreateWindow("PFA Android", 1920, 1080, 0);
     #else
-        //Win = SDL_CreateWindow("PFA SDL", 1912, 1000, SDL_WINDOW_RESIZABLE);
-        Win = SDL_CreateWindow("PFA SDL", 600, 700, SDL_WINDOW_RESIZABLE);
+        Win = SDL_CreateWindow("PFA SDL", 1912, 1000, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
+        SDL_SetWindowMinimumSize(Win, 700, 500);
     #endif
     
     if(Win == nullptr)
@@ -476,6 +476,7 @@ void Render::HandleResize(int newWidth, int newHeight)
     WinW = newWidth;
     WinH = newHeight;
     
+    // Keyboard resizing + re-position
     for(int i = 0; i != 128; ++i)
     {
         KeyX[i] = (i / 12 * 126 + GenKeyX[i % 12]) * WinW / 1350;
@@ -504,6 +505,10 @@ void Render::HandleResize(int newWidth, int newHeight)
         _KeyWidth[i] = val;
     }
     _KeyWidth[127] = WinW - KeyX[127];
+    
+    // Re-scale the notes too
+    BkeyW = scale(60);
+    WkeyW = scale(94);
 }
 
 int Render::scale(int x)

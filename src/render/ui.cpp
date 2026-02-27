@@ -16,6 +16,7 @@
 
 
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <backend_render/imgui_impl_sdl3.h>
 #include <backend_render/imgui_impl_sdlrenderer3.h>
 #include <file_dlg/ImGuiFileDialog.h>
@@ -72,6 +73,8 @@ ImVec4 UI::ui_chcolors[16];
 int UI::current_audio_dev;
 std::vector<std::string> UI::soundfont_paths;
 std::vector<std::string> UI::prev_images;
+
+static ImVec2 trackedWindowSize = ImVec2(700, 380);
 
 
 
@@ -229,8 +232,9 @@ void UI::Setup(SDL_Window *w, SDL_Renderer *r)
   io.Fonts->AddFontFromFileTTF("ui_font.ttf", 22.0f);
   //FONT_icon_set = io.Fonts->AddFontFromFileTTF("fontello.ttf", 14.0f);
   //io.Fonts->AddFontFromFileTTF("ui_font.ttf", 19.0f);
-  SetupIconFonts();
 #endif
+
+    SetupIconFonts();
     
     // Setup Platform/Renderer backends
     //ImGui_ImplSDL3_InitForSDLRenderer(w, r);
@@ -479,6 +483,24 @@ ImVec4 UI::UIntToImVec4(unsigned int rgb)
     return ImVec4(r, g, b, alpha);
 }
 
+void ConstrainWindowMove(const char* windowName, ImVec2 minPos, ImVec2 maxPos)
+{
+    ImGuiContext& g = *GImGui;
+    
+    if(g.MovingWindow != nullptr && g.MovingWindow == ImGui::FindWindowByName(windowName))
+    {
+        ImVec2 pos = g.MovingWindow->Pos;
+        
+        pos.x = std::clamp(pos.x, minPos.x, maxPos.x);
+        pos.y = std::clamp(pos.y, minPos.y, maxPos.y);
+        
+        if(pos.x != g.MovingWindow->Pos.x || pos.y != g.MovingWindow->Pos.y)
+        {
+            g.MovingWindow->Pos = pos;
+        }
+    }
+}
+
 void UI::Render(SDL_Renderer *r)
 {
     ImGui_ImplSDLRenderer3_NewFrame();
@@ -561,6 +583,9 @@ void UI::Render(SDL_Renderer *r)
     
     ImGui::Columns(1); // Reset to single column
     
+    ImVec2 viewportSize = ImGui::GetMainViewport()->Size;
+    ConstrainWindowMove("PFA Android", ImVec2(0, 0), ImVec2(viewportSize.x - trackedWindowSize.x, viewportSize.y - trackedWindowSize.y));
+    
     
     
     // Show the main GUI window
@@ -575,6 +600,8 @@ void UI::Render(SDL_Renderer *r)
         ImGui::SetNextWindowSize(ImVec2(964.0f, 600.0f));
         ImGui::Begin("PFA Android", &main_gui_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 #endif
+
+        trackedWindowSize = ImGui::GetWindowSize();
 
         velocity_filter = live_conf.vel_filter;
         min_velocity = live_conf.vel_min;
@@ -594,7 +621,7 @@ void UI::Render(SDL_Renderer *r)
         {
             if(ImGui::BeginTabItem("Play MIDI Files"))
             {
-                ImGui::SetNextItemWidth(300);
+                ImGui::SetNextItemWidth(310);
                 ImGui::InputTextWithHint("##EHE", "Search midis", midi_search, IM_ARRAYSIZE(midi_search));
                 
                 midi_search_text = midi_search;
@@ -731,7 +758,7 @@ void UI::Render(SDL_Renderer *r)
             
             if(ImGui::BeginTabItem("Soundfonts"))
             {
-                ImGui::SetNextItemWidth(300);
+                ImGui::SetNextItemWidth(310);
                 ImGui::InputTextWithHint("##XD", "Search soundfonts", sf_search, IM_ARRAYSIZE(sf_search));
                 
                 sf_search_text = sf_search;
