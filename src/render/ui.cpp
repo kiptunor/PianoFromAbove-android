@@ -647,7 +647,7 @@ void UI::Render(SDL_Renderer *r)
                 }
                 
                 ImGui::PushFont(FONT_icon_set);
-                ConstrainWindowMove("Choose a MIDI File##MidiFileFD"); // Very smart tweaking XDD
+                ConstrainWindowMove("Choose a MIDI File##MidiFileFD"); // Very smart tweaking XDD (See ImGuiFileDialog.cpp:3841)
                 if(ImGuiFileDialog::Instance()->Display("MidiFileFD", 0, ImVec2(700, 500), ImVec2(FLT_MAX, FLT_MAX)))
                 {
                     if(ImGuiFileDialog::Instance()->IsOk())
