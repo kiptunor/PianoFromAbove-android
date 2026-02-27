@@ -74,8 +74,6 @@ int UI::current_audio_dev;
 std::vector<std::string> UI::soundfont_paths;
 std::vector<std::string> UI::prev_images;
 
-static ImVec2 trackedWindowSize = ImVec2(700, 380);
-
 
 
 
@@ -483,12 +481,22 @@ ImVec4 UI::UIntToImVec4(unsigned int rgb)
     return ImVec4(r, g, b, alpha);
 }
 
-void ConstrainWindowMove(const char* windowName, ImVec2 minPos, ImVec2 maxPos)
+void ConstrainWindowMove(const char* windowName)
 {
     ImGuiContext& g = *GImGui;
     
-    if(g.MovingWindow != nullptr && g.MovingWindow == ImGui::FindWindowByName(windowName))
+    ImGuiWindow* win = ImGui::FindWindowByName(windowName);
+    if(g.MovingWindow != nullptr && g.MovingWindow == win)
     {
+        ImVec2 viewportPos = g.MovingWindow->Viewport->Pos;
+        ImVec2 viewportSize = g.MovingWindow->Viewport->Size;
+        ImVec2 windowSize = g.MovingWindow->Size;
+        
+        ImVec2 minPos = viewportPos;
+        ImVec2 maxPos;
+        maxPos.x = viewportPos.x + viewportSize.x - windowSize.x;
+        maxPos.y = viewportPos.y + viewportSize.y - windowSize.y;
+        
         ImVec2 pos = g.MovingWindow->Pos;
         
         pos.x = std::clamp(pos.x, minPos.x, maxPos.x);
@@ -583,8 +591,8 @@ void UI::Render(SDL_Renderer *r)
     
     ImGui::Columns(1); // Reset to single column
     
-    ImVec2 viewportSize = ImGui::GetMainViewport()->Size;
-    ConstrainWindowMove("PFA Android", ImVec2(0, 0), ImVec2(viewportSize.x - trackedWindowSize.x, viewportSize.y - trackedWindowSize.y));
+    //ImVec2 viewportSize = ImGui::GetMainViewport()->Size;
+    ConstrainWindowMove("PFA Android");
     
     
     
@@ -600,8 +608,6 @@ void UI::Render(SDL_Renderer *r)
         ImGui::SetNextWindowSize(ImVec2(964.0f, 600.0f));
         ImGui::Begin("PFA Android", &main_gui_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 #endif
-
-        trackedWindowSize = ImGui::GetWindowSize();
 
         velocity_filter = live_conf.vel_filter;
         min_velocity = live_conf.vel_min;
@@ -632,6 +638,7 @@ void UI::Render(SDL_Renderer *r)
                 {
                     IGFD::FileDialogConfig config;
 					config.path = last_midi_path;
+					config.flags = ImGuiFileDialogFlags_ConfirmOverwrite | ImGuiFileDialogFlags_HideColumnType;
                     ImGuiFileDialog::Instance()->OpenDialog("MidiFileFD", "Choose a MIDI File", ".mid,.midi,.smf,.MID,.MIDI,.SMF", config);
                 }
                 if(ImGui::BeginItemTooltip())
@@ -641,6 +648,7 @@ void UI::Render(SDL_Renderer *r)
                 }
                 
                 ImGui::PushFont(FONT_icon_set);
+                ConstrainWindowMove("Choose a MIDI File##MidiFileFD"); // Very smart tweaking XDD
                 if(ImGuiFileDialog::Instance()->Display("MidiFileFD"))
                 {
                     if(ImGuiFileDialog::Instance()->IsOk())
@@ -777,6 +785,7 @@ void UI::Render(SDL_Renderer *r)
                     ImGui::EndTooltip();
                 }
                 
+                ConstrainWindowMove("Choose Soundfont File##SoundfontFD");
                 if(ImGuiFileDialog::Instance()->Display("SoundfontFD"))
                 {
                     if(ImGuiFileDialog::Instance()->IsOk())
@@ -911,7 +920,7 @@ void UI::Render(SDL_Renderer *r)
                 
                 ImGui::SameLine();
                 
-                ImGui::Text("Settings marked with * require restart of NV PFA\n\n");
+                ImGui::Text("Settings marked with * require restart of the app\n\n");
                 
                 if(ImGui::BeginTabBar("sub-tabs", ImGuiTabBarFlags_None))
                 {
@@ -1209,6 +1218,8 @@ void UI::Render(SDL_Renderer *r)
         }
         ImGui::End();
     } // Main window
+    
+    ConstrainWindowMove("File Information");
     
     if(file_info_window)
     {
