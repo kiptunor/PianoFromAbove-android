@@ -62,7 +62,8 @@ Render::Render()
     #ifdef PLATFORM_ANDROID
         Win = SDL_CreateWindow("PFA Android", 1920, 1080, 0);
     #else
-        Win = SDL_CreateWindow("PFA SDL", 1912, 1000, 0);
+        //Win = SDL_CreateWindow("PFA SDL", 1912, 1000, SDL_WINDOW_RESIZABLE);
+        Win = SDL_CreateWindow("PFA SDL", 600, 700, SDL_WINDOW_RESIZABLE);
     #endif
     
     if(Win == nullptr)
@@ -123,8 +124,9 @@ Render::Render()
     BkeyH = scale(386), WkeyH = scale(608);
 	fDeflate = WkeyW * 0.15f / 2.0f;
 	fDeflate = floor( fDeflate + 0.5f );
-    fDeflate = std::max( std::min( fDeflate, 3.0f ), 1.0f );
+	fDeflate = std::max( std::min( fDeflate, 3.0f ), 1.0f );
 }
+
 
 Render::~Render()
 {
@@ -466,6 +468,42 @@ void Render::DrawBackgroundGrid()
             DrawRect(Ren, x - 1.0f, 0.0f, 1.8f, WinH, 0x402A2A2A, 0x601F1F1F, 0x601F1F1F, 0x402A2A2A);
         }
     }
+}
+
+
+void Render::HandleResize(int newWidth, int newHeight)
+{
+    WinW = newWidth;
+    WinH = newHeight;
+    
+    for(int i = 0; i != 128; ++i)
+    {
+        KeyX[i] = (i / 12 * 126 + GenKeyX[i % 12]) * WinW / 1350;
+    }
+   
+    for(int i = 0; i != 127; ++i)
+    {
+        int val;
+        switch(i % 12)
+        {
+            case 1:
+            case 3:
+            case 6:
+            case 8:
+            case 10:
+                val = WinW * 9 / 1350;
+            break;
+            case 4:
+            case 11:
+                val = KeyX[i + 1] - KeyX[i];
+            break;
+            default:
+                val = KeyX[i + 2] - KeyX[i];
+            break;
+        }
+        _KeyWidth[i] = val;
+    }
+    _KeyWidth[127] = WinW - KeyX[127];
 }
 
 int Render::scale(int x)

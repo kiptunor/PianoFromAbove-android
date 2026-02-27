@@ -162,8 +162,8 @@ int APP_ENTRY(int argc, char *argv[])
     
     if(availableAudioDevices.size() == 0)
     {
-        Log::warn("", "No audio devices found!!!");
-        Log::info("", "Using default audio device (-1)");
+        Log::warn("No audio devices found!!!");
+        Log::info("Using default audio device (-1)");
         BASS_Init(-1, 44100, 0, 0, nullptr);
     }
     else
@@ -179,7 +179,7 @@ int APP_ENTRY(int argc, char *argv[])
             if(BASS_GetDeviceInfo(currentDeviceIndex, &deviceInfo))
                 Log::info("", "BASS Successfully Initialized with audio device:\nName: %s\nDriver: %s\nDefault: %s\nEnabled: %s\nIndex: %d", deviceInfo.name, deviceInfo.driver, (deviceInfo.flags & BASS_DEVICE_DEFAULT) ? "Yes" : "No", (deviceInfo.flags & BASS_DEVICE_ENABLED) ? "Yes" : "No", currentDeviceIndex);
             else
-                Log::warn("", "Failed to retrieve audio device information");
+                Log::warn("Failed to retrieve audio device information");
         }
     }
     
@@ -227,6 +227,9 @@ int APP_ENTRY(int argc, char *argv[])
             ImGui_ImplSDL3_ProcessEvent(&Evt);
             if(Evt.type == SDL_EVENT_QUIT)
                 Exit();
+            
+            if(Evt.type == SDL_EVENT_WINDOW_RESIZED)
+                RenderWin->HandleResize(Evt.window.data1, Evt.window.data2);
             
 #ifndef PLATFORM_ANDROID
             // Allow keyboard input only if the main window is not on display

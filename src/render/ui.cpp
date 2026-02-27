@@ -5,7 +5,6 @@
 
 
 #include "ui.h"
-#include "../nv_midi/utils.h"
 #include "render.h"
 #include "../config/soundfont_list.h"
 #include "../config/midi_list.h"
@@ -25,7 +24,7 @@
 
 
 
-bool UI::show_demo_window = false;
+// - - - - [Internal variables] - - - -
 bool file_info_window = false;
 bool allow_audio_dev_ssave;
 static char midi_search[128];
@@ -35,10 +34,7 @@ static std::string sf_search_text;
 static std::string img_filename;
 static std::string sf_filename;
 static std::string midi_filename;
-static char midi_path_entry[1024];
 static char soundfons_path_entry[1024];
-static char file_info_text[1500 * 50];
-//static int selected_image = 0;
 int selected_midi_path_entry;
 int selected_soundfont_path_etry;
 int selected_img_path_entry;
@@ -49,9 +45,9 @@ std::ostringstream file_info_fields;
 std::vector <std::string> current_soundfonts;
 FileHelpers::FileInfo current_file_info;
 
-float image_size = 80.0f;
-float padding = 8.0f;
 
+// UI/Widget variables
+bool UI::show_demo_window = false;
 bool UI::main_gui_window = false;
 int  UI::live_note_speed = 6000;
 int  UI::selIndex = 0;

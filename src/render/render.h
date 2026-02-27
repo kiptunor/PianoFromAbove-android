@@ -74,6 +74,7 @@ public:
     void ClearTrackChannelColors();
     void DrawBackgroundGrid();
     void LoadBackgroundImage(std::string file);
+    void HandleResize(int newWidth, int newHeight);
 
     void CreateNote(int k, int yb, int ye, unsigned int c);
 
