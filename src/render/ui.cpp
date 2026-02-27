@@ -590,8 +590,7 @@ void UI::Render(SDL_Renderer *r)
     }
     
     ImGui::Columns(1); // Reset to single column
-    
-    //ImVec2 viewportSize = ImGui::GetMainViewport()->Size;
+
     ConstrainWindowMove("PFA Android");
     
     
@@ -649,7 +648,7 @@ void UI::Render(SDL_Renderer *r)
                 
                 ImGui::PushFont(FONT_icon_set);
                 ConstrainWindowMove("Choose a MIDI File##MidiFileFD"); // Very smart tweaking XDD
-                if(ImGuiFileDialog::Instance()->Display("MidiFileFD"))
+                if(ImGuiFileDialog::Instance()->Display("MidiFileFD", 0, ImVec2(700, 500), ImVec2(FLT_MAX, FLT_MAX)))
                 {
                     if(ImGuiFileDialog::Instance()->IsOk())
                     {
@@ -786,7 +785,7 @@ void UI::Render(SDL_Renderer *r)
                 }
                 
                 ConstrainWindowMove("Choose Soundfont File##SoundfontFD");
-                if(ImGuiFileDialog::Instance()->Display("SoundfontFD"))
+                if(ImGuiFileDialog::Instance()->Display("SoundfontFD", 0, ImVec2(700, 500), ImVec2(FLT_MAX, FLT_MAX)))
                 {
                     if(ImGuiFileDialog::Instance()->IsOk())
                     {
