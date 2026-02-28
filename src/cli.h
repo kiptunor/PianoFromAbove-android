@@ -5,6 +5,11 @@
 #include <string>
 
 
+/*
+    This could be a nice hidden feature for android users xd
+*/
+
+
 
 class CLI
 {

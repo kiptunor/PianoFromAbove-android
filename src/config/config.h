@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-//#include "render/render.h"
 
 
 
@@ -49,7 +48,6 @@ class Config
             bool loop_colors;
             bool draw_vertical_lines;
             bool vsync;
-            //bool auto_refresh;
             bool OR; // Overlap remover
             std::string last_midi_path;
             std::string last_sf_path;

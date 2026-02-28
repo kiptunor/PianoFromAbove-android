@@ -35,8 +35,6 @@ std::string human_readable_size(uint64_t bytes)
 }
 
 
-// Don't forget to link -lstdc++fs
-
 std::vector<std::string> FileHelpers::GetFilesByExtension(const std::string& path, const std::string& extensions)
 {
     // I'm so fucking lazy to do this shit
@@ -45,6 +43,8 @@ std::vector<std::string> FileHelpers::GetFilesByExtension(const std::string& pat
     // Parse extensions
     std::vector<std::string> exts;
     std::string ext;
+    
+    // Get specified extensions separated by '|'
     for(char c : extensions)
     {
         if(c == '|')
@@ -62,7 +62,7 @@ std::vector<std::string> FileHelpers::GetFilesByExtension(const std::string& pat
     if(!ext.empty())
         exts.push_back(ext);
         
-        // Convert to lowercase
+    // Convert to lowercase
     for(auto& e : exts)
     {
         std::transform(e.begin(), e.end(), e.begin(), ::tolower);
@@ -106,10 +106,10 @@ FileHelpers::FileInfo FileHelpers::GetFileInfo(const std::string& path)
         res.file_name = path;
         
         std::ostringstream temp;
-        temp << std::put_time(tm_ptr, "D: %Y-%m-%d | T: %H:%M:%S");
+        temp << std::put_time(tm_ptr, "D: %Y-%m-%d | T: %H:%M:%S"); // Create date & time string
         res.last_mod  = temp.str();
         res.size      = human_readable_size(f_stat.st_size);
-        res.success = true;
+        res.success   = true;
     }
     else
     {

@@ -3,7 +3,6 @@
 #include <cmath>
 #include <algorithm>
 #include <random>
-#include <iostream>
 
 
 
@@ -14,7 +13,6 @@
 
 #include "render.h"
 #include "../globals.h"
-#include "ui.h"
 #include "../logger.h"
 
 

@@ -1,15 +1,4 @@
-#include <cstdarg>
-#include <cstdio>
-#include <string>
-
-#include <SDL3/SDL_log.h>
-
-
 #include "utils.h"
-
-
-#define APP_NAME "NVI_PFA"
-#define LOG_BUFFER_SIZE 1024
 
 
 

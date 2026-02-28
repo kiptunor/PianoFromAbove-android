@@ -1,4 +1,3 @@
-#include <iostream>
 #include <filesystem>
 
 
@@ -29,6 +28,7 @@
 #include "logger.h"
 #include "config/config.h"
 #include "config/midi_list.h"
+#include "config/soundfont_list.h"
 #include "globals.h"
 #include "audio/playback.h"
 #include "render/render.h"
@@ -153,9 +153,11 @@ int APP_ENTRY(int argc, char *argv[])
     UI::UpdateWidgetValues();
     
     
-    
+    // Set initial background color
     SDL_SetRenderDrawColor(RenderWin->Ren, live_conf.bg_R, live_conf.bg_G, live_conf.bg_B, live_conf.bg_A); // Set initial background color
     
+    // Get available audio devices
+    // Required for when the user wants to change the audio device
     availableAudioDevices = Playback::GetAudioOutputs();
     
     AudioSetup();
@@ -164,7 +166,7 @@ int APP_ENTRY(int argc, char *argv[])
     {
         Log::warn("No audio devices found!!!");
         Log::info("Using default audio device (-1)");
-        BASS_Init(-1, 44100, 0, 0, nullptr);
+        BASS_Init(-1, 44100, 0, 0, nullptr); // There's seems to be a problem here
     }
     else
     {
@@ -202,6 +204,7 @@ int APP_ENTRY(int argc, char *argv[])
 			Playback::saved_position = BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE);
 		}
 		
+		// Set note size / note speed
 		_WinH = RenderWin->WinH - RenderWin->WinW * 80 / 1000;
 		Tscr = (double)_WinH / UI::live_note_speed;
 		
@@ -249,7 +252,7 @@ int APP_ENTRY(int argc, char *argv[])
 	    		        case SDLK_RIGHT:
 				        	Playback::seek_playback(Playback::seek_amount);
 				        	break;
-						case SDLK_D:
+						case SDLK_D: // Only here for development purposes
 						    UI::show_demo_window = true;
 							break;
 	    		        case SDLK_Q:
@@ -264,9 +267,11 @@ int APP_ENTRY(int argc, char *argv[])
 		// Set the background color again but with live color changes
 		SDL_SetRenderDrawColor(RenderWin->Ren, UI::liveColor.r, UI::liveColor.g, UI::liveColor.b, UI::liveColor.a);
 		
+		// Check whether the background image is enabled
 		if(live_conf.background_image)
 		    SDL_RenderTexture(RenderWin->Ren, RenderWin->background_img, NULL, NULL);
 		
+		// and on top of the background image draw the vertical lines
 		if(live_conf.draw_vertical_lines)
 		    RenderWin->DrawBackgroundGrid();
 		
@@ -293,6 +298,6 @@ int APP_ENTRY(int argc, char *argv[])
 			Playback::Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
     }
     
-    Log::closeFile();
+    //Log::closeFile(); // Not yet needed
     return 0;
 }

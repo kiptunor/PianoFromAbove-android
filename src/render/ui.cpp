@@ -1,6 +1,6 @@
 #include <string>
 #include <filesystem>
-#include <iostream>
+
 
 
 
@@ -13,6 +13,7 @@
 #include "../../assets/FA6FreeSolidFontData.h"
 #include "../../assets/IconsFontAwesome6.h"
 #include "../file_helpers.h"
+#include "../globals.h"
 
 
 #include <imgui.h>
@@ -79,6 +80,274 @@ std::vector<std::string> UI::prev_images;
 
 
 
+/*
+    ██╗███╗   ██╗████████╗███████╗██████╗ ███╗   ██╗ █████╗ ██╗               
+    ██║████╗  ██║╚══██╔══╝██╔════╝██╔══██╗████╗  ██║██╔══██╗██║               
+    ██║██╔██╗ ██║   ██║   █████╗  ██████╔╝██╔██╗ ██║███████║██║               
+    ██║██║╚██╗██║   ██║   ██╔══╝  ██╔══██╗██║╚██╗██║██╔══██║██║               
+    ██║██║ ╚████║   ██║   ███████╗██║  ██║██║ ╚████║██║  ██║███████╗          
+    ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝          
+                                                                              
+    ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
+    ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
+    █████╗  ██║   ██║██╔██╗ ██║██║        ██║   ██║██║   ██║██╔██╗ ██║███████╗
+    ██╔══╝  ██║   ██║██║╚██╗██║██║        ██║   ██║██║   ██║██║╚██╗██║╚════██║
+    ██║     ╚██████╔╝██║ ╚████║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║███████║
+    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+                                                                              
+*/
+
+
+// So many of you wanted this
+// And I can relate to such a problem
+
+// Filter only the filenames before showing them on the midi and soundfont lists or it will cause a godamn stupid chaos
+std::string FilenameOnly(const std::string& path)
+{
+    size_t slash = path.find_last_of("/\\");
+    return (slash == std::string::npos) ? path : path.substr(slash + 1);
+}
+
+UI::RGBAint Frgba2Irgba(ImVec4& col)
+{
+    UI::RGBAint res;
+    res.r = static_cast<int>(col.x * 255.0f);
+    res.g = static_cast<int>(col.y * 255.0f);
+    res.b = static_cast<int>(col.z * 255.0f);
+    res.a = static_cast<int>(col.w * 255.0f);
+    return res;
+}
+
+bool searchDuplicatedMidiItem(const std::vector<std::string>& items, const std::string& item)
+{
+    for(const auto& i : items)
+        if(i == item)
+            return true;
+    return false;
+}
+
+bool searchDuplicatedSoundfontItem(const std::vector<UI::SoundfontItem>& items, const std::string& item)
+{
+    for(const auto& i : items)
+        if(i.label == item)
+            return true;
+    return false;
+}
+
+void RenderMidiList(const std::vector<std::string>& items, int& selectedIndex, std::string find_item)
+{
+    ImGui::BeginChild("##midils", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
+    
+    for(int i = 0; i < items.size(); ++i)
+    {
+        std::string midi_filename = FilenameOnly(items[i]);
+    
+        // Filter check (case-insensitive optional)
+        if(!find_item.empty() && midi_filename.find(find_item) == std::string::npos)
+            continue;
+    
+        bool isSelected = (i == selectedIndex);
+    
+        if(ImGui::Selectable((midi_filename + "##" + std::to_string(i)).c_str(), isSelected))
+        {
+            selectedIndex = i;
+        }
+    
+        if(isSelected)
+            ImGui::SetItemDefaultFocus();
+    }
+    
+        ImGui::EndChild();
+}
+
+std::vector<std::string> GetCheckedSoundfonts(const std::vector<UI::SoundfontItem>& items)
+{
+    std::vector<std::string> checkedItems;
+    
+    for(const auto& item : items)
+    {
+        if(item.checked)
+        {
+            checkedItems.push_back(item.label);
+        }
+    }
+    
+    return checkedItems;
+}
+
+void RenderSoundfontList(std::vector<UI::SoundfontItem>& items, std::string find_item)
+{
+    ImGui::BeginChild("##sfls", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
+    
+    bool soundfont_changed = false;
+    
+    for(int i = 0; i < items.size(); ++i)
+    {
+        std::string sf_filename = FilenameOnly(items[i].label);
+    
+        // Filter check
+        if(!find_item.empty() && sf_filename.find(find_item) == std::string::npos)
+            continue;
+            
+        // Store previous checkbox state
+        bool previous_state = items[i].checked;
+        
+#ifdef PLATFORM_ANDROID
+        const int item_selection_height = 44;
+#else
+        const int item_selection_height = 28;
+#endif
+        
+        std::string temp = "##" + std::to_string(i);
+        if(ImGui::Selectable(temp.c_str(), selected_soundfont == i, ImGuiSelectableFlags_AllowOverlap, ImVec2(0, item_selection_height)))
+            selected_soundfont = i;
+        
+        ImGui::SameLine();
+    
+        // Unique ID to avoid conflicts
+        ImGui::Checkbox((sf_filename + "##" + std::to_string(i)).c_str(), &items[i].checked);
+        
+        // Check if state changed
+        if(previous_state != items[i].checked)
+        {
+            soundfont_changed = true;
+        }
+    }
+    
+    ImGui::EndChild();
+    
+    // If any soundfont selection changed, update the checked_soundfonts list
+    // and reload soundfonts immediately
+    if(soundfont_changed)
+    {
+        checked_soundfonts = GetCheckedSoundfonts(items);
+        SoundfontList::Save(live_soundfont_list);
+        Playback::ReloadSoundfonts();
+    }
+}
+
+void RenderSoundfontsPathsList(const std::vector<std::string>& items, int& selectedIndex)
+{
+    ImGui::BeginChild("##soundfontspathls", ImVec2(0, 190), true, ImGuiWindowFlags_HorizontalScrollbar);
+    
+    for(int i = 0; i < items.size(); ++i)
+    {
+        bool isSelected = (i == selectedIndex);
+    
+        if(ImGui::Selectable((items[i] + "##" + std::to_string(i)).c_str(), isSelected))
+        {
+            selectedIndex = i;
+        }
+    
+        if(isSelected)
+            ImGui::SetItemDefaultFocus();
+    }
+    
+    ImGui::EndChild();
+}
+
+void ShowAudioDeviceList(const std::vector<Playback::AudioDevice>& audioDevices)
+{
+    std::vector<const char*> deviceNames;
+    for(const auto& device : audioDevices)
+    {
+        deviceNames.push_back(device.name);
+    }
+    
+    // Ensure current_audio_dev is valid
+    if(deviceNames.empty())
+    {
+        UI::current_audio_dev = 0; // Reset to 0 if there are no devices
+        allow_audio_dev_ssave = false;
+    }
+    else if(UI::current_audio_dev >= deviceNames.size())
+    {
+        allow_audio_dev_ssave = true;
+        UI::current_audio_dev = 0; // Reset to the first device if the index is out of bounds
+    }
+    
+    // Display the combo box
+    const char* currentDeviceName = (deviceNames.empty() ? "No devices available" : deviceNames[UI::current_audio_dev]);
+    
+    if(ImGui::BeginCombo("Audio Devices *", currentDeviceName))
+    {
+        if(deviceNames.empty())
+        {
+            // Render a placeholder item when no devices are available
+            ImGui::Selectable("No devices available", false);
+        }
+        else
+        {
+            for(int i = 0; i < deviceNames.size(); i++)
+            {
+                // Check if this item is selected
+                bool isSelected = (UI::current_audio_dev == i);
+    
+                // Add the item to the combo box
+                if(ImGui::Selectable(deviceNames[i], isSelected))
+                {
+                    // Update the current index if the user selects this item
+                    UI::current_audio_dev = i;
+                }
+    
+                // Set the initial focus when opening the combo box
+                if(isSelected)
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+        }
+        ImGui::EndCombo();
+    }
+}
+
+unsigned int ImVec4ToUInt(const ImVec4& color)
+{
+    unsigned int r = static_cast<unsigned int>(color.x * 255.0f);
+    unsigned int g = static_cast<unsigned int>(color.y * 255.0f);
+    unsigned int b = static_cast<unsigned int>(color.z * 255.0f);
+    return (r << 16) | (g << 8) | b;
+}
+
+void moveSoundfont(int index, int direction)
+{
+    int new_index = index + direction;
+    if (index < 0 || index >= live_soundfont_list.size())
+        return;
+    if (new_index < 0 || new_index >= live_soundfont_list.size())
+        return;
+    
+    std::swap(live_soundfont_list[index], live_soundfont_list[new_index]);
+}
+
+void ConstrainWindowMove(const char* windowName)
+{
+    ImGuiContext& g = *GImGui;
+    
+    ImGuiWindow* win = ImGui::FindWindowByName(windowName);
+    if(g.MovingWindow != nullptr && g.MovingWindow == win)
+    {
+        ImVec2 viewportPos = g.MovingWindow->Viewport->Pos;
+        ImVec2 viewportSize = g.MovingWindow->Viewport->Size;
+        ImVec2 windowSize = g.MovingWindow->Size;
+        
+        ImVec2 minPos = viewportPos;
+        ImVec2 maxPos;
+        maxPos.x = viewportPos.x + viewportSize.x - windowSize.x;
+        maxPos.y = viewportPos.y + viewportSize.y - windowSize.y;
+        
+        ImVec2 pos = g.MovingWindow->Pos;
+        
+        pos.x = std::clamp(pos.x, minPos.x, maxPos.x);
+        pos.y = std::clamp(pos.y, minPos.y, maxPos.y);
+        
+        if(pos.x != g.MovingWindow->Pos.x || pos.y != g.MovingWindow->Pos.y)
+        {
+            g.MovingWindow->Pos = pos;
+        }
+    }
+}
+
 void SetupIconFonts()
 {
     static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
@@ -97,6 +366,44 @@ void SetupIconFonts()
     
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->AddFontFromMemoryCompressedTTF((void*)fa_solid_900_compressed_data, fa_solid_900_compressed_size, size, &icons_config, icons_ranges);
+}
+
+// - - - - [End of Internal Functions] - - - -
+
+/*
+    ███████╗██╗  ██╗████████╗███████╗██████╗ ███╗   ██╗ █████╗ ██╗            
+    ██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔══██╗████╗  ██║██╔══██╗██║            
+    █████╗   ╚███╔╝    ██║   █████╗  ██████╔╝██╔██╗ ██║███████║██║            
+    ██╔══╝   ██╔██╗    ██║   ██╔══╝  ██╔══██╗██║╚██╗██║██╔══██║██║            
+    ███████╗██╔╝ ██╗   ██║   ███████╗██║  ██║██║ ╚████║██║  ██║███████╗       
+    ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝       
+                                                                              
+    ███████╗██╗   ██╗███╗   ██╗ ██████╗████████╗██╗ ██████╗ ███╗   ██╗███████╗
+    ██╔════╝██║   ██║████╗  ██║██╔════╝╚══██╔══╝██║██╔═══██╗████╗  ██║██╔════╝
+    █████╗  ██║   ██║██╔██╗ ██║██║        ██║   ██║██║   ██║██╔██╗ ██║███████╗
+    ██╔══╝  ██║   ██║██║╚██╗██║██║        ██║   ██║██║   ██║██║╚██╗██║╚════██║
+    ██║     ╚██████╔╝██║ ╚████║╚██████╗   ██║   ██║╚██████╔╝██║ ╚████║███████║
+    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+                                                                              
+*/
+
+ImVec4 UI::Irgba2ImVec4(int r, int g, int b, int a)
+{
+    return ImVec4(
+        r / 255.0f,
+        g / 255.0f,
+        b / 255.0f,
+        a / 255.0f
+    );
+}
+
+ImVec4 UI::UIntToImVec4(unsigned int rgb)
+{
+    float alpha = 1.0f;
+    float r = ((rgb >> 16) & 0xFF) / 255.0f;
+    float g = ((rgb >> 8)  & 0xFF) / 255.0f;
+    float b = (rgb         & 0xFF) / 255.0f;
+    return ImVec4(r, g, b, alpha);
 }
 
 void UI::SetDefaultTheme()
@@ -240,292 +547,6 @@ void UI::Setup(SDL_Window *w, SDL_Renderer *r)
     ImGui_ImplSDL3_InitForVulkan(w);
 }
 
-
-
-
-
-
-/*
-- - - - [UI Functions] - - - -
-*/
-
-UI::RGBAint UI::Frgba2Irgba(ImVec4& col)
-{
-    RGBAint res;
-    res.r = static_cast<int>(col.x * 255.0f);
-    res.g = static_cast<int>(col.y * 255.0f);
-    res.b = static_cast<int>(col.z * 255.0f);
-    res.a = static_cast<int>(col.w * 255.0f);
-    return res;
-}
-
-ImVec4 UI::Irgba2ImVec4(int r, int g, int b, int a)
-{
-    return ImVec4(
-        r / 255.0f,
-        g / 255.0f,
-        b / 255.0f,
-        a / 255.0f
-    );
-}
-
-
-/*
-Functions for internal use only
-*/
-
-
-// So many of you wanted this
-// And I can relate to such a problem
-
-// Filter only the filenames before showing them on the midi and soundfont lists or it will cause a godamn stupid chaos
-std::string FilenameOnly(const std::string& path)
-{
-    size_t slash = path.find_last_of("/\\");
-    return (slash == std::string::npos) ? path : path.substr(slash + 1);
-}
-
-bool searchDuplicatedMidiItem(const std::vector<std::string>& items, const std::string& item)
-{
-    for(const auto& i : items)
-        if(i == item)
-            return true;
-    return false;
-}
-
-bool searchDuplicatedSoundfontItem(const std::vector<UI::SoundfontItem>& items, const std::string& item)
-{
-    for(const auto& i : items)
-        if(i.label == item)
-            return true;
-    return false;
-}
-
-void RenderMidiList(const std::vector<std::string>& items, int& selectedIndex, std::string find_item)
-{
-    ImGui::BeginChild("##midils", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
-    
-    for(int i = 0; i < items.size(); ++i)
-    {
-        std::string midi_filename = FilenameOnly(items[i]);
-    
-        // Filter check (case-insensitive optional)
-        if(!find_item.empty() && midi_filename.find(find_item) == std::string::npos)
-            continue;
-    
-        bool isSelected = (i == selectedIndex);
-    
-        if(ImGui::Selectable((midi_filename + "##" + std::to_string(i)).c_str(), isSelected))
-        {
-            selectedIndex = i;
-        }
-    
-        if(isSelected)
-            ImGui::SetItemDefaultFocus();
-    }
-    
-        ImGui::EndChild();
-}
-
-void RenderSoundfontList(std::vector<UI::SoundfontItem>& items, std::string find_item)
-{
-    ImGui::BeginChild("##sfls", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
-    
-    bool soundfont_changed = false;
-    
-    for(int i = 0; i < items.size(); ++i)
-    {
-        std::string sf_filename = FilenameOnly(items[i].label);
-    
-        // Filter check
-        if(!find_item.empty() && sf_filename.find(find_item) == std::string::npos)
-            continue;
-            
-        // Store previous checkbox state
-        bool previous_state = items[i].checked;
-        
-#ifdef PLATFORM_ANDROID
-        const int item_selection_height = 44;
-#else
-        const int item_selection_height = 28;
-#endif
-        
-        std::string temp = "##" + std::to_string(i);
-        if(ImGui::Selectable(temp.c_str(), selected_soundfont == i, ImGuiSelectableFlags_AllowOverlap, ImVec2(0, item_selection_height)))
-            selected_soundfont = i;
-        
-        ImGui::SameLine();
-    
-        // Unique ID to avoid conflicts
-        ImGui::Checkbox((sf_filename + "##" + std::to_string(i)).c_str(), &items[i].checked);
-        
-        // Check if state changed
-        if(previous_state != items[i].checked)
-        {
-            soundfont_changed = true;
-        }
-    }
-    
-    ImGui::EndChild();
-    
-    // If any soundfont selection changed, update the checked_soundfonts list
-    // and reload soundfonts immediately
-    if(soundfont_changed)
-    {
-        checked_soundfonts = UI::GetCheckedSoundfonts(items);
-        SoundfontList::Save(live_soundfont_list);
-        Playback::ReloadSoundfonts();
-    }
-}
-
-std::vector<std::string> UI::GetCheckedSoundfonts(const std::vector<SoundfontItem>& items)
-{
-    std::vector<std::string> checkedItems;
-    
-    for(const auto& item : items)
-    {
-        if(item.checked)
-        {
-            checkedItems.push_back(item.label);
-        }
-    }
-    
-    return checkedItems;
-}
-
-
-
-void RenderSoundfontsPathsList(const std::vector<std::string>& items, int& selectedIndex)
-{
-    ImGui::BeginChild("##soundfontspathls", ImVec2(0, 190), true, ImGuiWindowFlags_HorizontalScrollbar);
-    
-    for(int i = 0; i < items.size(); ++i)
-    {
-        bool isSelected = (i == selectedIndex);
-    
-        if(ImGui::Selectable((items[i] + "##" + std::to_string(i)).c_str(), isSelected))
-        {
-            selectedIndex = i;
-        }
-    
-        if(isSelected)
-            ImGui::SetItemDefaultFocus();
-    }
-    
-    ImGui::EndChild();
-}
-
-void ShowAudioDeviceList(const std::vector<Playback::AudioDevice>& audioDevices)
-{
-    std::vector<const char*> deviceNames;
-    for(const auto& device : audioDevices)
-    {
-        deviceNames.push_back(device.name);
-    }
-    
-    // Ensure current_audio_dev is valid
-    if(deviceNames.empty())
-    {
-        UI::current_audio_dev = 0; // Reset to 0 if there are no devices
-        allow_audio_dev_ssave = false;
-    }
-    else if(UI::current_audio_dev >= deviceNames.size())
-    {
-        allow_audio_dev_ssave = true;
-        UI::current_audio_dev = 0; // Reset to the first device if the index is out of bounds
-    }
-    
-    // Display the combo box
-    const char* currentDeviceName = (deviceNames.empty() ? "No devices available" : deviceNames[UI::current_audio_dev]);
-    
-    if(ImGui::BeginCombo("Audio Devices *", currentDeviceName))
-    {
-        if(deviceNames.empty())
-        {
-            // Render a placeholder item when no devices are available
-            ImGui::Selectable("No devices available", false);
-        }
-        else
-        {
-            for(int i = 0; i < deviceNames.size(); i++)
-            {
-                // Check if this item is selected
-                bool isSelected = (UI::current_audio_dev == i);
-    
-                // Add the item to the combo box
-                if(ImGui::Selectable(deviceNames[i], isSelected))
-                {
-                    // Update the current index if the user selects this item
-                    UI::current_audio_dev = i;
-                }
-    
-                // Set the initial focus when opening the combo box
-                if(isSelected)
-                {
-                    ImGui::SetItemDefaultFocus();
-                }
-            }
-        }
-        ImGui::EndCombo();
-    }
-}
-
-unsigned int UI::ImVec4ToUInt(const ImVec4& color)
-{
-    unsigned int r = static_cast<unsigned int>(color.x * 255.0f);
-    unsigned int g = static_cast<unsigned int>(color.y * 255.0f);
-    unsigned int b = static_cast<unsigned int>(color.z * 255.0f);
-    return (r << 16) | (g << 8) | b;
-}
-
-ImVec4 UI::UIntToImVec4(unsigned int rgb)
-{
-    float alpha = 1.0f;
-    float r = ((rgb >> 16) & 0xFF) / 255.0f;
-    float g = ((rgb >> 8)  & 0xFF) / 255.0f;
-    float b = (rgb         & 0xFF) / 255.0f;
-    return ImVec4(r, g, b, alpha);
-}
-
-void moveSoundfont(int index, int direction)
-{
-    int new_index = index + direction;
-    if (index < 0 || index >= live_soundfont_list.size())
-        return;
-    if (new_index < 0 || new_index >= live_soundfont_list.size())
-        return;
-    
-    std::swap(live_soundfont_list[index], live_soundfont_list[new_index]);
-}
-
-void ConstrainWindowMove(const char* windowName)
-{
-    ImGuiContext& g = *GImGui;
-    
-    ImGuiWindow* win = ImGui::FindWindowByName(windowName);
-    if(g.MovingWindow != nullptr && g.MovingWindow == win)
-    {
-        ImVec2 viewportPos = g.MovingWindow->Viewport->Pos;
-        ImVec2 viewportSize = g.MovingWindow->Viewport->Size;
-        ImVec2 windowSize = g.MovingWindow->Size;
-        
-        ImVec2 minPos = viewportPos;
-        ImVec2 maxPos;
-        maxPos.x = viewportPos.x + viewportSize.x - windowSize.x;
-        maxPos.y = viewportPos.y + viewportSize.y - windowSize.y;
-        
-        ImVec2 pos = g.MovingWindow->Pos;
-        
-        pos.x = std::clamp(pos.x, minPos.x, maxPos.x);
-        pos.y = std::clamp(pos.y, minPos.y, maxPos.y);
-        
-        if(pos.x != g.MovingWindow->Pos.x || pos.y != g.MovingWindow->Pos.y)
-        {
-            g.MovingWindow->Pos = pos;
-        }
-    }
-}
-
 void UI::Render(SDL_Renderer *r)
 {
     ImGui_ImplSDLRenderer3_NewFrame();
@@ -607,10 +628,24 @@ void UI::Render(SDL_Renderer *r)
     }
     
     ImGui::Columns(1); // Reset to single column
+    
+/*
+    ▗▖  ▗▖ ▗▄▖ ▗▄▄▄▖▗▖  ▗▖         
+    ▐▛▚▞▜▌▐▌ ▐▌  █  ▐▛▚▖▐▌         
+    ▐▌  ▐▌▐▛▀▜▌  █  ▐▌ ▝▜▌         
+    ▐▌  ▐▌▐▌ ▐▌▗▄█▄▖▐▌  ▐▌         
+                                   
+                                   
+    ▗▖ ▗▖▗▄▄▄▖▗▖  ▗▖▗▄▄▄  ▗▄▖ ▗▖ ▗▖
+    ▐▌ ▐▌  █  ▐▛▚▖▐▌▐▌  █▐▌ ▐▌▐▌ ▐▌
+    ▐▌ ▐▌  █  ▐▌ ▝▜▌▐▌  █▐▌ ▐▌▐▌ ▐▌
+    ▐▙█▟▌▗▄█▄▖▐▌  ▐▌▐▙▄▄▀▝▚▄▞▘▐▙█▟▌
+                                   
+                                   
+                                   
+*/
 
     ConstrainWindowMove("PFA Android");
-    
-    
     
     // Show the main GUI window
     if(main_gui_window)
@@ -1083,7 +1118,7 @@ void UI::Render(SDL_Renderer *r)
                             ImGui::Text("Change the background color of the main scene");
                             ImGui::EndTooltip();
                         }
-                        liveColor = UI::Frgba2Irgba(clear_color);
+                        liveColor = Frgba2Irgba(clear_color);
                         
                         ImGui::Checkbox("Vertical Lines", &vertical_lines);
                         live_conf.draw_vertical_lines = vertical_lines;
@@ -1265,6 +1300,22 @@ void UI::Render(SDL_Renderer *r)
         ImGui::End();
     } // Main window
     
+    
+/*
+    ▗▄▄▄▖▗▄▄▄▖▗▖   ▗▄▄▄▖    ▗▄▄▄▖▗▖  ▗▖▗▄▄▄▖ ▗▄▖ 
+    ▐▌     █  ▐▌   ▐▌         █  ▐▛▚▖▐▌▐▌   ▐▌ ▐▌
+    ▐▛▀▀▘  █  ▐▌   ▐▛▀▀▘      █  ▐▌ ▝▜▌▐▛▀▀▘▐▌ ▐▌
+    ▐▌   ▗▄█▄▖▐▙▄▄▖▐▙▄▄▖    ▗▄█▄▖▐▌  ▐▌▐▌   ▝▚▄▞▘
+                                                 
+                                            
+    ▗▖ ▗▖▗▄▄▄▖▗▖  ▗▖▗▄▄▄  ▗▄▖ ▗▖ ▗▖              
+    ▐▌ ▐▌  █  ▐▛▚▖▐▌▐▌  █▐▌ ▐▌▐▌ ▐▌              
+    ▐▌ ▐▌  █  ▐▌ ▝▜▌▐▌  █▐▌ ▐▌▐▌ ▐▌              
+    ▐▙█▟▌▗▄█▄▖▐▌  ▐▌▐▙▄▄▀▝▚▄▞▘▐▙█▟▌              
+                                                 
+                                                 
+                                                 
+*/
     ConstrainWindowMove("File Information");
     
     if(file_info_window)
@@ -1300,7 +1351,7 @@ void UI::Render(SDL_Renderer *r)
             ImGui::EndTable();
         }
         ImGui::End();  
-    }
+    } // File info window
     
     ImGui::End();
     

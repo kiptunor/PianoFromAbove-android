@@ -8,7 +8,7 @@
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
-#include "../nv_midi/utils.h"
+
 
 
 
@@ -89,11 +89,8 @@ class UI
         static void Setup(SDL_Window *w, SDL_Renderer *r);
         static void SetDefaultTheme();
         static void Render(SDL_Renderer *r);
-        static std::vector<std::string> GetCheckedSoundfonts(const std::vector<SoundfontItem>& items);
         static void UpdateWidgetValues();
-        static RGBAint Frgba2Irgba(ImVec4& col);
         static ImVec4 Irgba2ImVec4(int r, int g, int b, int a);
-        static unsigned int ImVec4ToUInt(const ImVec4& color);
         static ImVec4 UIntToImVec4(unsigned int rgb);
 };
 

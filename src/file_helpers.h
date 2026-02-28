@@ -11,14 +11,13 @@
 class FileHelpers
 {
     public:
-    typedef struct
+        typedef struct
         {
             std::string file_name;
             std::string size;
             std::string last_mod;
-            //std::string location; // Kind of useless
-            bool success; // Checks if the operation completed successfully
-            std::ostringstream err; // Inserting errors
+            bool success;           // Checks if the operation completed successfully
+            std::ostringstream err; // Insert any possible error
         }FileInfo;
         
         

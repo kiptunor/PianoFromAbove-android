@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <SDL3/SDL.h>
 #include "../nv_midi/list.h"
-#include "../globals.h"
+
 
 
 

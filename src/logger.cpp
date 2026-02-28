@@ -47,6 +47,10 @@ void Log::closeFile()
         log_file.close();
 }
 
+/*
+Ugly code but it does its job :/
+*/
+
 void Log::info(const char *src_dbg_str, const char *fmt, ...)
 {
     va_list args, args_copy;
@@ -198,9 +202,22 @@ void Log::trace(const char *src_dbg_str, const char *fmt, ...)
 }
 
 
-// ------------------------------------ //
-// - - - - [No source logging] - - - -  //
-// ------------------------------------ //
+/*
+    ▗▖  ▗▖ ▗▄▖      ▗▄▄▖ ▗▄▖ ▗▖ ▗▖▗▄▄▖  ▗▄▄▖▗▄▄▄▖
+    ▐▛▚▖▐▌▐▌ ▐▌    ▐▌   ▐▌ ▐▌▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌   
+    ▐▌ ▝▜▌▐▌ ▐▌     ▝▀▚▖▐▌ ▐▌▐▌ ▐▌▐▛▀▚▖▐▌   ▐▛▀▀▘
+    ▐▌  ▐▌▝▚▄▞▘    ▗▄▄▞▘▝▚▄▞▘▝▚▄▞▘▐▌ ▐▌▝▚▄▄▖▐▙▄▄▖
+                                                 
+                                                                                 
+    ▗▖    ▗▄▖  ▗▄▄▖ ▗▄▄▖▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖         
+    ▐▌   ▐▌ ▐▌▐▌   ▐▌     █  ▐▛▚▖▐▌▐▌            
+    ▐▌   ▐▌ ▐▌▐▌▝▜▌▐▌▝▜▌  █  ▐▌ ▝▜▌▐▌▝▜▌         
+    ▐▙▄▄▖▝▚▄▞▘▝▚▄▞▘▝▚▄▞▘▗▄█▄▖▐▌  ▐▌▝▚▄▞▘         
+                                                 
+                                                 
+                                                 
+    Here the loging functions don't require first argument where you specify the macro that concatenates source debugging (See logger.h:15)
+*/
 
 
 void Log::info(const char *fmt, ...)

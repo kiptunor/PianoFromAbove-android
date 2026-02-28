@@ -18,7 +18,7 @@
 
 extern NVnoteList Midi_ctx;
 
-//inline HSTREAM Stream;
+
 
 class Playback
 {

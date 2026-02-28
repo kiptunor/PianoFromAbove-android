@@ -1,7 +1,6 @@
 #include <vector>
 #include <sstream>
 #include <filesystem>
-#include <iostream>
 
 #include <bass.h>
 #include <bassmidi.h>
@@ -65,7 +64,7 @@ bool Playback::LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soun
     
     bool is_enabled_sf_available = false;
     
-    for(const auto& soundfont : enabled_soundfonts)
+    for(const auto& soundfont : enabled_soundfonts) // Iterate through all enabled soundfonts
     {
         if(soundfont.checked)
         {
@@ -73,7 +72,7 @@ bool Playback::LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soun
             if(Sf)
             {
                 BASS_MIDI_FontSetVolume(Sf, 0.15);
-                BASS_MIDI_FONT font = {Sf, -1, 0};
+                BASS_MIDI_FONT font = {Sf, -1, 0}; // Set the soundfont context, preset and bank
                 fontSet.push_back(font);
             }
             is_enabled_sf_available = true;
@@ -81,7 +80,7 @@ bool Playback::LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soun
     }
     
     if(!fontSet.empty())
-        BASS_MIDI_StreamSetFonts(Playback::main_stream, fontSet.data(), fontSet.size());
+        BASS_MIDI_StreamSetFonts(Playback::main_stream, fontSet.data(), fontSet.size()); // Load soundfonts
     
     return is_enabled_sf_available;
 }
@@ -145,8 +144,6 @@ void Playback::updateBassVoiceCount(int voiceCount)
         // Update the configuration
         loaded_config.bass_voice_count = voiceCount;
         
-        // Optional: Log the change
-        //NVi::info("Player", "Voice count updated to %d\n", voiceCount);
         Log::info("Voice count updated to: %d");
     }
 }
@@ -162,7 +159,6 @@ void Playback::loadMidiFile(const std::string& midi_path)
     
     if(!std::filesystem::exists(midi_path))
     {
-        //std::cerr << "MIDI file does not exist: " << midi_path << std::endl;
         Log::error("MIDI File does not exists ! '%s'", midi_path.c_str());
         SDL_UnlockMutex(bass_mutex);
         return;
@@ -179,9 +175,11 @@ void Playback::loadMidiFile(const std::string& midi_path)
     }
 
     
-    // Create new stream
-    //Playback::main_stream = BASS_StreamCreateFile(0, midi_path.c_str(), 0, 0, BASS_SAMPLE_FLOAT | BASS_STREAM_PRESCAN | BASS_STREAM_DECODE);
-    Playback::main_stream = BASS_MIDI_StreamCreateFile(FALSE, midi_path.c_str(), 0, 0, BASS_SAMPLE_FLOAT, 1);
+    // - - - - [Create new MIDI stream] - - - -
+    
+    // Honestly idfk which one is better
+    //Playback::main_stream = BASS_StreamCreateFile(0, midi_path.c_str(), 0, 0, BASS_SAMPLE_FLOAT | BASS_STREAM_PRESCAN | BASS_STREAM_DECODE); // On heavy load it caues longer sutters
+    Playback::main_stream = BASS_MIDI_StreamCreateFile(FALSE, midi_path.c_str(), 0, 0, BASS_SAMPLE_FLOAT, 1); // While this 1 causes many short stutters. Absolute garbage
     BASS_ChannelSetDSP(Playback::main_stream, &dsp_limiter, 0, 0);
     
     if(!LoadEnabledSoundfonts(live_soundfont_list))

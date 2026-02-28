@@ -1,5 +1,4 @@
 #include <fstream>
-#include <iostream>
 #include <nlohmann/json.hpp>
 
 #include "soundfont_list.h"
@@ -8,14 +7,6 @@
 
 
 
-/*
-std::vector<std::string> SoundfontList::GetSoundFontFiles()
-{
-    std::vector<std::string> soundfont_files;
-    soundfont_files = FileHelpers::GetFilesByExtension("/home/andre/disks/1_TB_1/bm/soundfonts", ".sf2|.sfz");
-    return soundfont_files;
-}
-*/
 
 std::vector<UI::SoundfontItem> SoundfontList::Get(std::vector<std::string> paths)
 {
@@ -63,8 +54,3 @@ std::vector<UI::SoundfontItem> SoundfontList::Load()
     }
     return soundfonts;
 }
-
-//void SoundfontList::Refresh()
-//{
-//    std::vector<std::string> files = GetSoundFontFiles();
-//}
