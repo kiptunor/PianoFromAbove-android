@@ -115,7 +115,7 @@
 // #define searchString "Search"
 #define dirEntryString ICON_FA_FOLDER " "
 // #define linkEntryString "[LINK] "
-#define fileEntryString ICON_FA_FILE_AUDIO " "
+#define fileEntryString ICON_FA_FILE " "
 // #define fileNameString "File Name : "
 // #define dirNameString "Directory Path :"
 #define buttonResetSearchString "Reset path"

@@ -344,8 +344,14 @@ void RenderSoundfontList(std::vector<UI::SoundfontItem>& items, std::string find
         // Store previous checkbox state
         bool previous_state = items[i].checked;
         
+#ifdef PLATFORM_ANDROID
+        const int item_selection_height = 44;
+#else
+        const int item_selection_height = 28;
+#endif
+        
         std::string temp = "##" + std::to_string(i);
-        if(ImGui::Selectable(temp.c_str(), selected_soundfont == i, ImGuiSelectableFlags_AllowOverlap, ImVec2(0, 28)))
+        if(ImGui::Selectable(temp.c_str(), selected_soundfont == i, ImGuiSelectableFlags_AllowOverlap, ImVec2(0, item_selection_height)))
             selected_soundfont = i;
         
         ImGui::SameLine();
@@ -481,6 +487,17 @@ ImVec4 UI::UIntToImVec4(unsigned int rgb)
     return ImVec4(r, g, b, alpha);
 }
 
+void moveSoundfont(int index, int direction)
+{
+    int new_index = index + direction;
+    if (index < 0 || index >= live_soundfont_list.size())
+        return;
+    if (new_index < 0 || new_index >= live_soundfont_list.size())
+        return;
+    
+    std::swap(live_soundfont_list[index], live_soundfont_list[new_index]);
+}
+
 void ConstrainWindowMove(const char* windowName)
 {
     ImGuiContext& g = *GImGui;
@@ -601,7 +618,7 @@ void UI::Render(SDL_Renderer *r)
         ImVec2 center = ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f);
         ImGui::SetNextWindowPos(center, ImGuiCond_Once, ImVec2(0.5f, 0.5f)); // Pivot 0.5 = center
 #ifndef PLATFORM_ANDROID
-        ImGui::SetNextWindowSizeConstraints(ImVec2(700, 380), ImVec2(FLT_MAX, FLT_MAX));
+        ImGui::SetNextWindowSizeConstraints(ImVec2(740, 380), ImVec2(FLT_MAX, FLT_MAX));
         ImGui::Begin("PFA Android", &main_gui_window);
 #else   // Setting up a different ui layout for mobile users
         ImGui::SetNextWindowSize(ImVec2(964.0f, 600.0f));
@@ -637,7 +654,7 @@ void UI::Render(SDL_Renderer *r)
                 {
                     IGFD::FileDialogConfig config;
 					config.path = last_midi_path;
-					config.flags = ImGuiFileDialogFlags_ConfirmOverwrite | ImGuiFileDialogFlags_HideColumnType;
+					config.flags = ImGuiFileDialogFlags_HideColumnType;
                     ImGuiFileDialog::Instance()->OpenDialog("MidiFileFD", "Choose a MIDI File", ".mid,.midi,.smf,.MID,.MIDI,.SMF", config);
                 }
                 if(ImGui::BeginItemTooltip())
@@ -776,6 +793,7 @@ void UI::Render(SDL_Renderer *r)
                 {
                     IGFD::FileDialogConfig config;
 					config.path = last_sf_path;
+					config.flags = ImGuiFileDialogFlags_HideColumnType;
                     ImGuiFileDialog::Instance()->OpenDialog("SoundfontFD", "Choose Soundfont File", ".sf2,.sfz,.SF2,.SFZ", config);
                 }
                 if(ImGui::BeginItemTooltip())
@@ -824,6 +842,34 @@ void UI::Render(SDL_Renderer *r)
                 if(ImGui::BeginItemTooltip())
                 {
                     ImGui::Text("Remove soundfont from the list");
+                    ImGui::EndTooltip();
+                }
+                
+                ImGui::SameLine();
+                
+                if(ImGui::Button(ICON_FA_ANGLE_UP))
+                {
+                    moveSoundfont(selected_soundfont, -1);
+                    selected_soundfont = selected_soundfont-1;
+                    SoundfontList::Save(live_soundfont_list);
+                }
+                if(ImGui::BeginItemTooltip())
+                {
+                    ImGui::Text("Move up the selected soundfont");
+                    ImGui::EndTooltip();
+                }
+                
+                ImGui::SameLine();
+                
+                if(ImGui::Button(ICON_FA_ANGLE_DOWN))
+                {
+                    moveSoundfont(selected_soundfont, +1);
+                    selected_soundfont = selected_soundfont+1;
+                    SoundfontList::Save(live_soundfont_list);
+                }
+                if(ImGui::BeginItemTooltip())
+                {
+                    ImGui::Text("Move down the selected soundfont");
                     ImGui::EndTooltip();
                 }
                 
@@ -1100,6 +1146,7 @@ void UI::Render(SDL_Renderer *r)
                         {
                             IGFD::FileDialogConfig config;
 					        config.path = live_conf.last_image_path;
+							config.flags = ImGuiFileDialogFlags_HideColumnType;
                             ImGuiFileDialog::Instance()->OpenDialog("ImageFileFD", "Choose Image File", ".png,.jpg,.jpeg,.webp,.bmp,.svg", config);
                         }
                         if(ImGui::BeginItemTooltip())
@@ -1111,7 +1158,7 @@ void UI::Render(SDL_Renderer *r)
                         ImGui::Text("Image file: %s", FilenameOnly(live_conf.background_image_path).c_str());
                         
                         ImGui::PushFont(FONT_icon_set);
-                        if(ImGuiFileDialog::Instance()->Display("ImageFileFD"))
+                        if(ImGuiFileDialog::Instance()->Display("ImageFileFD", 0, ImVec2(700, 500), ImVec2(FLT_MAX, FLT_MAX)))
                         {
                             if(ImGuiFileDialog::Instance()->IsOk())
                             {
