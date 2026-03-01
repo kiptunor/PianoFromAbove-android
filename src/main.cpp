@@ -112,6 +112,18 @@ void UI::UpdateWidgetValues()
     live_soundfont_list         = loaded_soundfont_list;
 }
 
+#ifndef PLATFORM_ANDROID
+void ToggleFullscreen(SDL_Window* window)
+{
+    if (SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN) {
+        SDL_SetWindowFullscreen(window, false);
+    } else {
+        SDL_SetWindowFullscreenMode(window, NULL);  // use current display mode
+        SDL_SetWindowFullscreen(window, true);
+    }
+}
+#endif
+
 int APP_ENTRY(int argc, char *argv[])
 {
 #ifndef PLATFORM_ANDROID
@@ -241,6 +253,7 @@ int APP_ENTRY(int argc, char *argv[])
             {
 			    if(Evt.type == SDL_EVENT_KEY_DOWN) 
 			    {
+					SDL_Keymod mods = SDL_GetModState();
 		    	    switch(Evt.key.key)
 		    	    {
 	    		        case SDLK_SPACE:
@@ -255,6 +268,12 @@ int APP_ENTRY(int argc, char *argv[])
 						case SDLK_D: // Only here for development purposes
 						    UI::show_demo_window = true;
 							break;
+						case SDLK_RETURN:
+		                    if(mods & SDL_KMOD_RALT)
+							{
+			                    ToggleFullscreen(RenderWin->Win);
+							}
+				            break;
 	    		        case SDLK_Q:
 						    Exit();
 				        	break;

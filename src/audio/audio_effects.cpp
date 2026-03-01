@@ -39,8 +39,6 @@ void CALLBACK dsp_limiter(u32 handle, u32 channel, void *buffer, u32 length, voi
             gain = limiter_release_coeff * gain + (1.0f - limiter_release_coeff) * target_gain;
         
         samples[i] = input * gain * limiter_makeup_gain;
-        
-        //samples[i] = input * gain * limiter_makeup_gain;
     }
 }
 
