@@ -2,6 +2,8 @@
 #define AUDIO_EFFECTS_H
 
 
+#include <math.h>
+
 #include <bass.h>
 #include <bassmidi.h>
 
@@ -9,11 +11,17 @@
 
 
 // Limiter settings
-inline float limiter_threshold = 0.8f;
-inline float limiter_knee = 0.05f;
-inline float limiter_attack = 0.1f;     // attack speed (0 = instant, 1 = never)
-inline float limiter_release = 0.0005f; // release speed
-inline float current_gain = 1.0f;
+inline f32 limiter_threshold = 0.3f;
+inline f32 limiter_ratio = 1000.0f;  // high ratio = limiter
+inline f32 limiter_attack_ms = 10.0f;
+inline f32 limiter_release_ms = 50.0f;
+inline f32 limiter_sample_rate = 44100.0f;
+
+inline f32 limiter_attack_coeff = expf(-1.0f / (limiter_attack_ms * 0.001f * limiter_sample_rate));
+inline f32 limiter_release_coeff = expf(-1.0f / (limiter_release_ms * 0.001f * limiter_sample_rate));
+inline f32 envelope = 0.0f;
+inline f32 gain = 1.0f;
+inline f32 limiter_makeup_gain = 1.5f;
 
 
 

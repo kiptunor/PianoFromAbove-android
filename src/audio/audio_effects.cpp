@@ -10,33 +10,37 @@
 
 
 
-
+// Stollen from OmniMIDIv2
 void CALLBACK dsp_limiter(u32 handle, u32 channel, void *buffer, u32 length, void *user)
 {
-    float *samples = (float*)buffer;
-    u32 count = length / sizeof(float);
-   
+    f32 *samples = (f32*)buffer;
+    u32 count = length / sizeof(f32);
+        
     for(u32 i = 0; i < count; ++i)
     {
-        float input = samples[i];
-        float abs_input = fabs(input);
-   
-        float desired_gain = 1.0f;
-   
-        if(abs_input > limiter_threshold)
-        {
-            float exceed = abs_input - limiter_threshold;
-            float compressed = exceed / (exceed + limiter_knee);
-            desired_gain = limiter_threshold / (limiter_threshold + compressed);
-        }
-   
-        // Smoothly approach desired gain
-        if(desired_gain < current_gain)
-            current_gain += (desired_gain - current_gain) * limiter_attack; // attack smoothing
+        f32 input = samples[i];
+        f32 abs_input = fabsf(input);
+        
+        // Envelope detection
+        if (abs_input > envelope)
+            envelope = limiter_attack_coeff * envelope + (1.0f - limiter_attack_coeff) * abs_input;
         else
-            current_gain += (desired_gain - current_gain) * limiter_release; // release smoothing
-   
-        samples[i] *= current_gain;
+            envelope = limiter_release_coeff * envelope + (1.0f - limiter_release_coeff) * abs_input;
+        
+        // Gain computation
+        f32 target_gain = 1.0f;
+        if (envelope > limiter_threshold)
+            target_gain = (limiter_threshold + (envelope - limiter_threshold) / limiter_ratio) / envelope;
+        
+        // Apply gain (instant attack, smooth release)
+        if (target_gain < gain)
+            gain = target_gain;
+        else
+            gain = limiter_release_coeff * gain + (1.0f - limiter_release_coeff) * target_gain;
+        
+        samples[i] = input * gain * limiter_makeup_gain;
+        
+        //samples[i] = input * gain * limiter_makeup_gain;
     }
 }
 
