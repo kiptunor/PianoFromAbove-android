@@ -3,7 +3,7 @@
 
 
 
-#include <unordered_map>
+#include <map>
 #include <SDL3/SDL.h>
 #include "../nv_midi/list.h"
 
@@ -52,7 +52,6 @@ inline unsigned int note_color;
 class Render {
 public:
 
-    std::unordered_map<int, unsigned int> trackRandomColors;
     SDL_Window   *Win;
     SDL_Renderer *Ren;
 	const SDL_DisplayMode *mod;
@@ -79,7 +78,8 @@ public:
     void CreateNote(int k, int yb, int ye, unsigned int c);
 
 private:
-    std::unordered_map<std::pair<int, int>, unsigned int, PairHash> trackChannelColorMap;
+    //std::unordered_map<std::pair<int, int>, unsigned int, PairHash> trackChannelColorMap;
+    std::map<std::pair<int, int>, unsigned int> trackChannelColorMap;
 
     //SDL_Texture *Bk0, *Bk1, *Wk, *note;
     SDL_Surface *colors;

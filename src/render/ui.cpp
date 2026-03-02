@@ -1139,6 +1139,7 @@ void UI::Render(SDL_Renderer *r)
                                 ui_chcolors[i] = UIntToImVec4(NoteColors[i]);
                                 live_conf.channel_colors[i] = NoteColors[i];
                             }
+                            live_conf.is_custom_ch_colors = false;
                         }
                         if(ImGui::BeginItemTooltip())
                         {
@@ -1163,12 +1164,12 @@ void UI::Render(SDL_Renderer *r)
                         }
                         ImGui::Text("\n");
                         
-                        ImGui::Checkbox("Loop colors *", &loop_colors);
+                        ImGui::Checkbox("Loop colors ", &loop_colors);
                         live_conf.loop_colors = loop_colors;
                         
                         if(ImGui::BeginItemTooltip())
                         {
-                            ImGui::Text("The colors will be applied if track count exceeds 16");
+                            ImGui::Text("The colors will be applied if track count exceeds 16\nIf no loop colors are enabled, random colors will be generated from track 17");
                             ImGui::EndTooltip();
                         }
                         
