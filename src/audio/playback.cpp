@@ -218,7 +218,10 @@ void Playback::CloseMidi()
     
     // Reset note lists
     for(int i = 0; i < 128; ++i)
+    {
         Midi_ctx.Note_list[i].clear();
+        std::list<NVnote>().swap(Midi_ctx.Note_list[i]);  // Shrink the capacity so the visualization performace is the same when playing new midis
+    }
     
     
     // Clear previous channel / track colors
