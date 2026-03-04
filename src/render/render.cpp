@@ -477,6 +477,7 @@ void Render::LoadBackgroundImage(std::string file)
 void Render::ClearTrackChannelColors()
 {
     trackChannelColorMap.clear();
+    std::map<std::pair<int, int>, unsigned int>().swap(trackChannelColorMap); 
 }
 
 bool IsSharp(int note)
