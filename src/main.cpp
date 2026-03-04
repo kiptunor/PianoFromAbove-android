@@ -74,11 +74,9 @@ void Exit()
 void AudioSetup()
 {
     BASS_PluginLoad(BASSMIDI_LIB, 0);
-    BASS_SetConfig(BASS_CONFIG_BUFFER, 5000); // Set buffer size to 500ms
+    BASS_SetConfig(BASS_CONFIG_BUFFER, 5000);
     BASS_SetConfig(BASS_CONFIG_UPDATEPERIOD, 10);
     BASS_SetConfig(BASS_CONFIG_MIDI_AUTOFONT, 0);
-    
-    BASS_Init(1, 44100, 0, 0, nullptr); // Initialize default device for now
 }
 
 void UI::UpdateWidgetValues()
@@ -170,8 +168,6 @@ int APP_ENTRY(int argc, char *argv[])
     
     UI::Setup(RenderWin->Win, RenderWin->Ren);
     
-    UI::UpdateWidgetValues();
-    
     
     // Set initial background color
     SDL_SetRenderDrawColor(RenderWin->Ren, live_conf.bg_R, live_conf.bg_G, live_conf.bg_B, live_conf.bg_A); // Set initial background color
@@ -186,17 +182,20 @@ int APP_ENTRY(int argc, char *argv[])
     {
         Log::warn("No audio devices found!!!");
         Log::info("Using default audio device (-1)");
-        BASS_Init(-1, 44100, 0, 0, nullptr); // There's seems to be a problem here
+        BASS_Init(live_conf.audio_device_index, 44100, 0, 0, nullptr); // There's seems to be a problem here
     }
     else
     {
-        if(!BASS_Init(live_conf.audio_device_index, 44100, 0, 0, nullptr))
+        bool bass_init_stat = BASS_Init(live_conf.audio_device_index, 44100, 0, 0, nullptr);
+        if(!bass_init_stat)
         {
             Playback::bassErrorHandler();
         }
         else
         {
+            //BASS_Init(1, 44100, 0, 0, nullptr);
             int currentDeviceIndex = BASS_GetDevice();
+            live_conf.audio_device_index = currentDeviceIndex;
             BASS_DEVICEINFO deviceInfo;
             if(BASS_GetDeviceInfo(currentDeviceIndex, &deviceInfo))
                 Log::info("", "BASS Successfully Initialized with audio device:\nName: %s\nDriver: %s\nDefault: %s\nEnabled: %s\nIndex: %d", deviceInfo.name, deviceInfo.driver, (deviceInfo.flags & BASS_DEVICE_DEFAULT) ? "Yes" : "No", (deviceInfo.flags & BASS_DEVICE_ENABLED) ? "Yes" : "No", currentDeviceIndex);
@@ -204,6 +203,9 @@ int APP_ENTRY(int argc, char *argv[])
                 Log::warn("Failed to retrieve audio device information");
         }
     }
+    
+    // Do this here instead
+    UI::UpdateWidgetValues();
     
     if(live_conf.background_image)
         RenderWin->LoadBackgroundImage(live_conf.background_image_path);

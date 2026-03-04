@@ -70,7 +70,7 @@ class Config
 inline Config::configuration default_settings =
 {
     .bass_voice_count = 500,
-    .audio_device_index = 0,
+    .audio_device_index = 1,
     .note_speed = 4271,
     .bg_R = 47,
     .bg_G = 47,
