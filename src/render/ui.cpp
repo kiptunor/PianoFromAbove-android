@@ -204,8 +204,9 @@ void RenderSoundfontList(std::vector<UI::SoundfontItem>& items, std::string find
         
         ImGui::SameLine();
     
-        // Unique ID to avoid conflicts
-        ImGui::Checkbox((sf_filename + "##" + std::to_string(i)).c_str(), &items[i].checked);
+        // Unique ID to avoid conflicts and update the single selection index too for better UX
+        if(ImGui::Checkbox((sf_filename + "##" + std::to_string(i)).c_str(), &items[i].checked))
+            selected_soundfont = i;
         
         // Check if state changed
         if(previous_state != items[i].checked)
