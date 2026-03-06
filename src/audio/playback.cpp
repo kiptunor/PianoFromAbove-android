@@ -86,52 +86,32 @@ bool Playback::LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soun
 }
 
 void Playback::ReloadSoundfonts()
-{
-    
+{ 
     if(!Playback::main_stream || !BASS_ChannelIsActive(Playback::main_stream))
-        return; // No active stream to modify
-    
-    
-    // Save current playback position and state
+        return;
+        
     u64 position = BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE);
     bool was_playing = !is_paused;
     
-    // Get current midi file path
-    std::string current_midi = loaded_config.last_midi_path;
+    // I spent nearly 2 hours trying to fix playback reset when switching soundfonts in puased state.
+    // Fuck you BASS   
+    //BASS_ChannelStop(Playback::main_stream); // Don't stop the playback here. It resets the entire midi playback.
     
-    // Stop and free the current stream
-    BASS_ChannelStop(Playback::main_stream);
-    BASS_StreamFree(Playback::main_stream);
-    
-    // Create new stream with the same MIDI file
-    Playback::main_stream = BASS_StreamCreateFile(0, current_midi.c_str(), 0, 0, BASS_SAMPLE_FLOAT);
-    BASS_ChannelSetDSP(Playback::main_stream, &dsp_limiter, 0, 0);
-    
-    //LoadDefaultSoundfonts();
+        
     if(!LoadEnabledSoundfonts(live_soundfont_list))
         LoadDefaultSoundfonts();
-    
-    // Restore other settings
-    BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_MIDI_VOICES, loaded_config.bass_voice_count);
-    BASS_MIDI_StreamSetFilter(Playback::main_stream, 0, reinterpret_cast<BOOL (*)(HSTREAM, int, BASS_MIDI_EVENT *, BOOL, void *)>(filter), nullptr);
-    
-    // Restore position
+        
     BASS_ChannelSetPosition(Playback::main_stream, position, BASS_POS_BYTE);
-    
-    // Resume playback if it was playing before
+        
     if(was_playing)
     {
         BASS_ChannelPlay(Playback::main_stream, FALSE);
-        Playback::is_paused = false;
-    } 
+        is_paused = false;
+    }
     else
-        Playback::is_paused = true;
-    
-    
-    // Update our playback time
-    Playback::Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, position);
-    
-    Log::info("", "Soundfonts reloaded");
+        is_paused = true;
+        
+    Log::info("Soundfonts reloaded");
 }
 
 void Playback::updateBassVoiceCount(int voiceCount)
