@@ -33,8 +33,7 @@ void NVsequencer::seq_reset(NVmidiFile &midi)
         else
         {
             Tree[Nodes + i] = midi.tracks;
-            //NVMidi::log_warn("Sequ", "Empty track: %d", i);
-            Log::warn("", "Empty track: %d", i);
+            Log::warn("Empty track: %d", i);
         }
     }
 

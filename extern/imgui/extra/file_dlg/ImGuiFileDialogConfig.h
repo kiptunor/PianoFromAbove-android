@@ -38,7 +38,7 @@
 //// THUMBNAILS /////////////////
 /////////////////////////////////
 
-#define USE_THUMBNAILS
+//#define USE_THUMBNAILS
 // the thumbnail generation use the stb_image and stb_resize lib who need to define the implementation
 // btw if you already use them in your app, you can have compiler error due to "implemntation found in double"
 // so uncomment these line for prevent the creation of implementation of these libs again
@@ -47,10 +47,10 @@
 //#define IMGUI_RADIO_BUTTON RadioButton
 //#define DisplayMode_ThumbailsList_ImageHeight 100.0f
 // #define tableHeaderFileThumbnailsString "Thumbnails"
-#define DisplayMode_FilesList_ButtonString ICON_FA_LIST
-#define DisplayMode_FilesList_ButtonHelp "Switch to file list"
-#define DisplayMode_ThumbailsList_ButtonString ICON_FA_IMAGE
-#define DisplayMode_ThumbailsList_ButtonHelp "Switch to thumbnail List"
+//#define DisplayMode_FilesList_ButtonString ICON_FA_LIST
+//#define DisplayMode_FilesList_ButtonHelp "Switch to file list"
+//#define DisplayMode_ThumbailsList_ButtonString ICON_FA_IMAGE
+//#define DisplayMode_ThumbailsList_ButtonHelp "Switch to thumbnail List"
 // todo
 // #define DisplayMode_ThumbailsGrid_ButtonString "TG"
 // #define DisplayMode_ThumbailsGrid_ButtonHelp "Thumbnails Grid"

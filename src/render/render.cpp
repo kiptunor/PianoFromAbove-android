@@ -79,7 +79,6 @@ Render::Render()
     printf("SDL_GetRendererName(): %s\n", backend);
     
     SDL_SetRenderVSync(Ren, live_conf.vsync); // Todo: Add to config and UI settings
-	//SDL_GL_SetSwapInterval(0); // Throws OpenGL contex error at exit
 	SDL_SetWindowPosition(Win, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 	
 	SDL_DisplayID sid = SDL_GetDisplayForWindow(Win);
@@ -132,13 +131,7 @@ Render::~Render()
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
-    
-    // This was forgotten for a long time wtff
-    //SDL_DestroySurface(colors); // Not even a thing anymore lmao
-    //SDL_DestroyTexture(Bk0);
-    //SDL_DestroyTexture(Bk1);
-    //SDL_DestroyTexture(Wk);
-    //SDL_DestroyTexture(bg_img);
+
     SDL_DestroyTexture(background_img);
     SDL_DestroyRenderer(Ren);
     SDL_DestroyWindow(Win);
@@ -288,7 +281,7 @@ void Render::DrawKeyBoard()
             DrawRect(Ren, fCurX + fKeyGap1 , fCurY + fTopCY+WinH - WinW * 82 / 1000, _KeyWidth[j] - fKeyGap, fNearCY, 0xFFCCCCCC, 0xFFCCCCCC, 0xFF999999, 0xFF999999 );
             DrawRect(Ren, fCurX + fKeyGap1, fCurY + fTopCY+WinH - WinW * 82 / 1000, _KeyWidth[j] - fKeyGap, 2.0f, 0xFF3D3D3D, 0xFF3D3D3D, 0xFF999999, 0xFF999999 );
 
-            if( j == 60)
+            if(j == 60)
             {
                 float fMXGap = floor( _KeyWidth[j] * 0.25f + 0.5f );
                 float fMCX = _KeyWidth[j] - fMXGap * 2.0f - fKeyGap;
@@ -299,30 +292,26 @@ void Render::DrawKeyBoard()
         else
         {
             unsigned int c = KeyColor[j];
-                unsigned short r = (c >> 16) & 0xFF;
-                unsigned short g = (c >> 8) & 0xFF;
-                unsigned short b = c & 0xFF;
-                unsigned short r1 = r * 0.8f;
-                unsigned short g1 = g * 0.8f;
-                unsigned short b1 = b * 0.8f;
-                unsigned short r2 = r * 0.6f;
-                unsigned short g2 = g * 0.6f;
-                unsigned short b2 = b * 0.6f;
+            unsigned short r = (c >> 16) & 0xFF;
+            unsigned short g = (c >> 8) & 0xFF;
+            unsigned short b = c & 0xFF;
+            unsigned short r2 = r * 0.6f;
+            unsigned short g2 = g * 0.6f;
+            unsigned short b2 = b * 0.6f;
+            
+            unsigned int c_bgr = 0xFF000000 | (b << 16) | (g << 8) | r;
+            unsigned int darker = 0xFF000000 | (b2 << 16) | (g2 << 8) | r2;
                 
-                unsigned int c_bgr = 0xFF000000 | (b << 16) | (g << 8) | r;
-                unsigned int darker = 0xFF000000 | (b2 << 16) | (g2 << 8) | r2;
-                unsigned int lighter = 0xFF000000 | (b1 << 16) | (g1 << 8) | r1;
+            DrawRect(Ren, fCurX + fKeyGap1, fCurY + WinH - WinW * 82 / 1000, _KeyWidth[j] - fKeyGap, fTopCY + fNearCY - 2.0f, darker, darker, c_bgr, c_bgr);
+            DrawRect(Ren, fCurX + fKeyGap1, fCurY + fTopCY + fNearCY - 2.0f + WinH - WinW * 82 / 1000, _KeyWidth[j] - fKeyGap, 2.0f, darker, darker, darker, darker);
                 
-                DrawRect(Ren, fCurX + fKeyGap1, fCurY + WinH - WinW * 82 / 1000, _KeyWidth[j] - fKeyGap, fTopCY + fNearCY - 2.0f, darker, darker, c_bgr, c_bgr);
-                DrawRect(Ren, fCurX + fKeyGap1, fCurY + fTopCY + fNearCY - 2.0f + WinH - WinW * 82 / 1000, _KeyWidth[j] - fKeyGap, 2.0f, darker, darker, darker, darker);
-                
-                if(j == 60)
-                {
-                    float fMXGap = floor(_KeyWidth[j] * 0.25f + 0.5f);
-                    float fMCX = _KeyWidth[j] - fMXGap * 2.0f - fKeyGap;
-                    float fMY = std::max(fCurY + fTopCY + fNearCY - fMCX - 7.0f, fCurY + fSharpCY + 5.0f);
-                    DrawRect(Ren, fCurX + fKeyGap1 + fMXGap, fMY + WinH - WinW * 82 / 1000, fMCX, fCurY + fTopCY + fNearCY - 7.0f - fMY, darker, darker, darker, darker);
-                }
+            if(j == 60)
+            {
+                float fMXGap = floor(_KeyWidth[j] * 0.25f + 0.5f);
+                float fMCX = _KeyWidth[j] - fMXGap * 2.0f - fKeyGap;
+                float fMY = std::max(fCurY + fTopCY + fNearCY - fMCX - 7.0f, fCurY + fSharpCY + 5.0f);
+                DrawRect(Ren, fCurX + fKeyGap1 + fMXGap, fMY + WinH - WinW * 82 / 1000, fMCX, fCurY + fTopCY + fNearCY - 7.0f - fMY, darker, darker, darker, darker);
+            }
         }
         
 		//Drawing shadows on the bottom of the keys
@@ -355,23 +344,23 @@ void Render::DrawKeyBoard()
         else
         {
             const float fNewNear = fNearCY * 0.25f;
-                unsigned int c = KeyColor[j];
-                unsigned short r = (c >> 16) & 0xFF;
-                unsigned short g = (c >> 8) & 0xFF;
-                unsigned short b = c & 0xFF;
-                unsigned short r1 = r * 0.5f;
-                unsigned short g1 = g * 0.5f;
-                unsigned short b1 = b * 0.5f;
+            unsigned int c = KeyColor[j];
+            unsigned short r = (c >> 16) & 0xFF;
+            unsigned short g = (c >> 8) & 0xFF;
+            unsigned short b = c & 0xFF;
+            unsigned short r1 = r * 0.5f;
+            unsigned short g1 = g * 0.5f;
+            unsigned short b1 = b * 0.5f;
+            
+            unsigned int c_bgr = 0xFF000000 | (b << 16) | (g << 8) | r;
+            unsigned int darker = 0xFF000000 | (b1 << 16) | (g1 << 8) | r1;
                 
-                unsigned int c_bgr = 0xFF000000 | (b << 16) | (g << 8) | r;
-                unsigned int darker = 0xFF000000 | (b1 << 16) | (g1 << 8) | r1;
-                
-                DrawSkew(Ren, fSharpTopX1, fCurY + fSharpCY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY + fSharpCY - fNewNear + WinH - WinW * 82 / 1000, x + cx, fCurY + fSharpCY + WinH - WinW * 82 / 1000, x, fCurY + fSharpCY + WinH - WinW * 82 / 1000, c_bgr, c_bgr, darker, darker);
-                DrawSkew(Ren, fSharpTopX1, fCurY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX1, fCurY + fSharpCY - fNewNear + WinH - WinW * 82 / 1000, x, fCurY + fSharpCY + WinH - WinW * 82 / 1000, x, fCurY + WinH - WinW * 82 / 1000, c_bgr, c_bgr, darker, darker);
-                DrawSkew(Ren, fSharpTopX2, fCurY + fSharpCY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + WinH - WinW * 82 / 1000, x + cx, fCurY + WinH - WinW * 82 / 1000, x + cx, fCurY + fSharpCY + WinH - WinW * 82 / 1000, c_bgr, c_bgr, darker, darker);
-                DrawRect(Ren, fSharpTopX1, fCurY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2 - fSharpTopX1, fSharpCY, darker, darker, darker, darker);
-                DrawSkew(Ren, fSharpTopX1, fCurY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + fSharpCY * 0.35f + WinH - WinW * 82 / 1000, fSharpTopX1, fCurY - fNewNear + fSharpCY * 0.25f + WinH - WinW * 82 / 1000, c_bgr, c_bgr, c_bgr, c_bgr);
-                DrawSkew(Ren, fSharpTopX1, fCurY - fNewNear + fSharpCY * 0.25f + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + fSharpCY * 0.35f + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + fSharpCY * 0.75f + WinH - WinW * 82 / 1000, fSharpTopX1, fCurY - fNewNear + fSharpCY * 0.65f + WinH - WinW * 82 / 1000, c_bgr, c_bgr, darker, darker);
+            DrawSkew(Ren, fSharpTopX1, fCurY + fSharpCY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY + fSharpCY - fNewNear + WinH - WinW * 82 / 1000, x + cx, fCurY + fSharpCY + WinH - WinW * 82 / 1000, x, fCurY + fSharpCY + WinH - WinW * 82 / 1000, c_bgr, c_bgr, darker, darker);
+            DrawSkew(Ren, fSharpTopX1, fCurY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX1, fCurY + fSharpCY - fNewNear + WinH - WinW * 82 / 1000, x, fCurY + fSharpCY + WinH - WinW * 82 / 1000, x, fCurY + WinH - WinW * 82 / 1000, c_bgr, c_bgr, darker, darker);
+            DrawSkew(Ren, fSharpTopX2, fCurY + fSharpCY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + WinH - WinW * 82 / 1000, x + cx, fCurY + WinH - WinW * 82 / 1000, x + cx, fCurY + fSharpCY + WinH - WinW * 82 / 1000, c_bgr, c_bgr, darker, darker);
+            DrawRect(Ren, fSharpTopX1, fCurY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2 - fSharpTopX1, fSharpCY, darker, darker, darker, darker);
+            DrawSkew(Ren, fSharpTopX1, fCurY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + fSharpCY * 0.35f + WinH - WinW * 82 / 1000, fSharpTopX1, fCurY - fNewNear + fSharpCY * 0.25f + WinH - WinW * 82 / 1000, c_bgr, c_bgr, c_bgr, c_bgr);
+            DrawSkew(Ren, fSharpTopX1, fCurY - fNewNear + fSharpCY * 0.25f + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + fSharpCY * 0.35f + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + fSharpCY * 0.75f + WinH - WinW * 82 / 1000, fSharpTopX1, fCurY - fNewNear + fSharpCY * 0.65f + WinH - WinW * 82 / 1000, c_bgr, c_bgr, darker, darker);
         }
     }
 }
@@ -395,71 +384,59 @@ void Render::DrawNote(NVMidi::u16_t k, const NVnote &n, int pps)
     std::pair<int, int> trackChannelKey = {n.track, n.chn};
         
     auto it = trackChannelColorMap.find(trackChannelKey);
+    int colorIndex;
         
-    if(it != trackChannelColorMap.end())
+    if(it == trackChannelColorMap.end())
     {
-        // Use existing color
-        note_color = it->second;
+        // New track/channel combination - assign next color index
+        colorIndex = trackChannelColorMap.size();
+        trackChannelColorMap[trackChannelKey] = colorIndex;
     }
     else
     {
-        int colorIndex = trackChannelColorMap.size();
+        // Already assigned - use existing index
+        colorIndex = it->second;
+    }
         
-        if(!live_conf.is_custom_ch_colors)
+    if(!live_conf.is_custom_ch_colors)
+    {
+        if(live_conf.loop_colors)
         {
-            // Default colors
-            if(live_conf.loop_colors)
-            {
-                note_color = NoteColors[colorIndex % 16];
-            }
-            else
-            {
-                if(colorIndex < 16)
-                {
-                    note_color = NoteColors[colorIndex];
-                }
-                else
-                {
-                    note_color = GenerateRandomColor();
-                }
-            }
+            note_color = NoteColors[colorIndex % 16];
+            note_color = live_conf.channel_colors[colorIndex % 16]; // This is what allows live note color changing
         }
         else
         {
-            // User defined colors
-            if(live_conf.loop_colors)
-            {
-                note_color = live_conf.channel_colors[colorIndex % 16];
-            }
+            if(colorIndex < 16)
+                note_color = NoteColors[colorIndex];
             else
-            {
-                if(colorIndex < 16)
-                {
-                    note_color = live_conf.channel_colors[colorIndex];
-                }
-                else
-                {
-                    note_color = GenerateRandomColor();
-                }
-            }
+                note_color = GenerateRandomColor();
         }
-        
-        // Store the color in the map
-        trackChannelColorMap[trackChannelKey] = note_color;
+    }
+    else
+    {
+        if(live_conf.loop_colors)
+            note_color = live_conf.channel_colors[colorIndex % 16];
+        else
+        {
+            if(colorIndex < 16)
+                note_color = live_conf.channel_colors[colorIndex];
+            else
+                note_color = GenerateRandomColor();
+        }
     }
     
-
     int key = KeyMap[k];
-    
+        
     int y_0 = std::clamp((int)floor(_WinH - (n.Tstart - Playback::Tplay) * pps + 0.5f), 0, _WinH);
     int y_1 = (n.Tend < Playback::Tplay + Tscr) ? std::clamp((int)floor(_WinH - (n.Tend - Playback::Tplay) * pps + 0.5f), 0, _WinH) : 0;
-    
+        
     if(n.Tstart <= Playback::Tplay && Playback::Tplay < n.Tend)
     {
         RenderWin->KeyPress[key] = true;
         RenderWin->KeyColor[key] = note_color;
     }
-    
+        
     RenderWin->CreateNote(k, y_0, y_1, note_color);
 }
 

@@ -766,14 +766,14 @@ void UI::Render(SDL_Renderer *r)
                 
                 ImGui::SameLine();
                 
-                if(ImGui::Button(ICON_FA_CIRCLE_INFO))
+                if(ImGui::Button("-"))
                 {
-                    current_file_info = FileHelpers::GetFileInfo(live_midi_list[selIndex]);
-                    file_info_window = true;
+                    live_midi_list.erase(live_midi_list.begin() + selIndex);
+                    MidiList::save(live_midi_list);
                 }
                 if(ImGui::BeginItemTooltip())
                 {
-                    ImGui::Text("Show file information");
+                    ImGui::Text("Remove previous midi from the list");
                     ImGui::EndTooltip();
                 }
                 
@@ -786,6 +786,19 @@ void UI::Render(SDL_Renderer *r)
                 if(ImGui::BeginItemTooltip())
                 {
                     ImGui::Text("Clear midi list");
+                    ImGui::EndTooltip();
+                }
+                
+                ImGui::SameLine();
+                
+                if(ImGui::Button(ICON_FA_CIRCLE_INFO))
+                {
+                    current_file_info = FileHelpers::GetFileInfo(live_midi_list[selIndex]);
+                    file_info_window = true;
+                }
+                if(ImGui::BeginItemTooltip())
+                {
+                    ImGui::Text("Show file information");
                     ImGui::EndTooltip();
                 }
                 
@@ -1174,7 +1187,9 @@ void UI::Render(SDL_Renderer *r)
                             ImGui::EndTooltip();
                         }
                         
-                        ImGui::Checkbox("Background image", &background_image);
+                        if(ImGui::Checkbox("Background image", &background_image))
+                            RenderWin->LoadBackgroundImage(live_conf.background_image_path);
+                        
                         live_conf.background_image = background_image;
                         
                         ImGui::SameLine();

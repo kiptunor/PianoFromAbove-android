@@ -95,7 +95,7 @@ void NVnoteList::update_to(double T)
         Tread += dT * (Evt.abstick - abstick);
         abstick = Evt.abstick;
 
-        if (Tread >= T){ break; }
+        if(Tread >= T){ break; }
 
         switch(Evt.type)
         {
