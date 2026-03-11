@@ -51,7 +51,17 @@ set(CMAKE_CXX_STANDARD 17)
 
 if(EXE_TYPE)
     message(STATUS "Building as executable")
-    set(CMAKE_CXX_FLAGS "-O0")
+
+    include(ProcessorCount)
+    ProcessorCount(NPROC)
+    if(NPROC EQUAL 0)
+        set(NPROC 4)
+    endif()
+    
+    message(STATUS "Using ${NPROC} parallel LTO jobs")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto=${NPROC}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
+    set(CMAKE_CXX_FLAGS "-Ofast")
     set(CMAKE_CXX_FLAGS "-Os")
     set(CMAKE_CXX_FLAGS "-march=native")
     set(CMAKE_CXX_FLAGS "-ffast-math")              # Fast math

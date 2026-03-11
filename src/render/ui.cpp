@@ -1143,7 +1143,7 @@ void UI::Render(SDL_Renderer *r)
                             ImGui::EndTooltip();
                         }
                         
-                        ImGui::Text("");
+                        ImGui::Separator();
                         ImGui::Text("Custom Channel Colors *");
                         
                         if(ImGui::Button("Reset"))
