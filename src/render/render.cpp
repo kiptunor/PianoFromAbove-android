@@ -61,7 +61,7 @@ Render::Render()
         Win = SDL_CreateWindow("PFA Android", 1920, 1080, 0);
     #else
         Win = SDL_CreateWindow("PFA SDL", 1912, 1000, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
-        SDL_SetWindowMinimumSize(Win, 700, 500);
+        SDL_SetWindowMinimumSize(Win, 745, 716);
     #endif
     
     if(Win == nullptr)

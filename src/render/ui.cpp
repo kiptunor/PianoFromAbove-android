@@ -1161,6 +1161,8 @@ void UI::Render(SDL_Renderer *r)
                             ImGui::EndTooltip();
                         }
                         
+                        ImGui::Text("Pause to change colors");
+                        
                         for(int i = 0; i < 16; i++)
                         {
                             if(!is_defaultconfig)
@@ -1169,8 +1171,10 @@ void UI::Render(SDL_Renderer *r)
                             }
                             
                             temp_widget_id = "##Ch" + std::to_string(i);
-
+                            
+                            ImGui::BeginDisabled(!Playback::is_paused);
                             ImGui::ColorEdit3(temp_widget_id.c_str(), (float*)&ui_chcolors[i], ImGuiColorEditFlags_NoInputs);
+                            ImGui::EndDisabled();
 
                             ImGui::SameLine();
                             
