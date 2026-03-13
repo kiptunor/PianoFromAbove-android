@@ -8,6 +8,7 @@
 
 #include "../logger.h"
 #include "playback.h"
+#include "../nv_midi/list.h"
 #include "../globals.h"
 #include "audio_effects.h"
 #include "../render/render.h"
@@ -124,7 +125,7 @@ void Playback::updateBassVoiceCount(int voiceCount)
         // Update the configuration
         loaded_config.bass_voice_count = voiceCount;
         
-        Log::info("Voice count updated to: %d");
+        //Log::info("Voice count updated to: %d");
     }
 }
 
@@ -153,6 +154,10 @@ void Playback::loadMidiFile(const std::string& midi_path)
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "MIDI Loading Error!!!!!", temp_msg.str().c_str(), nullptr);
         return;
     }
+    
+    // How tf did I missed this for so long ??? :skull:
+    if(live_conf.OR)
+        Midi_ctx.OR();
 
     
     // - - - - [Create new MIDI stream] - - - -

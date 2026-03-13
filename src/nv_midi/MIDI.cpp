@@ -60,7 +60,9 @@ bool NVmidiFile::mid_open(const char *name)
     trk_ptr  = new NVMidi::nv_byte* [tracks];
     grp_code = new NVMidi::nv_byte  [tracks];
     
+    Log::info("", "Loading MIDI file: %s", name);
     Log::info("Total track count: %d", tracks);
+    Log::info("PPQ: %d", ppnq);
     
     total_track_count = tracks;
 
