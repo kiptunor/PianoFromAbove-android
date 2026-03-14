@@ -5,12 +5,13 @@
 #include <string>
 #include <cstdint>
 #include <array>
+#include <map>
+#include <vector>
 
 #include "ffr.h"
-#include "../btree/btree_map.h"
 #include "integers.h"
 
-#include <boost/container/flat_map.hpp>
+
 
 #define MTrk 1297379947
 #define MThd 1297377380
@@ -119,14 +120,14 @@ struct single_midi_info_collector
 		std::uint64_t denominator;
 	};
 
-	using tempo_graph = btree::btree_map<std::int64_t, tempo_event>;
+	using tempo_graph = std::map<std::int64_t, tempo_event>;
 	using time_graph = std::map<std::int64_t, long_time>;
-	using der_polyphony_graph = btree::btree_map<std::int64_t, note_on_off_counter>;
-	using polyphony_graph = btree::btree_map<std::int64_t, std::int64_t>;
+	using der_polyphony_graph = std::map<std::int64_t, note_on_off_counter>;
+	using polyphony_graph = std::map<std::int64_t, std::int64_t>;
 
 	bool processing, finished;
 
-	std::wstring filename;
+	std::string filename;
 	std::string log_line;
 	std::string error_line;
 
@@ -139,7 +140,7 @@ struct single_midi_info_collector
 
 	bool allow_legacy_rsb_meta_interaction;
 
-	single_midi_info_collector(std::wstring filename, std::uint16_t ppq, bool allow_legacy_rsb_meta_interaction = false) : filename(filename), log_line(" "), processing(0), finished(0), ppq(ppq), allow_legacy_rsb_meta_interaction(allow_legacy_rsb_meta_interaction)
+	single_midi_info_collector(std::string filename, std::uint16_t ppq, bool allow_legacy_rsb_meta_interaction = false) : filename(filename), log_line(" "), processing(0), finished(0), ppq(ppq), allow_legacy_rsb_meta_interaction(allow_legacy_rsb_meta_interaction)
 	{}
 
 	void fetch_data() 
