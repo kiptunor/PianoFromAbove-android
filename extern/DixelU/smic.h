@@ -1,3 +1,14 @@
+/*
+    - - - - [Single MIDI Info Collector] - - - -
+    
+    Parses and collects midi information like PPQ, track count, tempo events and polyphony
+    
+    Original code: https://github.com/DixelU/SAFC/blob/master/_SAFC_/SAFC_InnerModules/single_midi_info_collector.h
+*/
+
+
+
+
 #pragma once
 #ifndef SAF_SMIC
 #define SAF_SMIC
@@ -140,7 +151,7 @@ struct single_midi_info_collector
 
 	bool allow_legacy_rsb_meta_interaction;
 
-	single_midi_info_collector(std::string filename, std::uint16_t ppq, bool allow_legacy_rsb_meta_interaction = false) : filename(filename), log_line(" "), processing(0), finished(0), ppq(ppq), allow_legacy_rsb_meta_interaction(allow_legacy_rsb_meta_interaction)
+	single_midi_info_collector(std::string filename, bool allow_legacy_rsb_meta_interaction = false) : filename(filename), log_line(" "), processing(0), finished(0), allow_legacy_rsb_meta_interaction(allow_legacy_rsb_meta_interaction)
 	{}
 
 	void fetch_data() 
@@ -161,6 +172,12 @@ struct single_midi_info_collector
 
 		tempo_map[0] = tempo_event(0x7, 0xA1, 0x20);
 		poly_differences[-1] = note_on_off_counter();
+		
+		for (int i = 0; i < 12 && file_input.good(); i++)
+            static_cast<void>(file_input.get());
+
+        ppq = ((std::uint16_t)file_input.get()) << 8;
+        ppq |= ((std::uint16_t)file_input.get());
 
 		while(file_input.good())
 		{

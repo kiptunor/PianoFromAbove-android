@@ -21,6 +21,7 @@
 #include <backend_render/imgui_impl_sdl3.h>
 #include <backend_render/imgui_impl_sdlrenderer3.h>
 #include <file_dlg/ImGuiFileDialog.h>
+#include <DixelU/smic.h>
 
 
 
@@ -46,6 +47,11 @@ std::string temp_widget_id;
 std::ostringstream file_info_fields;
 std::vector <std::string> current_soundfonts;
 FileHelpers::FileInfo current_file_info;
+char file_name_buf[3100] = {0};
+char file_size_buf[3100] = {0};
+char last_mod_buf[3100] = {0};
+bool is_midi_info = false;
+single_midi_info_collector* smic_ptr = nullptr;
 
 
 // UI/Widget variables
@@ -506,7 +512,7 @@ void UI::SetDefaultTheme()
 	style.Colors[ImGuiCol_TableBorderLight]      = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
 	style.Colors[ImGuiCol_TableRowBg]            = ImVec4(0.1176470592617989f, 0.1333333402872086f, 0.1490196138620377f, 1.0f);
 	style.Colors[ImGuiCol_TableRowBgAlt]         = ImVec4(0.09803921729326248f, 0.105882354080677f, 0.1215686276555061f, 1.0f);
-	style.Colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.9356134533882141f, 0.9356129765510559f, 0.9356223344802856f, 1.0f);
+	style.Colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.00f, 0.43f, 1.00f, 1.00f);
 	style.Colors[ImGuiCol_DragDropTarget]        = ImVec4(0.4980392158031464f, 0.5137255191802979f, 1.0f, 1.0f);
 	style.Colors[ImGuiCol_NavHighlight]          = ImVec4(0.266094446182251f, 0.2890366911888123f, 1.0f, 1.0f);
 	style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0.4980392158031464f, 0.5137255191802979f, 1.0f, 1.0f);
@@ -657,7 +663,7 @@ void UI::Render(SDL_Renderer *r)
         ImGui::SetNextWindowSizeConstraints(ImVec2(740, 380), ImVec2(FLT_MAX, FLT_MAX));
         ImGui::Begin("PFA Android", &main_gui_window);
 #else   // Setting up a different ui layout for mobile users
-        ImGui::SetNextWindowSize(ImVec2(964.0f, 600.0f));
+        ImGui::SetNextWindowSize(ImVec2(1500.0f, 760.0f));
         ImGui::Begin("PFA Android", &main_gui_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 #endif
 
@@ -794,7 +800,13 @@ void UI::Render(SDL_Renderer *r)
                 if(ImGui::Button(ICON_FA_CIRCLE_INFO))
                 {
                     current_file_info = FileHelpers::GetFileInfo(live_midi_list[selIndex]);
+                    
+                    strncpy(file_name_buf, current_file_info.file_name.c_str(), sizeof(file_name_buf) - 1);
+                    strncpy(file_size_buf, current_file_info.size.c_str(), sizeof(file_size_buf) - 1);
+                    strncpy(last_mod_buf, current_file_info.last_mod.c_str(), sizeof(last_mod_buf) - 1);
+                    
                     file_info_window = true;
+                    is_midi_info = true;
                 }
                 if(ImGui::BeginItemTooltip())
                 {
@@ -964,7 +976,13 @@ void UI::Render(SDL_Renderer *r)
                 if(ImGui::Button(ICON_FA_CIRCLE_INFO))
                 {
                     current_file_info = FileHelpers::GetFileInfo(live_soundfont_list[selected_soundfont].label);
+                    
+                    strncpy(file_name_buf, current_file_info.file_name.c_str(), sizeof(file_name_buf) - 1);
+                    strncpy(file_size_buf, current_file_info.size.c_str(), sizeof(file_size_buf) - 1);
+                    strncpy(last_mod_buf, current_file_info.last_mod.c_str(), sizeof(last_mod_buf) - 1);
+                    
                     file_info_window = true;
+                    is_midi_info = false;
                 }
                 if(ImGui::BeginItemTooltip())
                 {
@@ -1351,26 +1369,74 @@ void UI::Render(SDL_Renderer *r)
         ImGui::Begin("File Information", &file_info_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 #endif
 
-        if(ImGui::BeginTable("File Info table", 3, ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_BordersOuterV | ImGuiTableFlags_BordersInnerV))
+        ImGui::Text("File:                         ");
+        ImGui::SameLine();
+        ImGui::InputText("##nu", file_name_buf, sizeof(file_name_buf));
+        ImGui::SameLine();
+        ImGui::PushID("cp1");
+        if(ImGui::Button(ICON_FA_COPY))
+            SDL_SetClipboardText(file_name_buf);
+        ImGui::PopID();
+    
+        ImGui::Text("File Size:                 ");
+        ImGui::SameLine();
+        ImGui::InputText("##a", file_size_buf, sizeof(file_size_buf), ImGuiInputTextFlags_ReadOnly);
+        ImGui::SameLine();
+        ImGui::PushID("cp2");
+        if(ImGui::Button(ICON_FA_COPY))
+            SDL_SetClipboardText(file_size_buf);
+        ImGui::PopID();
+        
+        ImGui::Text("Last Modification: ");
+        ImGui::SameLine();
+        ImGui::InputText("##heh", last_mod_buf, sizeof(last_mod_buf), ImGuiInputTextFlags_ReadOnly);
+        ImGui::SameLine();
+        ImGui::PushID("cp3");
+        if(ImGui::Button(ICON_FA_COPY))
+            SDL_SetClipboardText(last_mod_buf);
+        ImGui::PopID();
+        
+        std::ostringstream basic_file_info;
+        basic_file_info << "File: " << file_name_buf << "\n";
+        basic_file_info << "Size: " << file_size_buf << "\n";
+        basic_file_info << "Last Modification: " << last_mod_buf << "\n";
+        
+        if(ImGui::Button("Copy basic info"))
+            SDL_SetClipboardText(basic_file_info.str().c_str());
+        
+        if(ImGui::BeginItemTooltip())
         {
-            ImGui::TableSetupColumn("File");
-            ImGui::TableSetupColumn("Size");
-            ImGui::TableSetupColumn("Last modification");
-            ImGui::TableHeadersRow();
-            
-            ImGui::TableNextRow();
-            
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%s", current_file_info.file_name.c_str());
-            
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text("%s", current_file_info.size.c_str());
-            
-            ImGui::TableSetColumnIndex(2);
-            ImGui::Text("%s", current_file_info.last_mod.c_str());
-            
-            ImGui::EndTable();
+            ImGui::Text("Copy basic file info to clipboard (The file info above)");
+            ImGui::EndTooltip();
         }
+        
+        if(is_midi_info)
+        {
+            ImGui::BeginDisabled();
+            if(ImGui::Button("More MIDI Info (Soon)"))
+            {
+                //Log::debug("Do the smic stuff here");
+                smic_ptr = new single_midi_info_collector(live_midi_list[selIndex], true);
+                
+                smic_ptr->fetch_data();
+                
+                Log::debug("PPQ: %d", smic_ptr->ppq);
+                Log::debug("", "Tracks: %s", std::to_string(smic_ptr->tracks.size()).c_str());
+                //for(auto & [tick, poly] : smic_ptr->polyphony)
+                //{
+                //    f64 polyphony = poly;
+                //    Log::debug("", "Polyphony %d: %f", tick, polyphony);
+                //}
+                
+                //for(auto & [tick, raw_tempo] : smic_ptr->tempo_map)
+                //{
+                //    f64 bpm = raw_tempo;
+                //    Log::debug("", "{Tempo Map} Tick: %d | Tempo: %f", tick, bpm);
+                //}
+            }
+            ImGui::EndDisabled();
+        }
+        
         ImGui::End();  
     } // File info window
     

@@ -1,3 +1,14 @@
+/*
+    - - - - [Fast File Reader] - - - -
+    
+    Read file byte by byte
+    
+    Original code: https://github.com/DixelU/SAFOR/blob/master/bbb_ffio.h
+*/
+
+
+
+
 #pragma once
 
 #ifndef BBB_FFIO
