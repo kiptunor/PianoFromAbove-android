@@ -148,6 +148,7 @@ struct single_midi_info_collector
 
 	std::vector<track_data> tracks;
 	std::uint16_t ppq;
+	int note_count = 0;
 
 	bool allow_legacy_rsb_meta_interaction;
 
@@ -173,7 +174,7 @@ struct single_midi_info_collector
 		tempo_map[0] = tempo_event(0x7, 0xA1, 0x20);
 		poly_differences[-1] = note_on_off_counter();
 		
-		for (int i = 0; i < 12 && file_input.good(); i++)
+		for(int i = 0; i < 12 && file_input.good(); i++)
             static_cast<void>(file_input.get());
 
         ppq = ((std::uint16_t)file_input.get()) << 8;
@@ -258,6 +259,7 @@ struct single_midi_info_collector
 						if(polyphony[index] == 0)
 							continue;
 						polyphony[index] -= 1;
+						note_count++;
 					}
 					else 
 						polyphony[index] += 1;

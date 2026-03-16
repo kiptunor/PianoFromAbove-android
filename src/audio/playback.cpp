@@ -123,7 +123,7 @@ void Playback::updateBassVoiceCount(int voiceCount)
         BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_MIDI_VOICES, voiceCount);
         
         // Update the configuration
-        loaded_config.bass_voice_count = voiceCount;
+        live_conf.bass_voice_count = voiceCount;
         
         //Log::info("Voice count updated to: %d");
     }
@@ -170,7 +170,7 @@ void Playback::loadMidiFile(const std::string& midi_path)
     if(!LoadEnabledSoundfonts(live_soundfont_list))
         LoadDefaultSoundfonts();
     
-    BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_MIDI_VOICES, loaded_config.bass_voice_count);
+    BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_MIDI_VOICES, live_conf.bass_voice_count);
     if(live_conf.vel_filter == true)
         BASS_MIDI_StreamSetFilter(Playback::main_stream, 0, reinterpret_cast<BOOL (*)(HSTREAM, int, BASS_MIDI_EVENT *, BOOL, void *)>(filter), nullptr);
     
@@ -295,6 +295,7 @@ void Playback::pause()
 		// If at the end and we press space, restart from beginning
 		ReloadSoundfonts(); // Useful for when chaning soundfonts after playback ended
 		BASS_ChannelSetPosition(main_stream, 0, BASS_POS_BYTE);
+		BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_MIDI_VOICES, live_conf.bass_voice_count);
 		BASS_ChannelPlay(main_stream, FALSE);
 		Tplay = 0.0;
 		playback_ended = false;

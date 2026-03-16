@@ -1422,6 +1422,7 @@ void UI::Render(SDL_Renderer *r)
                 
                 Log::debug("PPQ: %d", smic_ptr->ppq);
                 Log::debug("", "Tracks: %s", std::to_string(smic_ptr->tracks.size()).c_str());
+                Log::debug("Note Count: %.3f", (float)smic_ptr->note_count / 1000.0f);
                 //for(auto & [tick, poly] : smic_ptr->polyphony)
                 //{
                 //    f64 polyphony = poly;
