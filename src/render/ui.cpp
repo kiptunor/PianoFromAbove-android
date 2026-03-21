@@ -1365,7 +1365,7 @@ void UI::Render(SDL_Renderer *r)
         ImGui::SetNextWindowSizeConstraints(ImVec2(500, 380), ImVec2(FLT_MAX, FLT_MAX));
         ImGui::Begin("File Information", &file_info_window);
 #else   // Setting up a different ui layout for mobile users
-        ImGui::SetNextWindowSize(ImVec2(900.0f, 600.0f));
+        ImGui::SetNextWindowSize(ImVec2(1290.0f, 600.0f));
         ImGui::Begin("File Information", &file_info_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 #endif
 

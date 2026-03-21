@@ -33,7 +33,9 @@ bool NVnoteList::start_parse(const char *name)
     }
 
     Evt_sequencer.seq_start(MIDI_File);
-    abstick = 0; Tread = 0.0; dT = 0.5 / MIDI_File.ppnq;
+    abstick = 0;
+    Tread = 0.0;
+    dT = 0.5 / MIDI_File.ppnq;
     keys = new rP<decltype(keys)>::t [MIDI_File.tracks];
     return true;
 }
@@ -51,7 +53,8 @@ void NVnoteList::list_seek(double T)
     if(T < Tread)
     {
         abstick = 0; Tread = 0.0; dT = 0.5 / MIDI_File.ppnq;
-        MIDI_File.rewind_all(); Evt_sequencer.seq_reset(MIDI_File);
+        MIDI_File.rewind_all();
+        Evt_sequencer.seq_reset(MIDI_File);
     }
 
     for(int i = 0; i < 128; ++i)
@@ -77,7 +80,7 @@ void NVnoteList::list_seek(double T)
 
         if(Evt.type == NV_METYPE::META && Evt.num == 0x51u)
         {
-            NVMidi::u32_t   speed    =   Evt.data[0];
+            NVMidi::u32_t speed = Evt.data[0];
             speed = speed << 8 | Evt.data[1];
             speed = speed << 8 | Evt.data[2];
             dT = 0.000001 * speed / MIDI_File.ppnq;
@@ -91,7 +94,7 @@ void NVnoteList::update_to(double T)
 {
     while(Evt_sequencer.event().track < MIDI_File.tracks)
     {
-        const NVseq_event  &Evt  =  Evt_sequencer.event();
+        const NVseq_event &Evt = Evt_sequencer.event();
         Tread += dT * (Evt.abstick - abstick);
         abstick = Evt.abstick;
 
@@ -102,7 +105,7 @@ void NVnoteList::update_to(double T)
             case(NV_METYPE::META):
                 if(Evt.num == 0x51u)
                 {
-                    NVMidi::u32_t   speed    =   Evt.data[0];
+                    NVMidi::u32_t speed = Evt.data[0];
                     speed = speed << 8 | Evt.data[1];
                     speed = speed << 8 | Evt.data[2];
                     dT = 0.000001 * speed / MIDI_File.ppnq;
