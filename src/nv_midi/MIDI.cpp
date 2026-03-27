@@ -6,7 +6,7 @@
 #include "MIDI.h"
 
 
-using namespace NVMidi;
+
 
 
 bool NVmidiFile::mid_open(const char *name)
@@ -29,7 +29,7 @@ bool NVmidiFile::mid_open(const char *name)
         return (fclose(fp), false);
     }
 
-    if(tmp != "MThd"_u64be)
+    if(tmp != NVMidi::operator""_u64be("MThd", 4))
     {
         Log::error("Incompatible MIDI file type !");
         return (fclose(fp), false);
@@ -71,7 +71,7 @@ bool NVmidiFile::mid_open(const char *name)
         fread(&tmp , 4, 1, fp);
         fread(&size, 4, 1, fp);
 
-        if(tmp != "MTrk"_u64be)
+        if(tmp != NVMidi::operator""_u64be("MTrk", 4))
         {
             tracks = trk, mid_close();
             Log::error("Track %hd corrupted", trk);

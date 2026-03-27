@@ -22,18 +22,18 @@ void CALLBACK dsp_limiter(u32 handle, u32 channel, void *buffer, u32 length, voi
         f32 abs_input = fabsf(input);
         
         // Envelope detection
-        if (abs_input > envelope)
+        if(abs_input > envelope)
             envelope = limiter_attack_coeff * envelope + (1.0f - limiter_attack_coeff) * abs_input;
         else
             envelope = limiter_release_coeff * envelope + (1.0f - limiter_release_coeff) * abs_input;
         
         // Gain computation
         f32 target_gain = 1.0f;
-        if (envelope > limiter_threshold)
+        if(envelope > limiter_threshold)
             target_gain = (limiter_threshold + (envelope - limiter_threshold) / limiter_ratio) / envelope;
         
         // Apply gain (instant attack, smooth release)
-        if (target_gain < gain)
+        if(target_gain < gain)
             gain = target_gain;
         else
             gain = limiter_release_coeff * gain + (1.0f - limiter_release_coeff) * target_gain;

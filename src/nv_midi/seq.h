@@ -10,7 +10,6 @@ struct NVseq_event: /* Sequencer MIDI event class */
     public NVmidiEvent
     {
         NVMidi::u16_t track;   // Orbital number
-        
         NVMidi::u32_t abstick; // Absolute Tick
     };
 

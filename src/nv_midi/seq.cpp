@@ -11,9 +11,10 @@ void NVsequencer::seq_start(NVmidiFile &midi)
     Ev_buffer[midi.tracks].abstick = 0xFFFFFFFFu;
     Ev_buffer[midi.tracks].track   = midi.tracks;
 
-    for (Nodes = 1; Nodes < midi.tracks; Nodes <<= 1) { }
+    for(Nodes = 1; Nodes < midi.tracks; Nodes <<= 1){ }
 
-    Tree = new NVMidi::u16_t [Nodes << 1]; seq_reset(midi);
+    Tree = new NVMidi::u16_t [Nodes << 1];
+    seq_reset(midi);
 }
 
 void NVsequencer::seq_reset(NVmidiFile &midi)

@@ -113,19 +113,19 @@ void NVnoteList::update_to(double T)
             break;
 
             case(NV_METYPE::NOON):
-            if(Evt.value > 0)
-            {
-                Note_list[Evt.num].emplace_back(Tread, Evt);
-                auto nt = Note_list[Evt.num].end();
-                keys[Evt.track][Evt.num].push(--nt);
-                break;
-            }
+                if(Evt.value > 0)
+                {
+                    Note_list[Evt.num].emplace_back(Tread, Evt);
+                    auto nt = Note_list[Evt.num].end();
+                    keys[Evt.track][Evt.num].push(--nt);
+                    break;
+                }
             case(NV_METYPE::NOFF):
-            if(!keys[Evt.track][Evt.num].empty())
-            {
-                keys[Evt.track][Evt.num].top()->Tend = Tread;
-                keys[Evt.track][Evt.num].pop();
-            }
+                if(!keys[Evt.track][Evt.num].empty())
+                {
+                    keys[Evt.track][Evt.num].top()->Tend = Tread;
+                    keys[Evt.track][Evt.num].pop();
+                }
             default: break;
         }
 
