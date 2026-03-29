@@ -167,7 +167,7 @@ int APP_ENTRY(int argc, char *argv[])
     RenderWin = new Render();
     
     UI::Setup(RenderWin->Win, RenderWin->Ren);
-    
+ 
     
     // Set initial background color
     SDL_SetRenderDrawColor(RenderWin->Ren, live_conf.bg_R, live_conf.bg_G, live_conf.bg_B, live_conf.bg_A); // Set initial background color
@@ -206,6 +206,82 @@ int APP_ENTRY(int argc, char *argv[])
     
     // Do this here instead
     UI::UpdateWidgetValues();
+    
+    SDL_RenderPresent(RenderWin->Ren);
+    
+    // Let the user know if midi or soundfont files are missing
+    if(!loaded_config.dont_show_missing_midi_files)
+    {
+        if(MidiList::missing_files)
+        {
+            SDL_MessageBoxButtonData buttons[] = {
+                { 0, 0, "Don't Show Next Time!" },
+                { 0, 1, "Show missing files" },
+                { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 2, "Ignore" },
+            };
+            
+            SDL_MessageBoxData msgboxdata = {
+                SDL_MESSAGEBOX_WARNING,
+                RenderWin->Win,
+                "Missing Files",
+                "Previous MIDI files are missing",
+                SDL_arraysize(buttons),
+                buttons,
+                NULL  // color scheme (optional)
+            };
+            
+            int buttonid;
+            if(SDL_ShowMessageBox(&msgboxdata, &buttonid) == 1)
+            {
+                switch(buttonid)
+                {
+                    case 0: // Don't show next time
+                        live_conf.dont_show_missing_midi_files = true;
+                        Config::Save(live_conf);
+                    break;
+                    case 1: break; // Show missing files (Todo)
+                    case 2: break; // Ignore
+                }
+            }
+        }
+    }
+    
+    // Same thing but for soundfonts
+    if(!loaded_config.dont_show_missing_soundfonts)
+    {
+        if(MidiList::missing_files)
+        {
+            SDL_MessageBoxButtonData buttons[] = {
+                { 0, 0, "Don't Show Next Time!" },
+                { 0, 1, "Show missing files" },
+                { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 2, "Ignore" },
+            };
+            
+            SDL_MessageBoxData msgboxdata = {
+                SDL_MESSAGEBOX_WARNING,
+                RenderWin->Win,
+                "Missing Files",
+                "Soundfont files are missing",
+                SDL_arraysize(buttons),
+                buttons,
+                NULL  // color scheme (optional)
+            };
+            
+            int buttonid;
+            if(SDL_ShowMessageBox(&msgboxdata, &buttonid) == 1)
+            {
+                switch(buttonid)
+                {
+                    case 0: // Don't show next time
+                        live_conf.dont_show_missing_soundfonts = true;
+                        Config::Save(live_conf);
+                    break;
+                    case 1: break; // Show missing files (Todo)
+                    case 2: break; // Ignore
+                }
+            }
+        }
+    }
     
     if(live_conf.background_image)
         RenderWin->LoadBackgroundImage(live_conf.background_image_path);

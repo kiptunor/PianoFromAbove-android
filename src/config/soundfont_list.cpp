@@ -1,4 +1,5 @@
 #include <fstream>
+#include <filesystem>
 #include <nlohmann/json.hpp>
 
 #include "soundfont_list.h"
@@ -7,6 +8,9 @@
 
 
 
+
+bool SoundfontList::missing_files;
+std::vector<std::string> SoundfontList::missing_files_list;
 
 std::vector<UI::SoundfontItem> SoundfontList::Get(std::vector<std::string> paths)
 {
@@ -50,7 +54,13 @@ std::vector<UI::SoundfontItem> SoundfontList::Load()
         UI::SoundfontItem item;
         item.label = sflist_arr[i]["path"].get<std::string>();
         item.checked = sflist_arr[i]["enabled"].get<bool>();
-        soundfonts.push_back(item);
+        if(std::filesystem::exists(item.label))
+            soundfonts.emplace_back(item);
+        else
+        {
+            missing_files = true;
+            missing_files_list.emplace_back(item.label);
+        }
     }
     return soundfonts;
 }

@@ -54,6 +54,10 @@ Config::configuration Config::Load()
     in_conf.no_soundfont_duplicates = general_obj.value("noSoundfontDuplicates", default_settings.no_soundfont_duplicates);
     in_conf.no_midi_duplicates      = general_obj.value("noMidiDuplicates", default_settings.no_midi_duplicates);
     
+    nlohmann::json prompts_obj = json_in.value("prompts", nlohmann::json::object());
+    in_conf.dont_show_missing_midi_files  = prompts_obj.value("noMissingMidiFiles",  0);
+    in_conf.dont_show_missing_soundfonts = prompts_obj.value("noMissingSoundfonts", 0);
+    
     nlohmann::json visual_obj   = json_in.value("visual", nlohmann::json::object());
     in_conf.vsync               = visual_obj.value("vsync", default_settings.vsync);
     in_conf.note_speed          = visual_obj.value("noteSpeed", default_settings.note_speed);
@@ -137,6 +141,10 @@ void Config::Save(configuration config)
             { "soundfontPaths",        config.extra_sf_paths          },
             { "noMidiDuplicates",      config.no_midi_duplicates      },
             { "noSoundfontDuplicates", config.no_soundfont_duplicates }
+        }},
+        { "prompts", {
+            { "noMissingMidiFiles",  config.dont_show_missing_midi_files  },
+            { "noMissingSoundfonts", config.dont_show_missing_soundfonts }
         }},
         { "visual", visual },
         { "audio", {

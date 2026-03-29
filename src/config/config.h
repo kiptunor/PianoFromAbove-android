@@ -40,8 +40,10 @@ class Config
             bool audio_limiter;
             bool vel_filter;
             bool use_default_paths;
-            bool is_custom_ch_colors; // Only for internal use!!!
-            bool use_default_colors; // Only for internal use!!!
+            bool is_custom_ch_colors;          // Only for internal use!!!
+            bool use_default_colors;           // Only for internal use!!!
+            bool dont_show_missing_midi_files; // Only for internal use!!!
+            bool dont_show_missing_soundfonts; // Only for internal use!!!
             bool background_image;
             bool no_midi_duplicates;
             bool no_soundfont_duplicates;

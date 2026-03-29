@@ -21,6 +21,8 @@ class MidiList
     public:
         static std::vector<std::string> load();
         static void save(const std::vector<std::string> files);
+        static bool missing_files;
+        static std::vector<std::string> missing_files_list;
 };
 
 #endif

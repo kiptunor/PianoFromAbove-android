@@ -22,5 +22,7 @@ class SoundfontList
         static std::vector<UI::SoundfontItem> Load();
         //static void Refresh();
         static void Clear();
+        static bool missing_files;
+        static std::vector<std::string> missing_files_list;
 };
 #endif
