@@ -210,21 +210,33 @@ int APP_ENTRY(int argc, char *argv[])
     SDL_RenderPresent(RenderWin->Ren);
     
     // Let the user know if midi or soundfont files are missing
-    if(!loaded_config.dont_show_missing_midi_files)
+    if(!loaded_config.dont_show_missing_files)
     {
-        if(MidiList::missing_files)
+        if(SoundfontList::missing_files || MidiList::missing_files)
         {
+            std::ostringstream msg;
+            if(SoundfontList::missing_files)
+                msg << "Soundfont files are missing";
+            
+            if(MidiList::missing_files)
+                msg << "Previous MIDI files are missing";
+            
+            if(SoundfontList::missing_files && MidiList::missing_files)
+                msg << "Previous MIDI files and SoundFonts are missing";
+            
+            
             SDL_MessageBoxButtonData buttons[] = {
                 { 0, 0, "Don't Show Next Time!" },
                 { 0, 1, "Show missing files" },
                 { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 2, "Ignore" },
             };
             
+            std::string msg_str = msg.str();
             SDL_MessageBoxData msgboxdata = {
                 SDL_MESSAGEBOX_WARNING,
                 RenderWin->Win,
                 "Missing Files",
-                "Previous MIDI files are missing",
+                msg_str.c_str(),
                 SDL_arraysize(buttons),
                 buttons,
                 NULL  // color scheme (optional)
@@ -236,44 +248,7 @@ int APP_ENTRY(int argc, char *argv[])
                 switch(buttonid)
                 {
                     case 0: // Don't show next time
-                        live_conf.dont_show_missing_midi_files = true;
-                        Config::Save(live_conf);
-                    break;
-                    case 1: break; // Show missing files (Todo)
-                    case 2: break; // Ignore
-                }
-            }
-        }
-    }
-    
-    // Same thing but for soundfonts
-    if(!loaded_config.dont_show_missing_soundfonts)
-    {
-        if(MidiList::missing_files)
-        {
-            SDL_MessageBoxButtonData buttons[] = {
-                { 0, 0, "Don't Show Next Time!" },
-                { 0, 1, "Show missing files" },
-                { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 2, "Ignore" },
-            };
-            
-            SDL_MessageBoxData msgboxdata = {
-                SDL_MESSAGEBOX_WARNING,
-                RenderWin->Win,
-                "Missing Files",
-                "Soundfont files are missing",
-                SDL_arraysize(buttons),
-                buttons,
-                NULL  // color scheme (optional)
-            };
-            
-            int buttonid;
-            if(SDL_ShowMessageBox(&msgboxdata, &buttonid) == 1)
-            {
-                switch(buttonid)
-                {
-                    case 0: // Don't show next time
-                        live_conf.dont_show_missing_soundfonts = true;
+                        live_conf.dont_show_missing_files = true;
                         Config::Save(live_conf);
                     break;
                     case 1: break; // Show missing files (Todo)

@@ -69,6 +69,8 @@ class UI
         static bool loop_colors;
         static bool overlap_remover;
         static bool use_bg_image;
+        static bool show_full_path_lost_midis;
+        static bool show_full_path_lost_soundfonts;
         static bool no_midi_duplicates;
         static bool vertical_lines;
         static bool no_soundfont_duplicates;

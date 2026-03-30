@@ -42,6 +42,8 @@ int selected_midi_path_entry;
 int selected_soundfont_path_etry;
 int selected_img_path_entry;
 int selected_soundfont = 0;
+int selected_lost_midi = 0;
+int selected_lost_soundfont = 0;
 ImFont* FONT_icon_set;
 std::string temp_widget_id;
 std::ostringstream file_info_fields;
@@ -69,6 +71,8 @@ bool UI::vsync;
 bool UI::vertical_lines;
 bool UI::use_default_media_paths = true;
 bool UI::background_image;
+bool UI::show_full_path_lost_midis = false;
+bool UI::show_full_path_lost_soundfonts = false;
 int  UI::min_velocity;
 int  UI::max_velocity;
 std::string UI::last_midi_path;
@@ -1018,13 +1022,20 @@ void UI::Render(SDL_Renderer *r)
                 ImGui::EndTabItem();
             }
             
-            if(ImGui::BeginTabItem("Settings"))
+            std::ostringstream settings_tab_label;
+            
+            if(MidiList::missing_files || SoundfontList::missing_files)
+                settings_tab_label << "Settings (" << ICON_FA_TRIANGLE_EXCLAMATION << ")";
+            else
+                settings_tab_label << "Settings";
+            
+            if(ImGui::BeginTabItem(settings_tab_label.str().c_str()))
             {
                 if(ImGui::Button("Save"))
                 {
                     Config::Save(live_conf);
                 }
-                if (ImGui::BeginItemTooltip())
+                if(ImGui::BeginItemTooltip())
                 {
                     ImGui::Text("Save settings to configuration file");
                     ImGui::EndTooltip();
@@ -1117,6 +1128,72 @@ void UI::Render(SDL_Renderer *r)
                         }
                         
                         RenderSoundfontsPathsList(soundfont_paths, selected_soundfont_path_etry);
+                        
+                        if(MidiList::missing_files)
+                        {
+                            if(ImGui::CollapsingHeader("Missing MIDI Files"))
+                            {
+                                ImGui::Checkbox("Show full path", &show_full_path_lost_midis);
+                                ImGui::BeginChild("##lostmidis", ImVec2(0, 190), true, ImGuiWindowFlags_HorizontalScrollbar);
+                                
+                                for(int i = 0; i < MidiList::missing_files_list.size(); i++)
+                                {
+                                    std::string midi_filename;
+                                    if(!show_full_path_lost_midis)
+                                        midi_filename = FilenameOnly(MidiList::missing_files_list[i]);
+                                    else
+                                        midi_filename = MidiList::missing_files_list[i];
+                                    
+                                    // Filter check (case-insensitive optional)
+                                    //if(!find_item.empty() && midi_filename.find(find_item) == std::string::npos)
+                                    //    continue;
+                                    
+                                    bool isSelected = (i == selected_lost_midi);
+                                    
+                                    if(ImGui::Selectable((midi_filename + "##" + std::to_string(i)).c_str(), isSelected))
+                                    {
+                                        selected_lost_midi = i;
+                                    }
+                                    
+                                    if(isSelected)
+                                        ImGui::SetItemDefaultFocus();
+                                }
+                                ImGui::EndChild();
+                            }
+                        }
+                        
+                        if(SoundfontList::missing_files)
+                        {
+                            if(ImGui::CollapsingHeader("Missing SoundFont Files"))
+                            {
+                                ImGui::Checkbox("Show full path", &show_full_path_lost_soundfonts);
+                                ImGui::BeginChild("##lostsf", ImVec2(0, 190), true, ImGuiWindowFlags_HorizontalScrollbar);
+                                
+                                for(int i = 0; i < SoundfontList::missing_files_list.size(); i++)
+                                {
+                                    std::string sf_filename;
+                                    if(!show_full_path_lost_soundfonts)
+                                        sf_filename = FilenameOnly(SoundfontList::missing_files_list[i]);
+                                    else
+                                        sf_filename = SoundfontList::missing_files_list[i];
+                                    
+                                    // Filter check (case-insensitive optional)
+                                    //if(!find_item.empty() && midi_filename.find(find_item) == std::string::npos)
+                                    //    continue;
+                                    
+                                    bool isSelected = (i == selected_lost_soundfont);
+                                    
+                                    if(ImGui::Selectable((sf_filename + "##" + std::to_string(i)).c_str(), isSelected))
+                                    {
+                                        selected_lost_soundfont = i;
+                                    }
+                                    
+                                    if(isSelected)
+                                        ImGui::SetItemDefaultFocus();
+                                }
+                                ImGui::EndChild();
+                            }
+                        }
                         
                         ImGui::EndTabItem();
                     }
