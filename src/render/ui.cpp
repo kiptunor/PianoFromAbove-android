@@ -155,14 +155,12 @@ void RenderMidiList(const std::vector<std::string>& items, int& selectedIndex, s
         // Filter check (case-insensitive optional)
         if(!find_item.empty() && midi_filename.find(find_item) == std::string::npos)
             continue;
-        
-        size_t sel_idx = static_cast<size_t>(selectedIndex);
     
-        bool isSelected = (i == sel_idx);
+        bool isSelected = (i == static_cast<size_t>(selectedIndex));
     
         if(ImGui::Selectable((midi_filename + "##" + std::to_string(i)).c_str(), isSelected))
         {
-            sel_idx = i;
+            selectedIndex = static_cast<int>(i);
         }
     
         if(isSelected)
