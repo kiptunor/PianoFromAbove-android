@@ -148,19 +148,21 @@ void RenderMidiList(const std::vector<std::string>& items, int& selectedIndex, s
 {
     ImGui::BeginChild("##midils", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
     
-    for(int i = 0; i < items.size(); ++i)
+    for(size_t i = 0; i < items.size(); ++i)
     {
         std::string midi_filename = FilenameOnly(items[i]);
     
         // Filter check (case-insensitive optional)
         if(!find_item.empty() && midi_filename.find(find_item) == std::string::npos)
             continue;
+        
+        size_t sel_idx = static_cast<size_t>(selectedIndex);
     
-        bool isSelected = (i == selectedIndex);
+        bool isSelected = (i == sel_idx);
     
         if(ImGui::Selectable((midi_filename + "##" + std::to_string(i)).c_str(), isSelected))
         {
-            selectedIndex = i;
+            sel_idx = i;
         }
     
         if(isSelected)
@@ -191,7 +193,7 @@ void RenderSoundfontList(std::vector<UI::SoundfontItem>& items, std::string find
     
     bool soundfont_changed = false;
     
-    for(int i = 0; i < items.size(); ++i)
+    for(size_t i = 0; i < items.size(); ++i)
     {
         std::string sf_filename = FilenameOnly(items[i].label);
     
@@ -209,7 +211,7 @@ void RenderSoundfontList(std::vector<UI::SoundfontItem>& items, std::string find
 #endif
         
         std::string temp = "##" + std::to_string(i);
-        if(ImGui::Selectable(temp.c_str(), selected_soundfont == i, ImGuiSelectableFlags_AllowOverlap, ImVec2(0, item_selection_height)))
+        if(ImGui::Selectable(temp.c_str(), selected_soundfont == (int)i, ImGuiSelectableFlags_AllowOverlap, ImVec2(0, item_selection_height)))
             selected_soundfont = i;
         
         ImGui::SameLine();
@@ -241,13 +243,14 @@ void RenderSoundfontsPathsList(const std::vector<std::string>& items, int& selec
 {
     ImGui::BeginChild("##soundfontspathls", ImVec2(0, 190), true, ImGuiWindowFlags_HorizontalScrollbar);
     
-    for(int i = 0; i < items.size(); ++i)
+    size_t sel_idx = static_cast<size_t>(selectedIndex);
+    for(size_t i = 0; i < items.size(); ++i)
     {
-        bool isSelected = (i == selectedIndex);
+        bool isSelected = (i == sel_idx);
     
         if(ImGui::Selectable((items[i] + "##" + std::to_string(i)).c_str(), isSelected))
         {
-            selectedIndex = i;
+            sel_idx = i;
         }
     
         if(isSelected)
@@ -271,7 +274,7 @@ void ShowAudioDeviceList(const std::vector<Playback::AudioDevice>& audioDevices)
         UI::current_audio_dev = 0; // Reset to 0 if there are no devices
         allow_audio_dev_ssave = false;
     }
-    else if(UI::current_audio_dev >= deviceNames.size())
+    else if(UI::current_audio_dev >= (int)deviceNames.size())
     {
         allow_audio_dev_ssave = true;
         UI::current_audio_dev = 0; // Reset to the first device if the index is out of bounds
@@ -289,10 +292,10 @@ void ShowAudioDeviceList(const std::vector<Playback::AudioDevice>& audioDevices)
         }
         else
         {
-            for(int i = 0; i < deviceNames.size(); i++)
+            for(size_t i = 0; i < deviceNames.size(); i++)
             {
                 // Check if this item is selected
-                bool isSelected = (UI::current_audio_dev == i);
+                bool isSelected = (UI::current_audio_dev == (int)i);
     
                 // Add the item to the combo box
                 if(ImGui::Selectable(deviceNames[i], isSelected))
@@ -323,9 +326,9 @@ unsigned int ImVec4ToUInt(const ImVec4& color)
 void moveSoundfont(int index, int direction)
 {
     int new_index = index + direction;
-    if (index < 0 || index >= live_soundfont_list.size())
+    if (index < 0 || index >= (int)live_soundfont_list.size())
         return;
-    if (new_index < 0 || new_index >= live_soundfont_list.size())
+    if (new_index < 0 || new_index >= (int)live_soundfont_list.size())
         return;
     
     std::swap(live_soundfont_list[index], live_soundfont_list[new_index]);
@@ -1115,7 +1118,7 @@ void UI::Render(SDL_Renderer *r)
                             
                         if(ImGui::Button("-##sf1"))
                         {
-                            if(selected_soundfont_path_etry >= 0 && selected_soundfont_path_etry < soundfont_paths.size())
+                            if(selected_soundfont_path_etry >= 0 && selected_soundfont_path_etry < (int)soundfont_paths.size())
                             {
                                 soundfont_paths.erase(soundfont_paths.begin() + selected_soundfont_path_etry);
                                 selected_soundfont_path_etry = -1;
@@ -1136,7 +1139,7 @@ void UI::Render(SDL_Renderer *r)
                                 ImGui::Checkbox("Show full path", &show_full_path_lost_midis);
                                 ImGui::BeginChild("##lostmidis", ImVec2(0, 190), true, ImGuiWindowFlags_HorizontalScrollbar);
                                 
-                                for(int i = 0; i < MidiList::missing_files_list.size(); i++)
+                                for(size_t i = 0; i < MidiList::missing_files_list.size(); i++)
                                 {
                                     std::string midi_filename;
                                     if(!show_full_path_lost_midis)
@@ -1148,11 +1151,13 @@ void UI::Render(SDL_Renderer *r)
                                     //if(!find_item.empty() && midi_filename.find(find_item) == std::string::npos)
                                     //    continue;
                                     
-                                    bool isSelected = (i == selected_lost_midi);
+                                    size_t sel_idx = static_cast<size_t>(selected_lost_midi);
+                                    
+                                    bool isSelected = (i == sel_idx);
                                     
                                     if(ImGui::Selectable((midi_filename + "##" + std::to_string(i)).c_str(), isSelected))
                                     {
-                                        selected_lost_midi = i;
+                                        sel_idx = i;
                                     }
                                     
                                     if(isSelected)
@@ -1169,7 +1174,7 @@ void UI::Render(SDL_Renderer *r)
                                 ImGui::Checkbox("Show full path", &show_full_path_lost_soundfonts);
                                 ImGui::BeginChild("##lostsf", ImVec2(0, 190), true, ImGuiWindowFlags_HorizontalScrollbar);
                                 
-                                for(int i = 0; i < SoundfontList::missing_files_list.size(); i++)
+                                for(size_t i = 0; i < SoundfontList::missing_files_list.size(); i++)
                                 {
                                     std::string sf_filename;
                                     if(!show_full_path_lost_soundfonts)
@@ -1181,7 +1186,7 @@ void UI::Render(SDL_Renderer *r)
                                     //if(!find_item.empty() && midi_filename.find(find_item) == std::string::npos)
                                     //    continue;
                                     
-                                    bool isSelected = (i == selected_lost_soundfont);
+                                    bool isSelected = (i == (size_t)selected_lost_soundfont);
                                     
                                     if(ImGui::Selectable((sf_filename + "##" + std::to_string(i)).c_str(), isSelected))
                                     {
