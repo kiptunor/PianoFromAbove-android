@@ -55,7 +55,7 @@ bool NVmidiFile::mid_open(const char *name)
     fseek(fp, size + 8, SEEK_SET);
 #endif
 
-    trk_over = new bool     [tracks];
+    trk_over = new bool             [tracks];
     trk_data = new NVMidi::nv_byte* [tracks];
     trk_ptr  = new NVMidi::nv_byte* [tracks];
     grp_code = new NVMidi::nv_byte  [tracks];
@@ -161,8 +161,8 @@ bool NVmidiEvent::get(NVMidi::u16_t track, NVmidiFile &midi)
             value = *(*p)++;
         break;
         case(NV_METYPE::PITH):
-            value = *(*p)++; // Obtaining lower octal
-            value |= (*(*p)++) << 7; // Obtaining large combined bytes
+            value = (*(*p)++) << 7;  // MSB first
+            value |= *(*p)++;         // LSB second
         break;
 
         case(NV_METYPE::SYSC):

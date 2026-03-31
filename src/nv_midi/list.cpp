@@ -120,12 +120,14 @@ void NVnoteList::update_to(double T)
                     keys[Evt.track][Evt.num].push(--nt);
                     break;
                 }
+            break;
             case(NV_METYPE::NOFF):
                 if(!keys[Evt.track][Evt.num].empty())
                 {
                     keys[Evt.track][Evt.num].top()->Tend = Tread;
                     keys[Evt.track][Evt.num].pop();
                 }
+            break;
             default: break;
         }
 
