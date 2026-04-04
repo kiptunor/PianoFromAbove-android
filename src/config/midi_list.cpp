@@ -12,6 +12,7 @@
 
 bool MidiList::missing_files;
 std::vector<std::string> MidiList::missing_files_list;
+std::string MidiList::midi_list_path;
 
 
 void MidiList::save(const std::vector<std::string> files)
@@ -19,13 +20,16 @@ void MidiList::save(const std::vector<std::string> files)
     nlohmann::json midi_list_arr = nlohmann::json::object();
     midi_list_arr["PreviousMidiFiles"] = files;
     
-    std::ofstream file(MIDI_LIST_PATH);
+
+    std::ofstream file(midi_list_path);
+
     file << midi_list_arr.dump(4);
 }
 
 std::vector<std::string> MidiList::load()
 {
-    std::ifstream file(MIDI_LIST_PATH);
+    std::ifstream file(midi_list_path);
+
     if(!file.is_open())
     {
         Log::error("Failed to open MIDI list file");

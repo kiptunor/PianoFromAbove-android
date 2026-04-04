@@ -11,9 +11,11 @@
 
 
 #ifdef PLATFORM_ANDROID
-    #define CONFIG_FILE_PATH "/data/data/com.qsp.nvpfa/files/settings.json"
+    #define CONFIG_FILE "/data/data/com.qsp.nvpfa/files/settings.json"
 #else
-    #define CONFIG_FILE_PATH "settings.json"
+    #define CONFIG_FILE "settings.json"
+    #define CONFIG_DIR "/.config/npfa"
+    #define CONFIG_LISTS "/.cache/npfa"
 #endif
 
 
@@ -64,6 +66,7 @@ class Config
         static void Save(configuration config);
 //#ifdef DEBUG
         static void PrintLoadedConfig(configuration c);
+        static std::string config_path;
 //#endif
 };
 

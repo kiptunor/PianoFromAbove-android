@@ -11,6 +11,7 @@
 
 bool SoundfontList::missing_files;
 std::vector<std::string> SoundfontList::missing_files_list;
+std::string SoundfontList::soundfont_list_path;
 
 std::vector<UI::SoundfontItem> SoundfontList::Get(std::vector<std::string> paths)
 {
@@ -36,14 +37,17 @@ void SoundfontList::Save(std::vector<UI::SoundfontItem> sf_list)
             {"enabled", sf_list[i].checked}
         });
     }
-    std::ofstream out_file(SOUNDFONT_LIST_PATH);
+
+    std::ofstream out_file(soundfont_list_path);
     out_file << sflist_arr;
 }
 
 std::vector<UI::SoundfontItem> SoundfontList::Load()
 {
     std::vector<UI::SoundfontItem> soundfonts;
-    std::ifstream in_file(SOUNDFONT_LIST_PATH);
+
+    std::ifstream in_file(soundfont_list_path);
+
     if(!in_file.is_open())
         return soundfonts;
 

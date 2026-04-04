@@ -11,6 +11,9 @@
 
 
 
+std::string Config::config_path;
+
+
 // Required for channel / note colors storage
 std::string colorToHex(unsigned int color)
 {
@@ -37,7 +40,7 @@ unsigned int hexToUInt(const std::string& hex)
 
 Config::configuration Config::Load()
 {
-    std::ifstream in_file(CONFIG_FILE_PATH);
+    std::ifstream in_file(config_path);
         
     nlohmann::json json_in = nlohmann::json::parse(in_file);
         
@@ -160,8 +163,9 @@ void Config::Save(configuration config)
             }}
         }}
     };
-        
-    std::ofstream out_file(CONFIG_FILE_PATH);
+
+
+    std::ofstream out_file(config_path);
     out_file << json_out.dump(2);
 }
 

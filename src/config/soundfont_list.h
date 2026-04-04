@@ -7,9 +7,9 @@
 
 
 #ifdef PLATFORM_ANDROID
-    #define SOUNDFONT_LIST_PATH "/data/data/com.qsp.nvpfa/files/soundfonts.json"
+    #define SOUNDFONT_LIST_FILE "/data/data/com.qsp.nvpfa/files/soundfonts.json"
 #else
-    #define SOUNDFONT_LIST_PATH "soundfonts.json"
+    #define SOUNDFONT_LIST_FILE "soundfonts.json"
 #endif
 
 
@@ -24,5 +24,6 @@ class SoundfontList
         static void Clear();
         static bool missing_files;
         static std::vector<std::string> missing_files_list;
+        static std::string soundfont_list_path;
 };
 #endif

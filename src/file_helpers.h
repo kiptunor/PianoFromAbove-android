@@ -23,5 +23,10 @@ class FileHelpers
         
         static std::vector<std::string> GetFilesByExtension(const std::string& path, const std::string& extensions);
         static FileInfo GetFileInfo(const std::string& path);
+#ifndef PLATFORM_ANDROID
+        static void createConfigDirs();
+        static std::string config_dir;
+        static std::string lists_dir;
+#endif
 };
 #endif

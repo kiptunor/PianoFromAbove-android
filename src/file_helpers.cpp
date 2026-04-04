@@ -7,6 +7,7 @@
 
 #include "file_helpers.h"
 #include "logger.h"
+#include "config/config.h"
 
 
 
@@ -14,7 +15,8 @@
 
 
 
-
+std::string FileHelpers::config_dir;
+std::string FileHelpers::lists_dir;
 
 
 std::string human_readable_size(uint64_t bytes)
@@ -120,3 +122,25 @@ FileHelpers::FileInfo FileHelpers::GetFileInfo(const std::string& path)
     
     return res;
 }
+
+#ifndef PLATFORM_ANDROID
+void FileHelpers::createConfigDirs()
+{
+    std::ostringstream config_dir_path;
+    std::ostringstream lists_dir_path;
+    config_dir_path << std::getenv("HOME") << CONFIG_DIR;
+    lists_dir_path << std::getenv("HOME") << CONFIG_LISTS;
+    
+    config_dir = config_dir_path.str();
+    lists_dir = lists_dir_path.str();
+    
+    if(!std::filesystem::exists(config_dir_path.str()))
+        if(!std::filesystem::create_directory(config_dir_path.str()))
+            Log::error("Failed to create config directory: %s", config_dir_path.str().c_str());
+    
+    
+    if(!std::filesystem::exists(lists_dir_path.str()))
+        if(!std::filesystem::create_directory(lists_dir_path.str()))
+            Log::error("Failed to create lists directory: %s", lists_dir_path.str().c_str());
+}
+#endif

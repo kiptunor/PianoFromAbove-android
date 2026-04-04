@@ -32,6 +32,7 @@
 #include "globals.h"
 #include "audio/playback.h"
 #include "render/render.h"
+#include "file_helpers.h"
 #include "render/ui.h"
 #ifndef PLATFORM_ANDROID
     #include "cli.h"
@@ -121,28 +122,52 @@ void UI::UpdateWidgetValues()
 #ifndef PLATFORM_ANDROID
 void ToggleFullscreen(SDL_Window* window)
 {
-    if (SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN) {
+    if(SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN)
         SDL_SetWindowFullscreen(window, false);
-    } else {
+    else
+    {
         SDL_SetWindowFullscreenMode(window, NULL);  // use current display mode
         SDL_SetWindowFullscreen(window, true);
     }
+    
 }
 #endif
 
 int APP_ENTRY(int argc, char *argv[])
 {
-#ifndef PLATFORM_ANDROID
+
     // CLI Parsing
     if(argc > 1)
-        CLI::parseArgs(argc, argv);
+        CLI::parseArgs(argc, argv); // The same CLI should also work on Android
+    
+#ifndef PLATFORM_ANDROID
+    FileHelpers::createConfigDirs();
+    std::ostringstream config_path;
+    config_path << FileHelpers::config_dir << "/" << CONFIG_FILE;
+    Config::config_path = config_path.str();
+    
+    std::ostringstream midi_list_path;
+    midi_list_path << FileHelpers::lists_dir << "/" << MIDI_LIST_FILE;
+    MidiList::midi_list_path = midi_list_path.str();
+    
+    std::ostringstream soundfont_list_path;
+    soundfont_list_path << FileHelpers::lists_dir << "/" << SOUNDFONT_LIST_FILE;
+    SoundfontList::soundfont_list_path = soundfont_list_path.str();
+#else
+    std::ostringstream config_path;
+    config_path << CONFIG_FILE;
+    
+    std::ostringstream midi_list_path;
+    midi_list_path << MIDI_LIST_FILE;
+    
+    std::ostringstream soundfont_list_path;
+    soundfont_list_path << SOUNDFONT_LIST_FILE;
 #endif
-    
-    
+
     /*
     - - - - Configuration Handling - - - -
     */
-    if(!std::filesystem::exists(CONFIG_FILE_PATH))
+    if(!std::filesystem::exists(config_path.str()))
         live_conf = default_settings;
     else
     {
@@ -151,12 +176,12 @@ int APP_ENTRY(int argc, char *argv[])
     }
     
     /* - - - - Soundfont List Handling - - - - */
-    if(std::filesystem::exists(SOUNDFONT_LIST_PATH))
+    if(std::filesystem::exists(soundfont_list_path.str()))
         loaded_soundfont_list = SoundfontList::Load();
     
     
     /* - - - - MIDI List Handling - - - - */
-    if(std::filesystem::exists(MIDI_LIST_PATH))
+    if(std::filesystem::exists(midi_list_path.str()))
     {
         loaded_midi_list = MidiList::load();
         live_midi_list = loaded_midi_list;
