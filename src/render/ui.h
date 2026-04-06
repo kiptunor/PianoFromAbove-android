@@ -22,8 +22,10 @@
 
 #ifdef PLATFORM_ANDROID
     #define FONT_AWESOME_ICON_SIZE 33
+    #define UI_FONT_SIZE 38.0f
 #else
     #define FONT_AWESOME_ICON_SIZE 18
+    #define UI_FONT_SIZE 22.0f
 #endif
 
 

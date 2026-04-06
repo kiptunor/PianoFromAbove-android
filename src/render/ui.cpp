@@ -12,6 +12,7 @@
 #include "../logger.h"
 #include "../../assets/FA6FreeSolidFontData.h"
 #include "../../assets/IconsFontAwesome6.h"
+#include "../../assets/Metrophobic_Regular.h"
 #include "../file_helpers.h"
 #include "../globals.h"
 
@@ -324,9 +325,9 @@ unsigned int ImVec4ToUInt(const ImVec4& color)
 void moveSoundfont(int index, int direction)
 {
     int new_index = index + direction;
-    if (index < 0 || index >= (int)live_soundfont_list.size())
+    if(index < 0 || index >= (int)live_soundfont_list.size())
         return;
-    if (new_index < 0 || new_index >= (int)live_soundfont_list.size())
+    if(new_index < 0 || new_index >= (int)live_soundfont_list.size())
         return;
     
     std::swap(live_soundfont_list[index], live_soundfont_list[new_index]);
@@ -335,27 +336,37 @@ void moveSoundfont(int index, int direction)
 void ConstrainWindowMove(const char* windowName)
 {
     ImGuiContext& g = *GImGui;
-    
+     
     ImGuiWindow* win = ImGui::FindWindowByName(windowName);
-    if(g.MovingWindow != nullptr && g.MovingWindow == win)
+    if(g.MovingWindow != nullptr)
     {
-        ImVec2 viewportPos = g.MovingWindow->Viewport->Pos;
-        ImVec2 viewportSize = g.MovingWindow->Viewport->Size;
-        ImVec2 windowSize = g.MovingWindow->Size;
-        
+        ImGuiWindow* movingWin = g.MovingWindow;
+         
+        // Find the root (non-child) window
+        while(movingWin->ParentWindow != nullptr)
+            movingWin = movingWin->ParentWindow;
+         
+        // Check if this root window matches our target
+        if(movingWin != win)
+            return;
+         
+        ImVec2 viewportPos = movingWin->Viewport->Pos;
+        ImVec2 viewportSize = movingWin->Viewport->Size;
+        ImVec2 windowSize = movingWin->Size;
+         
         ImVec2 minPos = viewportPos;
         ImVec2 maxPos;
         maxPos.x = viewportPos.x + viewportSize.x - windowSize.x;
         maxPos.y = viewportPos.y + viewportSize.y - windowSize.y;
-        
-        ImVec2 pos = g.MovingWindow->Pos;
-        
+         
+        ImVec2 pos = movingWin->Pos;
+         
         pos.x = std::clamp(pos.x, minPos.x, maxPos.x);
         pos.y = std::clamp(pos.y, minPos.y, maxPos.y);
-        
-        if(pos.x != g.MovingWindow->Pos.x || pos.y != g.MovingWindow->Pos.y)
+         
+        if(pos.x != movingWin->Pos.x || pos.y != movingWin->Pos.y)
         {
-            g.MovingWindow->Pos = pos;
+            movingWin->Pos = pos;
         }
     }
 }
@@ -531,7 +542,17 @@ void UI::Setup(SDL_Window *w, SDL_Renderer *r)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.IniFilename = IMGUI_INI_FILE_PATH;                 // Custom path for imgui ini
+    
+#ifdef PLATFORM_ANDROID
+    io.IniFilename = IMGUI_INI_FILE_PATH;
+#else
+    std::ostringstream ini_path;
+    ini_path << FileHelpers::config_dir << "/" << IMGUI_INI_FILE_PATH;
+    Log::trace("", "INI File path: %s", ini_path.str().c_str());
+    static std::string temp_str = ini_path.str();
+    io.IniFilename = temp_str.c_str();                 // Custom path for imgui ini
+#endif
+
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
     
@@ -541,15 +562,10 @@ void UI::Setup(SDL_Window *w, SDL_Renderer *r)
     
     //Metrophobic-Regular.ttf
     //Font suggested by Nerdly
-#ifdef PLATFORM_ANDROID
-    //std::string ui_font_file = NVFileUtils::GetFilePathA("ui_font.ttf", "rb");
-    
-    io.Fonts->AddFontFromFileTTF("ui_font.ttf", 38.0f);
-#else
-  io.Fonts->AddFontFromFileTTF("ui_font.ttf", 22.0f);
-  //FONT_icon_set = io.Fonts->AddFontFromFileTTF("fontello.ttf", 14.0f);
-  //io.Fonts->AddFontFromFileTTF("ui_font.ttf", 19.0f);
-#endif
+
+    ImFontConfig ui_font_config;
+    ui_font_config.FontDataOwnedByAtlas = false;
+    io.Fonts->AddFontFromMemoryTTF((void*)metrophobic_regular_ttf, metrophobic_regular_len, UI_FONT_SIZE, &ui_font_config);
 
     SetupIconFonts();
     
