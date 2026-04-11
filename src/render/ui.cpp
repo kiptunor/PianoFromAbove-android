@@ -243,7 +243,7 @@ void RenderSoundfontsPathsList(const std::vector<std::string>& items, int& selec
 {
     ImGui::BeginChild("##soundfontspathls", ImVec2(0, 190), true, ImGuiWindowFlags_HorizontalScrollbar);
     
-    size_t sel_idx = static_cast<size_t>(selectedIndex);
+    static size_t sel_idx = static_cast<size_t>(selectedIndex);
     for(size_t i = 0; i < items.size(); ++i)
     {
         bool isSelected = (i == sel_idx);
