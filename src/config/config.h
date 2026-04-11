@@ -55,6 +55,8 @@ class Config
             std::string last_midi_path;
             std::string last_sf_path;
             std::string last_midi_file;
+            std::string last_ccol_file_path;
+            std::string last_ccol_path;
             std::string background_image_path;
             std::string last_image_path;
             std::vector<std::string> current_soundfonts;
@@ -67,6 +69,7 @@ class Config
 //#ifdef DEBUG
         static void PrintLoadedConfig(configuration c);
         static std::string config_path;
+        static unsigned int hexToUInt(const std::string& hex);
 //#endif
 };
 

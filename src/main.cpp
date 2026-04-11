@@ -28,6 +28,7 @@
 #include "logger.h"
 #include "config/config.h"
 #include "config/midi_list.h"
+#include "config/channel_colors.h"
 #include "config/soundfont_list.h"
 #include "globals.h"
 #include "audio/playback.h"
@@ -89,16 +90,20 @@ void UI::UpdateWidgetValues()
     UI::liveColor.b = live_conf.bg_B;
     UI::liveColor.a = live_conf.bg_A;
     
-    bool fully_matched = false;
-    for(int i = 0; i < 16; i++)
+    if(std::filesystem::exists(live_conf.last_ccol_file_path))
     {
-        ui_chcolors[i] = UI::UIntToImVec4(live_conf.channel_colors[i]);
-        if(live_conf.channel_colors[i] != default_settings.channel_colors[i])
-        {
-            fully_matched = true;
-        }
+        unsigned int* colors = ChannelColors::getChannelColors(live_conf.last_ccol_file_path);
+        
+        if(colors != nullptr)
+            std::copy(colors, colors + 16, live_conf.channel_colors);
+        else
+            std::copy(default_settings.channel_colors, default_settings.channel_colors + 16, live_conf.channel_colors);
+        
+        delete[] colors;
     }
-    live_conf.is_custom_ch_colors = fully_matched;
+    else
+        std::copy(default_settings.channel_colors, default_settings.channel_colors + 16, live_conf.channel_colors);
+    
     
     UI::current_audio_dev       = live_conf.audio_device_index;
     UI::loop_colors             = live_conf.loop_colors;

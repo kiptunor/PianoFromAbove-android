@@ -30,7 +30,7 @@ std::string colorToHex(unsigned int color)
     return ss.str();
 }
 
-unsigned int hexToUInt(const std::string& hex)
+unsigned int Config::hexToUInt(const std::string& hex)
 {
     std::string clean = hex.substr(1);  // Remove '#'
     return static_cast<unsigned int>(std::strtol(clean.c_str(), nullptr, 16));
@@ -48,11 +48,6 @@ Config::configuration Config::Load()
     
     nlohmann::json general_obj      = json_in.value("general", nlohmann::json::object());
     in_conf.use_default_paths       = general_obj.value("useDefaultPaths", default_settings.use_default_paths);
-    in_conf.last_midi_path          = general_obj.value("lastMidiPath", "");
-    in_conf.last_midi_file          = general_obj.value("lastMidiFilePath", "");
-    in_conf.last_image_path         = general_obj.value("lastImagePath", "");
-    in_conf.background_image_path   = general_obj.value("lastBackgroundImage", "");
-    in_conf.last_sf_path            = general_obj.value("lastSoundfontPath", "");
     in_conf.extra_sf_paths          = general_obj.value("soundfontPaths", std::vector<std::string>{});
     in_conf.no_soundfont_duplicates = general_obj.value("noSoundfontDuplicates", default_settings.no_soundfont_duplicates);
     in_conf.no_midi_duplicates      = general_obj.value("noMidiDuplicates", default_settings.no_midi_duplicates);
@@ -65,15 +60,6 @@ Config::configuration Config::Load()
     in_conf.note_speed          = visual_obj.value("noteSpeed", default_settings.note_speed);
     in_conf.loop_colors         = visual_obj.value("loopNoteColors", default_settings.loop_colors);
     in_conf.draw_vertical_lines = visual_obj.value("drawVerticalLines", default_settings.draw_vertical_lines);
-    int count = std::min(visual_obj["channelColors"].size(), (size_t)16);
-    if(count != 0)
-        in_conf.is_custom_ch_colors = true;
-    
-    for(int i = 0; i < count; ++i)
-    {
-        std::string hexStr = visual_obj["channelColors"][i].get<std::string>();
-        in_conf.channel_colors[i] = hexToUInt(hexStr);
-    }
     
     nlohmann::json background_image_obj = visual_obj.value("backgroundImage", nlohmann::json::object());
     in_conf.background_image      = background_image_obj.value("enabled", default_settings.background_image);
@@ -98,6 +84,14 @@ Config::configuration Config::Load()
     
     nlohmann::json limiter_obj = effects_obj.value("audioLimiter", nlohmann::json::object());
     in_conf.audio_limiter = limiter_obj.value("enabled", default_settings.audio_limiter);
+    
+    nlohmann::json file_dlg_obj = json_in.value("fileDialog", nlohmann::json::object());
+    in_conf.last_midi_path          = file_dlg_obj.value("lastMidiPath",          "");
+    in_conf.last_midi_file          = file_dlg_obj.value("lastMidiFilePath",      "");
+    in_conf.last_image_path         = file_dlg_obj.value("lastImagePath",         "");
+    in_conf.last_sf_path            = file_dlg_obj.value("lastSoundfontPath",     "");
+    in_conf.last_ccol_file_path     = file_dlg_obj.value("lastChannelColorsFile", "");
+    in_conf.last_ccol_path          = file_dlg_obj.value("lastChannelColorsPath", "");
     
     
     return in_conf;
@@ -130,16 +124,11 @@ void Config::Save(configuration config)
     for(int i = 0; i < 16; ++i)
         colorHexes.push_back(colorToHex(config.channel_colors[i]));
     
-    visual["channelColors"] = colorHexes;
+    //visual["channelColors"] = colorHexes;
         
     json_out = {
         { "general", {
             { "defaultPaths",          config.use_default_paths       },
-            { "lastMidiPath",          config.last_midi_path          },
-            { "lastMidiFilePath",      config.last_midi_file          },
-            { "lastSoundfontPath",     config.last_sf_path            },
-            { "lastImagePath",         config.last_image_path         },
-            { "lastBackgroundImage",   config.background_image_path   },
             { "soundfontPaths",        config.extra_sf_paths          },
             { "noMidiDuplicates",      config.no_midi_duplicates      },
             { "noSoundfontDuplicates", config.no_soundfont_duplicates }
@@ -161,6 +150,14 @@ void Config::Save(configuration config)
                     { "enabled", config.audio_limiter }
                 }}
             }}
+        }},
+        { "fileDialog", {
+            { "lastMidiPath",          config.last_midi_path          },
+            { "lastMidiFilePath",      config.last_midi_file          },
+            { "lastSoundfontPath",     config.last_sf_path            },
+            { "lastImagePath",         config.last_image_path         },
+            { "lastChannelColorsFile", config.last_ccol_file_path     },
+            { "lastChannelColorsPath", config.last_ccol_path          }
         }}
     };
 

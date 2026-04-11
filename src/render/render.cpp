@@ -446,7 +446,7 @@ void Render::LoadBackgroundImage(std::string file)
     
     if(!background_img)
     {
-        Log::error("Failed to load background image: %s", SDL_GetError());
+        Log::error("", "Failed to load background image: %s", SDL_GetError());
         return;
     }
 }

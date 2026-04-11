@@ -104,10 +104,12 @@ add_executable(nvi-pfa
     extern/imgui/extra/file_dlg/ImGuiFileDialog.cpp
     extern/imgui/extra/implot/implot.cpp
     extern/imgui/extra/implot/implot_demo.cpp
+    extern/imgui/extra/implot/implot_items.cpp
     src/cli.cpp
     src/audio/audio_effects.cpp
     src/audio/playback.cpp
     src/config/config.cpp
+    src/config/channel_colors.cpp
     src/nv_midi/MIDI.cpp
     src/nv_midi/list.cpp
     src/config/soundfont_list.cpp

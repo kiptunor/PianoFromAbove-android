@@ -8,6 +8,7 @@
 #include "render.h"
 #include "../config/soundfont_list.h"
 #include "../config/midi_list.h"
+#include "../config/channel_colors.h"
 #include "../audio/playback.h"
 #include "../logger.h"
 #include "../../assets/FA6FreeSolidFontData.h"
@@ -548,9 +549,8 @@ void UI::Setup(SDL_Window *w, SDL_Renderer *r)
 #else
     std::ostringstream ini_path;
     ini_path << FileHelpers::config_dir << "/" << IMGUI_INI_FILE_PATH;
-    Log::trace("", "INI File path: %s", ini_path.str().c_str());
     static std::string temp_str = ini_path.str();
-    io.IniFilename = temp_str.c_str();                 // Custom path for imgui ini
+    io.IniFilename = temp_str.c_str();
 #endif
 
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
@@ -641,9 +641,9 @@ void UI::Render(SDL_Renderer *r)
     
     float sf_col_w = ImGui::GetColumnWidth();
     float sf_btn_h = ImGui::GetContentRegionAvail().y;
-    if (ImGui::InvisibleButton(">>" , ImVec2(sf_col_w, sf_btn_h)))
+    if(ImGui::InvisibleButton(">>" , ImVec2(sf_col_w, sf_btn_h)))
         Playback::seek_playback(Playback::seek_amount);
-        
+
     if(ImGui::IsItemActive())
     {
         float holdDuration = ImGui::GetIO().MouseDownDuration[0]; // [0] is for the left mouse button
@@ -793,7 +793,7 @@ void UI::Render(SDL_Renderer *r)
                 
                 ImGui::SameLine();
                 
-                if(ImGui::Button("-"))
+                if(ImGui::Button(ICON_FA_TRASH_CAN))
                 {
                     live_midi_list.erase(live_midi_list.begin() + selIndex);
                     MidiList::save(live_midi_list);
@@ -806,7 +806,7 @@ void UI::Render(SDL_Renderer *r)
                 
                 ImGui::SameLine();
                 
-                if(ImGui::Button("X"))
+                if(ImGui::Button(ICON_FA_RECTANGLE_XMARK))
                 {
                     ImGui::OpenPopup("Clear Midi List Confirmation");
                 }
@@ -871,7 +871,7 @@ void UI::Render(SDL_Renderer *r)
                 
                 ImGui::SameLine();
                 
-                if(ImGui::Button("+"))
+                if(ImGui::Button(ICON_FA_SQUARE_PLUS))
                 {
                     IGFD::FileDialogConfig config;
 					config.path = last_sf_path;
@@ -890,6 +890,8 @@ void UI::Render(SDL_Renderer *r)
                     if(ImGuiFileDialog::Instance()->IsOk())
                     {
                         std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                        //std::string file_ext = ImGuiFileDialog::Instance()->GetCurrentFilter(); // Useless if I can't set the file extension in the config
+                        //Log::trace("File extension: %s", file_ext.c_str());
                         last_sf_path = ImGuiFileDialog::Instance()->GetCurrentPath();
                         live_conf.last_sf_path = last_sf_path;
                         Config::Save(live_conf);
@@ -916,7 +918,7 @@ void UI::Render(SDL_Renderer *r)
                 
                 ImGui::SameLine();
                 
-                if(ImGui::Button("-"))
+                if(ImGui::Button(ICON_FA_TRASH_CAN))
                 {
                     live_soundfont_list.erase(live_soundfont_list.begin() + selected_soundfont);
                     SoundfontList::Save(live_soundfont_list);
@@ -982,7 +984,7 @@ void UI::Render(SDL_Renderer *r)
                 
                 ImGui::SameLine();
                 
-                if(ImGui::Button("X"))
+                if(ImGui::Button(ICON_FA_RECTANGLE_XMARK))
                 {
                     ImGui::OpenPopup("Confirm clearance");
                 }
@@ -1086,7 +1088,7 @@ void UI::Render(SDL_Renderer *r)
                         ImGui::Text("Add directories to scan and create soundfont lists");
                         ImGui::InputTextWithHint("##idk", "New entry", soundfons_path_entry, IM_ARRAYSIZE(soundfons_path_entry));
                         ImGui::SameLine();
-                        if(ImGui::Button("+##sf"))
+                        if(ImGui::Button(ICON_FA_SQUARE_PLUS))
                         {
                             if(strlen(soundfons_path_entry) > 0)
                             {
@@ -1130,7 +1132,7 @@ void UI::Render(SDL_Renderer *r)
                         
                         ImGui::SameLine();
                             
-                        if(ImGui::Button("-##sf1"))
+                        if(ImGui::Button(ICON_FA_TRASH_CAN))
                         {
                             if(selected_soundfont_path_etry >= 0 && selected_soundfont_path_etry < (int)soundfont_paths.size())
                             {
@@ -1257,52 +1259,103 @@ void UI::Render(SDL_Renderer *r)
                             ImGui::EndTooltip();
                         }
                         
-                        ImGui::Separator();
-                        ImGui::Text("Custom Channel Colors *");
+                        //ImGui::Separator();
                         
-                        if(ImGui::Button("Reset"))
+                        if(ImGui::CollapsingHeader("Note Colors"))
                         {
+                            ImGui::Text("Pause to change colors");
+                        
+                            ImGui::PushID("ccol_fd_btn");
+                            if(ImGui::Button(ICON_FA_FOLDER_OPEN))
+                            {
+                                IGFD::FileDialogConfig config;
+                                config.path = live_conf.last_ccol_path;
+                                config.flags = ImGuiFileDialogFlags_HideColumnType;
+                                ImGuiFileDialog::Instance()->OpenDialog("CColFileFD", "Choose Channel Color Preset", ".ccol", config);
+                            }
+                            ImGui::PopID();
+                            if(ImGui::BeginItemTooltip())
+                            {
+                                ImGui::Text("Choose a channel color preset");
+                                ImGui::EndTooltip();
+                            }
+                        
+                            ConstrainWindowMove("Choose Channel Color Preset##CColFileFD");
+                            ImGui::PushFont(FONT_icon_set);
+                            if(ImGuiFileDialog::Instance()->Display("CColFileFD", 0, ImVec2(700, 500), ImVec2(FLT_MAX, FLT_MAX)))
+                            {
+                                if(ImGuiFileDialog::Instance()->IsOk())
+                                {
+                                    live_conf.last_ccol_file_path = ImGuiFileDialog::Instance()->GetFilePathName();
+                                    live_conf.last_ccol_path = ImGuiFileDialog::Instance()->GetCurrentPath();
+                                    
+                                    unsigned int* colors = ChannelColors::getChannelColors(live_conf.last_ccol_file_path);
+                                    
+                                    // Safety is on the edge D:
+                                    if(colors != nullptr)
+                                        std::copy(colors, colors + 16, live_conf.channel_colors);
+                                    
+                                    delete[] colors;
+                                    
+                                    Config::Save(live_conf); // This many not be good for anyone but it's necessary for the file dialog paths. This will be changed soon
+                                }
+                                
+                                ImGuiFileDialog::Instance()->Close();
+                            }
+                            ImGui::PopFont();
+                            
+                            ImGui::SameLine();
+                        
+                            if(ImGui::Button("Reset"))
+                            {
+                                for(int i = 0; i < 16; i++)
+                                {
+                                    ui_chcolors[i] = UIntToImVec4(NoteColors[i]);
+                                    live_conf.channel_colors[i] = NoteColors[i];
+                                }
+                                live_conf.is_custom_ch_colors = false;
+                            }
+                            if(ImGui::BeginItemTooltip())
+                            {
+                                ImGui::Text("Reset the color order");
+                                ImGui::EndTooltip();
+                            }
+                        
+                            //ImGui::SameLine();
+                            /*
+                            if(ImGui::Button("Test stuff"))
+                            {
+                                ChannelColors::getChannelColors("/home/andre/ch_colors.ccol");
+                            }
+                            */
+                        
                             for(int i = 0; i < 16; i++)
                             {
-                                ui_chcolors[i] = UIntToImVec4(NoteColors[i]);
-                                live_conf.channel_colors[i] = NoteColors[i];
+                                if(!is_defaultconfig)
+                                {
+                                    ui_chcolors[i] = UIntToImVec4(live_conf.channel_colors[i]);
+                                }
+                                
+                                temp_widget_id = "##Ch" + std::to_string(i);
+                                
+                                ImGui::BeginDisabled(!Playback::is_paused);
+                                ImGui::ColorEdit3(temp_widget_id.c_str(), (float*)&ui_chcolors[i], ImGuiColorEditFlags_NoInputs);
+                                ImGui::EndDisabled();
+                                
+                                ImGui::SameLine();
+                                
+                                live_conf.channel_colors[i] = ImVec4ToUInt(ui_chcolors[i]);
                             }
-                            live_conf.is_custom_ch_colors = false;
-                        }
-                        if(ImGui::BeginItemTooltip())
-                        {
-                            ImGui::Text("Reset the color order");
-                            ImGui::EndTooltip();
-                        }
+                            ImGui::Text("\n");
                         
-                        ImGui::Text("Pause to change colors");
+                            ImGui::Checkbox("Loop colors ", &loop_colors);
+                            live_conf.loop_colors = loop_colors;
                         
-                        for(int i = 0; i < 16; i++)
-                        {
-                            if(!is_defaultconfig)
+                            if(ImGui::BeginItemTooltip())
                             {
-                                ui_chcolors[i] = UIntToImVec4(live_conf.channel_colors[i]);
+                                ImGui::Text("The colors will be applied if track count exceeds 16\nIf no loop colors are enabled, random colors will be generated from track 17");
+                                ImGui::EndTooltip();
                             }
-                            
-                            temp_widget_id = "##Ch" + std::to_string(i);
-                            
-                            ImGui::BeginDisabled(!Playback::is_paused);
-                            ImGui::ColorEdit3(temp_widget_id.c_str(), (float*)&ui_chcolors[i], ImGuiColorEditFlags_NoInputs);
-                            ImGui::EndDisabled();
-
-                            ImGui::SameLine();
-                            
-                            live_conf.channel_colors[i] = ImVec4ToUInt(ui_chcolors[i]);
-                        }
-                        ImGui::Text("\n");
-                        
-                        ImGui::Checkbox("Loop colors ", &loop_colors);
-                        live_conf.loop_colors = loop_colors;
-                        
-                        if(ImGui::BeginItemTooltip())
-                        {
-                            ImGui::Text("The colors will be applied if track count exceeds 16\nIf no loop colors are enabled, random colors will be generated from track 17");
-                            ImGui::EndTooltip();
                         }
                         
                         if(ImGui::Checkbox("Background image", &background_image))
