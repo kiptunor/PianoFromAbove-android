@@ -11,7 +11,7 @@
 
 // uncomment if you need to use your FileSystem Interface
 // if commented, you have two defualt interface, std::filesystem or dirent
-// #define USE_CUSTOM_FILESYSTEM
+// #define USE_CUSTOM_F    ILESYSTEM
 // this options need c++17
 #define USE_STD_FILESYSTEM
 
