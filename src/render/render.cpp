@@ -248,8 +248,10 @@ void Render::CreateNote(int k, int yb, int ye, unsigned int c)
     unsigned int darker = 0xFF000000 | (b2 << 16) | (g2 << 8) | r2;
     unsigned int lighter = 0xFF000000 | (b1 << 16) | (g1 << 8) | r1;
     
+    // Draw the inside of the note
     DrawRect(Ren, x, ye, w, h, darker, darker, darker, darker);
-        
+    
+    // Draw all 4 borders of the note with a darker color
     if(h - 2.0f * fDeflate > 0)
         DrawRect(Ren, x + fDeflate, ye + fDeflate, w - 2.0f * fDeflate, h - 2.0f * fDeflate, c_bgr, lighter, lighter, c_bgr);
 }
@@ -269,25 +271,35 @@ void Render::DrawKeyBoard()
 	float fSharpCY = fTopCY * 0.67f;
     float fCurY = fTransitionCY + fRedCY + fSpacerCY;
     
-	DrawRect(Ren, 0, WinH - WinW * 82 / 1000, WinW, WinW * 82 / 1000, 0xFF000000,0xFF000000,0xFF000000,0xFF000000 );
-    DrawRect(Ren, 0, WinH - WinW * 82 / 1000 + fTransitionCY, WinW, fRedCY, 0xFF06054C, 0xFF06054C, 0xFF0D0A98, 0xFF0D0A98 );
-    DrawRect(Ren, 0, WinH - WinW * 82 / 1000 + fTransitionCY + fRedCY, WinW, fSpacerCY, 0xFF1C1C1C, 0xFF1C1C1C, 0xFF1C1C1C, 0xFF1C1C1C );
+    // Black bar (with top offset)
+	DrawRect(Ren, 0, WinH - WinW * 82 / 1000, WinW, WinW * 82 / 1000, 0xFF000000,0xFF000000,0xFF000000,0xFF000000);
+	
+	// Red gradient bar over the black bar
+    DrawRect(Ren, 0, WinH - WinW * 82 / 1000 + fTransitionCY, WinW, fRedCY, 0xFF06054C, 0xFF06054C, 0xFF0D0A98, 0xFF0D0A98);
+    
+    // Black spacer between red bar and keys
+    DrawRect(Ren, 0, WinH - WinW * 82 / 1000 + fTransitionCY + fRedCY, WinW, fSpacerCY, 0xFF1C1C1C, 0xFF1C1C1C, 0xFF1C1C1C, 0xFF1C1C1C);
+    
+    
     for(int i = 0; i != 75; ++i)
     {
 	    int j = KeyMap[i];
 	    if(!KeyPress[j])//If the key is not pressed
         {
 	        DrawRect(Ren, fCurX + fKeyGap1 , fCurY+WinH - WinW * 82 / 1000, _KeyWidth[j] - fKeyGap, fTopCY + fNearCY, 0xFFCCCCCC, 0xFFCCCCCC, 0xFFFFFFFF, 0xFFFFFFFF );
-            DrawRect(Ren, fCurX + fKeyGap1 , fCurY + fTopCY+WinH - WinW * 82 / 1000, _KeyWidth[j] - fKeyGap, fNearCY, 0xFFCCCCCC, 0xFFCCCCCC, 0xFF999999, 0xFF999999 );
+            //DrawRect(Ren, fCurX + fKeyGap1 , fCurY + fTopCY+WinH - WinW * 82 / 1000, _KeyWidth[j] - fKeyGap, fNearCY, 0xFFCCCCCC, 0xFFCCCCCC, 0xFF999999, 0xFF999999 );
+            // The bottom side of the key
             DrawRect(Ren, fCurX + fKeyGap1, fCurY + fTopCY+WinH - WinW * 82 / 1000, _KeyWidth[j] - fKeyGap, 2.0f, 0xFF3D3D3D, 0xFF3D3D3D, 0xFF999999, 0xFF999999 );
-
+            
+            /*
             if(j == 60)
             {
                 float fMXGap = floor( _KeyWidth[j] * 0.25f + 0.5f );
                 float fMCX = _KeyWidth[j] - fMXGap * 2.0f - fKeyGap;
                 float fMY = std::max( fCurY + fTopCY - fMCX - 5.0f, fCurY + fSharpCY + 5.0f );
-                DrawRect(Ren, fCurX + fKeyGap1 + fMXGap, fMY+WinH - WinW * 82 / 1000, fMCX, fCurY + fTopCY - 5.0f - fMY, 0xFFCCCCCC,0xFFCCCCCC,0xFFCCCCCC,0xFFCCCCCC );
+                //DrawRect(Ren, fCurX + fKeyGap1 + fMXGap, fMY+WinH - WinW * 82 / 1000, fMCX, fCurY + fTopCY - 5.0f - fMY, 0xFFCCCCCC,0xFFCCCCCC,0xFFCCCCCC,0xFFCCCCCC );
             }
+            */
         }
         else
         {
@@ -301,20 +313,25 @@ void Render::DrawKeyBoard()
             
             unsigned int c_bgr = 0xFF000000 | (b << 16) | (g << 8) | r;
             unsigned int darker = 0xFF000000 | (b2 << 16) | (g2 << 8) | r2;
-                
+            
+            // Draw the colored fill of the white keys
             DrawRect(Ren, fCurX + fKeyGap1, fCurY + WinH - WinW * 82 / 1000, _KeyWidth[j] - fKeyGap, fTopCY + fNearCY - 2.0f, darker, darker, c_bgr, c_bgr);
+            
+            // Draw the colored bottom of the white key when pressed
             DrawRect(Ren, fCurX + fKeyGap1, fCurY + fTopCY + fNearCY - 2.0f + WinH - WinW * 82 / 1000, _KeyWidth[j] - fKeyGap, 2.0f, darker, darker, darker, darker);
-                
+            
+            /*
             if(j == 60)
             {
                 float fMXGap = floor(_KeyWidth[j] * 0.25f + 0.5f);
                 float fMCX = _KeyWidth[j] - fMXGap * 2.0f - fKeyGap;
                 float fMY = std::max(fCurY + fTopCY + fNearCY - fMCX - 7.0f, fCurY + fSharpCY + 5.0f);
-                DrawRect(Ren, fCurX + fKeyGap1 + fMXGap, fMY + WinH - WinW * 82 / 1000, fMCX, fCurY + fTopCY + fNearCY - 7.0f - fMY, darker, darker, darker, darker);
+                //DrawRect(Ren, fCurX + fKeyGap1 + fMXGap, fMY + WinH - WinW * 82 / 1000, fMCX, fCurY + fTopCY + fNearCY - 7.0f - fMY, darker, darker, darker, darker);
             }
+            */
         }
         
-		//Drawing shadows on the bottom of the keys
+		//Gray edges of the white keys (No note color mixing is done)
 		DrawRect(Ren, floor( fCurX + fKeyGap1 + _KeyWidth[j] - fKeyGap + 0.5f ), fCurY+WinH - WinW * 82 / 1000, fKeyGap, fTopCY + fNearCY, 0xFF000000, 0xFF999999, 0xFF999999, 0xFF000000 );
 		fCurX+=_KeyWidth[j];
     }
@@ -334,11 +351,22 @@ void Render::DrawKeyBoard()
         const float fSharpTopX2 = fSharpTopX1 + _KeyWidth[0] * fSharpTop;
 	    if(!KeyPress[j])//If the key is not pressed
         {
-            DrawSkew(Ren, fSharpTopX1, fCurY + fSharpCY - fNearCY+WinH - WinW * 82 / 1000, fSharpTopX2, fCurY + fSharpCY - fNearCY+WinH - WinW * 82 / 1000, x + cx, fCurY + fSharpCY+WinH - WinW * 82 / 1000, x, fCurY + fSharpCY+WinH - WinW * 82 / 1000, 0xFF404040,0xFF404040, 0xFF000000, 0xFF000000 );
-            DrawSkew(Ren, fSharpTopX1, fCurY - fNearCY+WinH - WinW * 82 / 1000, fSharpTopX1, fCurY + fSharpCY - fNearCY+WinH - WinW * 82 / 1000, x, fCurY + fSharpCY+WinH - WinW * 82 / 1000, x, fCurY+WinH - WinW * 82 / 1000, 0xFF404040,0xFF404040, 0xFF000000, 0xFF000000 );
-            DrawSkew(Ren, fSharpTopX2, fCurY + fSharpCY - fNearCY+WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNearCY+WinH - WinW * 82 / 1000, x + cx, fCurY+WinH - WinW * 82 / 1000, x + cx, fCurY + fSharpCY+WinH - WinW * 82 / 1000, 0xFF404040,0xFF404040, 0xFF000000, 0xFF000000 );
-            DrawRect(Ren, fSharpTopX1, fCurY - fNearCY+WinH - WinW * 82 / 1000, fSharpTopX2 - fSharpTopX1, fSharpCY, 0xFF000000,0xFF000000,0xFF000000,0xFF000000 );
-            DrawSkew(Ren, fSharpTopX1, fCurY - fNearCY+WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNearCY+WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNearCY + fSharpCY * 0.45f+WinH - WinW * 82 / 1000, fSharpTopX1, fCurY - fNearCY + fSharpCY * 0.35f+WinH - WinW * 82 / 1000, 0xFF202020,0xFF202020,0xFF404040,0xFF404040 );
+            // Black keys bottom end
+            DrawSkew(Ren, fSharpTopX1, fCurY + fSharpCY - fNearCY+WinH - WinW * 82 / 1000, fSharpTopX2, fCurY + fSharpCY - fNearCY+WinH - WinW * 82 / 1000, x + cx, fCurY + fSharpCY+WinH - WinW * 82 / 1000, x, fCurY + fSharpCY+WinH - WinW * 82 / 1000, 0xFF404040,0xFF404040, 0xFF000000, 0xFF000000);
+            
+            // Left side of the black keys
+            DrawSkew(Ren, fSharpTopX1, fCurY - fNearCY+WinH - WinW * 82 / 1000, fSharpTopX1, fCurY + fSharpCY - fNearCY+WinH - WinW * 82 / 1000, x, fCurY + fSharpCY+WinH - WinW * 82 / 1000, x, fCurY+WinH - WinW * 82 / 1000, 0xFF404040,0xFF404040, 0xFF000000, 0xFF000000);
+            
+            // Right side of the black keys
+            DrawSkew(Ren, fSharpTopX2, fCurY + fSharpCY - fNearCY+WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNearCY+WinH - WinW * 82 / 1000, x + cx, fCurY+WinH - WinW * 82 / 1000, x + cx, fCurY + fSharpCY+WinH - WinW * 82 / 1000, 0xFF404040,0xFF404040, 0xFF000000, 0xFF000000);
+            
+            // Bottom half gradient of the black keys
+            DrawRect(Ren, fSharpTopX1, fCurY - fNearCY+WinH - WinW * 82 / 1000, fSharpTopX2 - fSharpTopX1, fSharpCY, 0xFF000000,0xFF000000,0xFF000000,0xFF000000);
+            
+            // Top half gradient of the black keys
+            DrawSkew(Ren, fSharpTopX1, fCurY - fNearCY+WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNearCY+WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNearCY + fSharpCY * 0.45f+WinH - WinW * 82 / 1000, fSharpTopX1, fCurY - fNearCY + fSharpCY * 0.35f+WinH - WinW * 82 / 1000, 0xFF202020,0xFF202020,0xFF404040,0xFF404040);
+            
+            // Middle gradient (?)
             DrawSkew(Ren, fSharpTopX1, fCurY - fNearCY + fSharpCY * 0.35f+WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNearCY + fSharpCY * 0.45f+WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNearCY + fSharpCY * 0.65f+WinH - WinW * 82 / 1000, fSharpTopX1, fCurY - fNearCY + fSharpCY * 0.55f+WinH - WinW * 82 / 1000, 0xFF404040,0xFF404040, 0xFF000000, 0xFF000000);
         }
         else
@@ -354,12 +382,23 @@ void Render::DrawKeyBoard()
             
             unsigned int c_bgr = 0xFF000000 | (b << 16) | (g << 8) | r;
             unsigned int darker = 0xFF000000 | (b1 << 16) | (g1 << 8) | r1;
-                
+            
+            // Black keys bottom end
             DrawSkew(Ren, fSharpTopX1, fCurY + fSharpCY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY + fSharpCY - fNewNear + WinH - WinW * 82 / 1000, x + cx, fCurY + fSharpCY + WinH - WinW * 82 / 1000, x, fCurY + fSharpCY + WinH - WinW * 82 / 1000, c_bgr, c_bgr, darker, darker);
+            
+            // Left side of the black keys
             DrawSkew(Ren, fSharpTopX1, fCurY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX1, fCurY + fSharpCY - fNewNear + WinH - WinW * 82 / 1000, x, fCurY + fSharpCY + WinH - WinW * 82 / 1000, x, fCurY + WinH - WinW * 82 / 1000, c_bgr, c_bgr, darker, darker);
+            
+            // Right side of the black keys
             DrawSkew(Ren, fSharpTopX2, fCurY + fSharpCY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + WinH - WinW * 82 / 1000, x + cx, fCurY + WinH - WinW * 82 / 1000, x + cx, fCurY + fSharpCY + WinH - WinW * 82 / 1000, c_bgr, c_bgr, darker, darker);
+            
+            // Bottom half gradient of the black keys
             DrawRect(Ren, fSharpTopX1, fCurY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2 - fSharpTopX1, fSharpCY, darker, darker, darker, darker);
+            
+            // Top half gradient of the black keys
             DrawSkew(Ren, fSharpTopX1, fCurY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + fSharpCY * 0.35f + WinH - WinW * 82 / 1000, fSharpTopX1, fCurY - fNewNear + fSharpCY * 0.25f + WinH - WinW * 82 / 1000, c_bgr, c_bgr, c_bgr, c_bgr);
+            
+            // Middle gradient (?)
             DrawSkew(Ren, fSharpTopX1, fCurY - fNewNear + fSharpCY * 0.25f + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + fSharpCY * 0.35f + WinH - WinW * 82 / 1000, fSharpTopX2, fCurY - fNewNear + fSharpCY * 0.75f + WinH - WinW * 82 / 1000, fSharpTopX1, fCurY - fNewNear + fSharpCY * 0.65f + WinH - WinW * 82 / 1000, c_bgr, c_bgr, darker, darker);
         }
     }

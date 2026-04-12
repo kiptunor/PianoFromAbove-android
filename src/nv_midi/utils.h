@@ -21,7 +21,7 @@ namespace  NVMidi   /* ===== Tool function namespace ===== */
     using std::size_t;
 
     /* Mapping strings to big-endian integers */
-    nv_ul64 operator"" _u64be(const char *str, size_t n);
+    nv_ul64 operator""_u64be(const char *str, size_t n);
 
 
     void revU16(u16_t &x); // Reversing the end-order of a 16-bit integer variable

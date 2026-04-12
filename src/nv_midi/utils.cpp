@@ -6,7 +6,7 @@
 
 
 
-NVMidi::nv_ul64 NVMidi::operator"" _u64be(const char *str, size_t n)
+NVMidi::nv_ul64 NVMidi::operator""_u64be(const char *str, size_t n)
 {
     nv_ul64 ans = 0;
     u16_t   sft = 0; 
