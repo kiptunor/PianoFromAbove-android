@@ -10,6 +10,7 @@
 #include "playback.h"
 #include "../nv_midi/list.h"
 #include "../globals.h"
+#include "../config/midi_list.h"
 #include "audio_effects.h"
 #include "../render/render.h"
 
@@ -187,7 +188,7 @@ void Playback::loadMidiFile(const std::string& midi_path)
     playback_ended = false; // Allow the playback to start with the audio playback
     
     // Update current midi path
-    loaded_config.last_midi_path = midi_path;
+    MidiList::last_midi_file = midi_path;
     
     SDL_UnlockMutex(bass_mutex);
 }

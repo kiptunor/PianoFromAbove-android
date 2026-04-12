@@ -20,10 +20,11 @@ class MidiList
 {
     public:
         static std::vector<std::string> load();
-        static void save(const std::vector<std::string> files);
+        static void save(const std::vector<std::string> files, const std::string& last_midi_file);
         static bool missing_files;
         static std::vector<std::string> missing_files_list;
         static std::string midi_list_path;
+        static std::string last_midi_file;
 };
 
 #endif

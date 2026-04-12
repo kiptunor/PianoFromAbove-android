@@ -7,6 +7,7 @@
 #include "config/config.h"
 #include "mb_types.h"
 #include "audio/playback.h"
+#include "config/file_dialog_state.h"
 //#include "config/soundfont_list.h"
 
 
@@ -23,6 +24,8 @@ inline SDL_Mutex *bass_mutex = nullptr;
 inline bool is_defaultconfig;
 inline bool Playback::is_paused;
 inline std::vector<UI::SoundfontItem> loaded_soundfont_list;
+inline FileDialogState::DirPaths loaded_file_dialog_state;
+inline FileDialogState::DirPaths live_fd_state;
 
 
 #endif

@@ -51,14 +51,12 @@ class Config
             bool loop_colors;
             bool draw_vertical_lines;
             bool vsync;
+            bool custom_ui_theme;
             bool OR; // Overlap remover
-            std::string last_midi_path;
-            std::string last_sf_path;
             std::string last_midi_file;
             std::string last_ccol_file_path;
-            std::string last_ccol_path;
             std::string background_image_path;
-            std::string last_image_path;
+            std::string ui_theme_file_path;
             std::vector<std::string> current_soundfonts;
             std::vector<std::string> extra_midi_paths;
             std::vector<std::string> extra_sf_paths;
@@ -114,6 +112,7 @@ inline Config::configuration default_settings =
     .loop_colors = false,
     .draw_vertical_lines = true,
     .vsync = true,
+    .custom_ui_theme = false,
     .OR = true,
 };
 

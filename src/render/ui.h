@@ -79,6 +79,7 @@ class UI
         static bool background_image;
         static bool vsync;
         static bool use_default_media_paths;
+        static bool ui_theming;
         static ImVec4 ui_chcolors[16];
         static ImVec4 clear_color;
         static RGBAint liveColor;

@@ -110,6 +110,7 @@ add_executable(nvi-pfa
     src/audio/playback.cpp
     src/config/config.cpp
     src/config/channel_colors.cpp
+    src/config/file_dialog_state.cpp
     src/nv_midi/MIDI.cpp
     src/nv_midi/list.cpp
     src/config/soundfont_list.cpp

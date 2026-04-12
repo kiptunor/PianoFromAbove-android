@@ -30,6 +30,7 @@
 #include "config/midi_list.h"
 #include "config/channel_colors.h"
 #include "config/soundfont_list.h"
+#include "config/file_dialog_state.h"
 #include "globals.h"
 #include "audio/playback.h"
 #include "render/render.h"
@@ -112,15 +113,16 @@ void UI::UpdateWidgetValues()
     UI::live_note_speed         = live_conf.note_speed;
     UI::min_velocity            = live_conf.vel_min;
     UI::max_velocity            = live_conf.vel_max;
-    UI::last_midi_path          = live_conf.last_midi_path;
+    UI::last_midi_path          = live_fd_state.midi_path;
     UI::last_midi_file          = live_conf.last_midi_file;
     UI::vsync                   = live_conf.vsync;
     UI::soundfont_paths         = live_conf.extra_sf_paths;
-    UI::last_sf_path            = live_conf.last_sf_path;
+    UI::last_sf_path            = live_fd_state.soundfont_path;
     UI::no_midi_duplicates      = live_conf.no_midi_duplicates;
     UI::vertical_lines          = live_conf.draw_vertical_lines;
     UI::no_soundfont_duplicates = live_conf.no_soundfont_duplicates;
     UI::background_image        = live_conf.background_image;
+    UI::ui_theming              = live_conf.custom_ui_theme;
     live_soundfont_list         = loaded_soundfont_list;
 }
 
@@ -158,6 +160,10 @@ int APP_ENTRY(int argc, char *argv[])
     std::ostringstream soundfont_list_path;
     soundfont_list_path << FileHelpers::lists_dir << "/" << SOUNDFONT_LIST_FILE;
     SoundfontList::soundfont_list_path = soundfont_list_path.str();
+    
+    std::ostringstream file_dialog_state_path;
+    file_dialog_state_path << FileHelpers::lists_dir << "/" << FD_STATE_FILE_PATH;
+    FileDialogState::json_file_path = file_dialog_state_path.str();
 #else
     std::ostringstream config_path;
     config_path << CONFIG_FILE;
@@ -167,6 +173,9 @@ int APP_ENTRY(int argc, char *argv[])
     
     std::ostringstream soundfont_list_path;
     soundfont_list_path << SOUNDFONT_LIST_FILE;
+    
+    std::ostringstream file_dialog_state_path;
+    file_dialog_state_path << FD_STATE_FILE_PATH;
 #endif
 
     /*
@@ -191,6 +200,12 @@ int APP_ENTRY(int argc, char *argv[])
         loaded_midi_list = MidiList::load();
         live_midi_list = loaded_midi_list;
     }
+    
+    /* - - - - File Dialog State Handling - - - - */
+    if(std::filesystem::exists(file_dialog_state_path.str()))
+        loaded_file_dialog_state = FileDialogState::load();
+    
+    live_fd_state = loaded_file_dialog_state;
     
     
     /* - - - - Graphics Rendering Setup - - - - */

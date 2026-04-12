@@ -13,11 +13,14 @@
 bool MidiList::missing_files;
 std::vector<std::string> MidiList::missing_files_list;
 std::string MidiList::midi_list_path;
+std::string MidiList::last_midi_file;
 
 
-void MidiList::save(const std::vector<std::string> files)
+void MidiList::save(const std::vector<std::string> files, const std::string& last_midi_file)
 {
     nlohmann::json midi_list_arr = nlohmann::json::object();
+    midi_list_arr["lastMidiFile"] = last_midi_file;
+    
     midi_list_arr["PreviousMidiFiles"] = files;
     
 
@@ -38,6 +41,8 @@ std::vector<std::string> MidiList::load()
     
     nlohmann::json midi_list_arr;
     file >> midi_list_arr;
+    
+    midi_list_arr.value("lastMidiFile", "");
     
     if(!midi_list_arr.contains("PreviousMidiFiles"))
     {

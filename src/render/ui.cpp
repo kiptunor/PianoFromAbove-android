@@ -9,6 +9,7 @@
 #include "../config/soundfont_list.h"
 #include "../config/midi_list.h"
 #include "../config/channel_colors.h"
+#include "../config/file_dialog_state.h"
 #include "../audio/playback.h"
 #include "../logger.h"
 #include "../../assets/FA6FreeSolidFontData.h"
@@ -23,6 +24,7 @@
 #include <backend_render/imgui_impl_sdl3.h>
 #include <backend_render/imgui_impl_sdlrenderer3.h>
 #include <file_dlg/ImGuiFileDialog.h>
+#include <imgui_styles.h>
 #include <DixelU/smic.h>
 
 
@@ -36,9 +38,7 @@ static char midi_search[128];
 static char sf_search[128];
 static std::string midi_search_text;
 static std::string sf_search_text;
-static std::string img_filename;
-static std::string sf_filename;
-static std::string midi_filename;
+static std::string midi_file;
 static char soundfons_path_entry[1024];
 int selected_midi_path_entry;
 int selected_soundfont_path_etry;
@@ -75,6 +75,7 @@ bool UI::use_default_media_paths = true;
 bool UI::background_image;
 bool UI::show_full_path_lost_midis = false;
 bool UI::show_full_path_lost_soundfonts = false;
+bool UI::ui_theming = false;
 int  UI::min_velocity;
 int  UI::max_velocity;
 std::string UI::last_midi_path;
@@ -558,7 +559,12 @@ void UI::Setup(SDL_Window *w, SDL_Renderer *r)
     
     // Setup ImGui style
     ImGui::StyleColorsDark();
-    SetDefaultTheme(); // Setting a nice looking GUI :3
+    
+    if(!live_conf.custom_ui_theme)
+        SetDefaultTheme(); // Setting a nice looking GUI :3
+    
+    else
+        ImGui::LoadStyleFrom(live_conf.ui_theme_file_path.c_str());
     
     //Metrophobic-Regular.ttf
     //Font suggested by Nerdly
@@ -716,7 +722,7 @@ void UI::Render(SDL_Renderer *r)
                 if(ImGui::Button(ICON_FA_FOLDER_OPEN))
                 {
                     IGFD::FileDialogConfig config;
-					config.path = last_midi_path;
+					config.path = live_fd_state.midi_path;
 					config.flags = ImGuiFileDialogFlags_HideColumnType;
                     ImGuiFileDialog::Instance()->OpenDialog("MidiFileFD", "Choose a MIDI File", ".mid,.midi,.smf,.MID,.MIDI,.SMF", config);
                 }
@@ -732,31 +738,27 @@ void UI::Render(SDL_Renderer *r)
                 {
                     if(ImGuiFileDialog::Instance()->IsOk())
                     {
-                        std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-                        std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-                        last_midi_path = filePath;
-                        last_midi_file = filePathName;
-                        live_conf.last_midi_path = last_midi_path;
-                        live_conf.last_midi_file = last_midi_file;
-                        Config::Save(live_conf);
+                        midi_file = ImGuiFileDialog::Instance()->GetFilePathName();
+                        live_fd_state.midi_path = ImGuiFileDialog::Instance()->GetCurrentPath();
+                        FileDialogState::save(live_fd_state);
                         Playback::CloseMidi(); // Close previous MIDI file
-                        Playback::loadMidiFile(filePathName);
+                        Playback::loadMidiFile(midi_file);
                         
                         
                         if(no_midi_duplicates)
                         {
-                            if(!searchDuplicatedMidiItem(live_midi_list, filePathName))
+                            if(!searchDuplicatedMidiItem(live_midi_list, midi_file))
                             {
-                                live_midi_list.emplace_back(filePathName);
-                                MidiList::save(live_midi_list);
+                                live_midi_list.emplace_back(midi_file);
+                                MidiList::save(live_midi_list, midi_file);
                             }
                             else
                                 Log::info("Same midi already exists");
                         }
                         else
                         {
-                            live_midi_list.emplace_back(filePathName);
-                            MidiList::save(live_midi_list);
+                            live_midi_list.emplace_back(midi_file);
+                            MidiList::save(live_midi_list, midi_file);
                         }
                     }
                     
@@ -796,7 +798,7 @@ void UI::Render(SDL_Renderer *r)
                 if(ImGui::Button(ICON_FA_TRASH_CAN))
                 {
                     live_midi_list.erase(live_midi_list.begin() + selIndex);
-                    MidiList::save(live_midi_list);
+                    MidiList::save(live_midi_list, midi_file);
                 }
                 if(ImGui::BeginItemTooltip())
                 {
@@ -851,7 +853,7 @@ void UI::Render(SDL_Renderer *r)
                     if(ImGui::Button("Yes", ImVec2(120.0f, 0)))
                     {
                         live_midi_list.clear();
-                        MidiList::save(live_midi_list);
+                        MidiList::save(live_midi_list, midi_file);
                         ImGui::CloseCurrentPopup();
                     }
                     
@@ -874,7 +876,7 @@ void UI::Render(SDL_Renderer *r)
                 if(ImGui::Button(ICON_FA_SQUARE_PLUS))
                 {
                     IGFD::FileDialogConfig config;
-					config.path = last_sf_path;
+					config.path = live_fd_state.soundfont_path;
 					config.flags = ImGuiFileDialogFlags_HideColumnType;
                     ImGuiFileDialog::Instance()->OpenDialog("SoundfontFD", "Choose Soundfont File", ".sf2,.sfz,.SF2,.SFZ", config);
                 }
@@ -892,9 +894,9 @@ void UI::Render(SDL_Renderer *r)
                         std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
                         //std::string file_ext = ImGuiFileDialog::Instance()->GetCurrentFilter(); // Useless if I can't set the file extension in the config
                         //Log::trace("File extension: %s", file_ext.c_str());
-                        last_sf_path = ImGuiFileDialog::Instance()->GetCurrentPath();
-                        live_conf.last_sf_path = last_sf_path;
-                        Config::Save(live_conf);
+                        live_fd_state.soundfont_path = ImGuiFileDialog::Instance()->GetCurrentPath();
+                        //live_conf.last_sf_path = last_sf_path;
+                        FileDialogState::save(live_fd_state);
                         
                         if(no_soundfont_duplicates)
                         {
@@ -1250,17 +1252,6 @@ void UI::Render(SDL_Renderer *r)
                         }
                         liveColor = Frgba2Irgba(clear_color);
                         
-                        ImGui::Checkbox("Vertical Lines", &vertical_lines);
-                        live_conf.draw_vertical_lines = vertical_lines;
-                        
-                        if(ImGui::BeginItemTooltip())
-                        {
-                            ImGui::Text("Show the vertical lines in between the white keys");
-                            ImGui::EndTooltip();
-                        }
-                        
-                        //ImGui::Separator();
-                        
                         if(ImGui::CollapsingHeader("Note Colors"))
                         {
                             ImGui::Text("Pause to change colors");
@@ -1269,7 +1260,7 @@ void UI::Render(SDL_Renderer *r)
                             if(ImGui::Button(ICON_FA_FOLDER_OPEN))
                             {
                                 IGFD::FileDialogConfig config;
-                                config.path = live_conf.last_ccol_path;
+                                config.path = live_fd_state.ccol_path;
                                 config.flags = ImGuiFileDialogFlags_HideColumnType;
                                 ImGuiFileDialog::Instance()->OpenDialog("CColFileFD", "Choose Channel Color Preset", ".ccol", config);
                             }
@@ -1287,7 +1278,7 @@ void UI::Render(SDL_Renderer *r)
                                 if(ImGuiFileDialog::Instance()->IsOk())
                                 {
                                     live_conf.last_ccol_file_path = ImGuiFileDialog::Instance()->GetFilePathName();
-                                    live_conf.last_ccol_path = ImGuiFileDialog::Instance()->GetCurrentPath();
+                                    live_fd_state.ccol_path = ImGuiFileDialog::Instance()->GetCurrentPath();
                                     
                                     unsigned int* colors = ChannelColors::getChannelColors(live_conf.last_ccol_file_path);
                                     
@@ -1297,7 +1288,8 @@ void UI::Render(SDL_Renderer *r)
                                     
                                     delete[] colors;
                                     
-                                    Config::Save(live_conf); // This many not be good for anyone but it's necessary for the file dialog paths. This will be changed soon
+                                    FileDialogState::save(live_fd_state);
+                                    
                                 }
                                 
                                 ImGuiFileDialog::Instance()->Close();
@@ -1320,14 +1312,6 @@ void UI::Render(SDL_Renderer *r)
                                 ImGui::Text("Reset the color order");
                                 ImGui::EndTooltip();
                             }
-                        
-                            //ImGui::SameLine();
-                            /*
-                            if(ImGui::Button("Test stuff"))
-                            {
-                                ChannelColors::getChannelColors("/home/andre/ch_colors.ccol");
-                            }
-                            */
                         
                             for(int i = 0; i < 16; i++)
                             {
@@ -1358,47 +1342,108 @@ void UI::Render(SDL_Renderer *r)
                             }
                         }
                         
-                        if(ImGui::Checkbox("Background image", &background_image))
-                            RenderWin->LoadBackgroundImage(live_conf.background_image_path);
-                        
-                        live_conf.background_image = background_image;
-                        
-                        ImGui::SameLine();
-                        
-                        if(ImGui::Button(ICON_FA_FOLDER_OPEN))
+                        if(ImGui::CollapsingHeader("Background"))
                         {
-                            IGFD::FileDialogConfig config;
-					        config.path = live_conf.last_image_path;
-							config.flags = ImGuiFileDialogFlags_HideColumnType;
-                            ImGuiFileDialog::Instance()->OpenDialog("ImageFileFD", "Choose Image File", ".png,.jpg,.jpeg,.webp,.bmp,.svg", config);
-                        }
-                        if(ImGui::BeginItemTooltip())
-                        {
-                            ImGui::Text("Load a background image");
-                            ImGui::EndTooltip();
-                        }
-                        
-                        ImGui::Text("Image file: %s", FilenameOnly(live_conf.background_image_path).c_str());
-                        
-                        ImGui::PushFont(FONT_icon_set);
-                        if(ImGuiFileDialog::Instance()->Display("ImageFileFD", 0, ImVec2(700, 500), ImVec2(FLT_MAX, FLT_MAX)))
-                        {
-                            if(ImGuiFileDialog::Instance()->IsOk())
+                            ImGui::Checkbox("Vertical Lines", &vertical_lines);
+                            live_conf.draw_vertical_lines = vertical_lines;
+                            
+                            if(ImGui::BeginItemTooltip())
                             {
-                                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-                                std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-                                
-                                live_conf.background_image_path = filePathName;
-                                live_conf.last_image_path = filePath;
-                                
-                                Config::Save(live_conf);
-                                
-                                RenderWin->LoadBackgroundImage(filePathName);
+                                ImGui::Text("Show the vertical lines in between the white keys");
+                                ImGui::EndTooltip();
                             }
                             
-                            ImGuiFileDialog::Instance()->Close();
+                            if(ImGui::Checkbox("Background image", &background_image))
+                                RenderWin->LoadBackgroundImage(live_conf.background_image_path);
+                        
+                            live_conf.background_image = background_image;
+                        
+                            ImGui::SameLine();
+                        
+                            if(ImGui::Button(ICON_FA_FOLDER_OPEN))
+                            {
+                                IGFD::FileDialogConfig config;
+                                config.path = live_fd_state.bg_image_path;
+                                config.flags = ImGuiFileDialogFlags_HideColumnType;
+                                ImGuiFileDialog::Instance()->OpenDialog("ImageFileFD", "Choose Image File", ".png,.jpg,.jpeg,.webp,.bmp,.svg", config);
+                            }
+                            if(ImGui::BeginItemTooltip())
+                            {
+                                ImGui::Text("Load a background image");
+                                ImGui::EndTooltip();
+                            }
+                            
+                            ImGui::PushFont(FONT_icon_set);
+                            if(ImGuiFileDialog::Instance()->Display("ImageFileFD", 0, ImVec2(700, 500), ImVec2(FLT_MAX, FLT_MAX)))
+                            {
+                                if(ImGuiFileDialog::Instance()->IsOk())
+                                {
+                                    live_conf.background_image_path = ImGuiFileDialog::Instance()->GetFilePathName();
+                                    live_fd_state.bg_image_path = ImGuiFileDialog::Instance()->GetCurrentPath();
+                                    FileDialogState::save(live_fd_state);
+                                    
+                                    RenderWin->LoadBackgroundImage(live_conf.background_image_path);
+                                }
+                                
+                                ImGuiFileDialog::Instance()->Close();
+                            }
+                            ImGui::PopFont();
+                        
+                            ImGui::Text("Image file: %s", FilenameOnly(live_conf.background_image_path).c_str());
                         }
-                        ImGui::PopFont();
+                        
+                        if(ImGui::CollapsingHeader("UI Theme"))
+                        {
+                            if(ImGui::Checkbox("Enable custom UI theme", &ui_theming))
+                            {
+                                live_conf.custom_ui_theme = ui_theming;
+                                if(!ui_theming)
+                                    SetDefaultTheme();
+                                else
+                                    if(std::filesystem::exists(live_conf.ui_theme_file_path))
+                                        ImGui::LoadStyleFrom(live_conf.ui_theme_file_path.c_str());
+                                        // Warn the user if the theme file is missing
+                                    else
+                                        SetDefaultTheme();
+                            }
+                            
+                            ImGui::SameLine();
+                            
+                            ImGui::BeginDisabled(!live_conf.custom_ui_theme);
+                            ImGui::PushID("uiThemeId");
+                            if(ImGui::Button(ICON_FA_FOLDER_OPEN))
+                            {
+                                IGFD::FileDialogConfig config;
+					            config.path = live_fd_state.ui_theme_path;
+					            config.flags = ImGuiFileDialogFlags_HideColumnType;
+                                ImGuiFileDialog::Instance()->OpenDialog("UiThemeFD", "Choose a Custom UI Theme", ".imst", config);
+                            }
+                            ImGui::PopID();
+                            if(ImGui::BeginItemTooltip())
+                            {
+                                ImGui::Text("Choose a UI Theme File");
+                                ImGui::EndTooltip();
+                            }
+                            
+                            ImGui::PushFont(FONT_icon_set);
+                            ConstrainWindowMove("Choose a Custom UI Theme##UiThemeFD");
+                            if(ImGuiFileDialog::Instance()->Display("UiThemeFD", 0, ImVec2(700, 500), ImVec2(FLT_MAX, FLT_MAX)))
+                            {
+                                if(ImGuiFileDialog::Instance()->IsOk())
+                                {
+                                    live_conf.ui_theme_file_path = ImGuiFileDialog::Instance()->GetFilePathName();
+                                    live_fd_state.ui_theme_path = ImGuiFileDialog::Instance()->GetCurrentPath();
+                                    FileDialogState::save(live_fd_state);
+                                    ImGui::LoadStyleFrom(live_conf.ui_theme_file_path.c_str());
+                                }
+                                
+                                ImGuiFileDialog::Instance()->Close();
+                            }
+                            ImGui::PopFont();
+                            ImGui::EndDisabled();
+                            
+                            ImGui::Text("Current theme: %s", live_conf.ui_theme_file_path.c_str());
+                        }
                     
                         ImGui::EndTabItem();
                     }

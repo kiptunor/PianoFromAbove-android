@@ -60,6 +60,10 @@ Config::configuration Config::Load()
     in_conf.note_speed          = visual_obj.value("noteSpeed", default_settings.note_speed);
     in_conf.loop_colors         = visual_obj.value("loopNoteColors", default_settings.loop_colors);
     in_conf.draw_vertical_lines = visual_obj.value("drawVerticalLines", default_settings.draw_vertical_lines);
+    in_conf.last_ccol_file_path = visual_obj.value("channelColors", "");
+    nlohmann::json ui_theme_obj = visual_obj.value("customUiTheme", nlohmann::json::object());
+    in_conf.custom_ui_theme      = ui_theme_obj.value("enabled", default_settings.custom_ui_theme);
+    in_conf.ui_theme_file_path   = ui_theme_obj.value("path", default_settings.ui_theme_file_path);
     
     nlohmann::json background_image_obj = visual_obj.value("backgroundImage", nlohmann::json::object());
     in_conf.background_image      = background_image_obj.value("enabled", default_settings.background_image);
@@ -85,15 +89,6 @@ Config::configuration Config::Load()
     nlohmann::json limiter_obj = effects_obj.value("audioLimiter", nlohmann::json::object());
     in_conf.audio_limiter = limiter_obj.value("enabled", default_settings.audio_limiter);
     
-    nlohmann::json file_dlg_obj = json_in.value("fileDialog", nlohmann::json::object());
-    in_conf.last_midi_path          = file_dlg_obj.value("lastMidiPath",          "");
-    in_conf.last_midi_file          = file_dlg_obj.value("lastMidiFilePath",      "");
-    in_conf.last_image_path         = file_dlg_obj.value("lastImagePath",         "");
-    in_conf.last_sf_path            = file_dlg_obj.value("lastSoundfontPath",     "");
-    in_conf.last_ccol_file_path     = file_dlg_obj.value("lastChannelColorsFile", "");
-    in_conf.last_ccol_path          = file_dlg_obj.value("lastChannelColorsPath", "");
-    
-    
     return in_conf;
 }
 
@@ -106,6 +101,7 @@ void Config::Save(configuration config)
         { "vsync", config.vsync },
         { "noteSpeed", config.note_speed },
         { "loopNoteColors", config.loop_colors },
+        { "channelColors", config.last_ccol_file_path     },
         { "drawVerticalLines", config.draw_vertical_lines },
         { "backgroundImage", {
             { "enabled", config.background_image },
@@ -117,21 +113,23 @@ void Config::Save(configuration config)
             { "B", config.bg_B },
             { "A", config.bg_A }
         }},
-        { "overlapRemover", config.OR }
+        { "overlapRemover", config.OR },
+        { "customUiTheme", {
+            { "enabled",  config.custom_ui_theme    },
+            { "path",     config.ui_theme_file_path }
+        }},
     };
         
     std::vector<std::string> colorHexes;
     for(int i = 0; i < 16; ++i)
         colorHexes.push_back(colorToHex(config.channel_colors[i]));
-    
-    //visual["channelColors"] = colorHexes;
         
     json_out = {
         { "general", {
             { "defaultPaths",          config.use_default_paths       },
             { "soundfontPaths",        config.extra_sf_paths          },
             { "noMidiDuplicates",      config.no_midi_duplicates      },
-            { "noSoundfontDuplicates", config.no_soundfont_duplicates }
+            { "noSoundfontDuplicates", config.no_soundfont_duplicates },
         }},
         { "prompts", {
             { "noMissingFiles",  config.dont_show_missing_files  }
@@ -150,42 +148,10 @@ void Config::Save(configuration config)
                     { "enabled", config.audio_limiter }
                 }}
             }}
-        }},
-        { "fileDialog", {
-            { "lastMidiPath",          config.last_midi_path          },
-            { "lastMidiFilePath",      config.last_midi_file          },
-            { "lastSoundfontPath",     config.last_sf_path            },
-            { "lastImagePath",         config.last_image_path         },
-            { "lastChannelColorsFile", config.last_ccol_file_path     },
-            { "lastChannelColorsPath", config.last_ccol_path          }
         }}
     };
 
 
     std::ofstream out_file(config_path);
     out_file << json_out.dump(2);
-}
-
-//#ifdef DEBUG
-void Config::PrintLoadedConfig(configuration c)
-{
-    std::cout << "Loaded Configuration:" << std::endl;
-    std::cout << "Default Paths: " << c.use_default_paths << std::endl;
-    std::cout << "Background Image Enabled: " << c.background_image << std::endl;
-    std::cout << "Background Image Path: " << c.background_image_path << std::endl;
-    std::cout << "Background Color: (" << c.bg_R << ", " << c.bg_G << ", " << c.bg_B << ", " << c.bg_A << ")" << std::endl;
-    std::cout << "Note Speed: " << c.note_speed << std::endl;
-    std::cout << "Loop Note Colors: " << c.loop_colors << std::endl;
-    std::cout << "Overlap Remover: " << c.OR << std::endl;
-    std::cout << "Channel Colors: ";
-    for(int i = 0; i < 16; ++i)
-        std::cout << colorToHex(c.channel_colors[i]) << " ";
-    
-    std::cout << std::endl;
-    std::cout << "Bass Voice Count: " << c.bass_voice_count << std::endl;
-    std::cout << "Audio Device Index: " << c.audio_device_index << std::endl;
-    std::cout << "Velocity Filter Enabled: " << c.vel_filter << std::endl;
-    std::cout << "Velocity Filter Min: " << c.vel_min << std::endl;
-    std::cout << "Velocity Filter Max: " << c.vel_max << std::endl;
-    std::cout << "Audio Limiter Enabled: " << c.audio_limiter << std::endl;
 }
