@@ -1,5 +1,5 @@
-#include <cstdio>
 #include "../logger.h"
+#include <cstdio>
 
 
 
@@ -9,13 +9,27 @@
 
 
 
+
+
+
+
+
+
+
+
+
 bool NVmidiFile::mid_open(const char *name)
 {
     // Midi file opening
-    FILE* fp;
-    fp=fopen(name, "rb");
+    FILE *fp;
+
+
+    fp                 = fopen(name, "rb");
+
     NVMidi::u32_t size = 0;
-    NVMidi::u32_t tmp = 0;
+    NVMidi::u32_t tmp  = 0;
+
+
     if(fp == nullptr)
     {
         Log::error("Failed to open MIDI file !");
@@ -35,18 +49,18 @@ bool NVmidiFile::mid_open(const char *name)
         return (fclose(fp), false);
     }
 
-    fread(&size  , 4, 1, fp);
+    fread(&size, 4, 1, fp);
     NVMidi::revU32(size);
-    
-    fread(&type  , 2, 1, fp);
+
+    fread(&type, 2, 1, fp);
     NVMidi::revU16(type);
-    
+
     fread(&tracks, 2, 1, fp);
     NVMidi::revU16(tracks);
-    
-    fread(&ppnq  , 2, 1, fp);
+
+    fread(&ppnq, 2, 1, fp);
     NVMidi::revU16(ppnq);
-    
+
 #ifdef __linux__
     fseek(fp, SEEK_SET, size + 8);
 #endif
@@ -55,20 +69,19 @@ bool NVmidiFile::mid_open(const char *name)
     fseek(fp, size + 8, SEEK_SET);
 #endif
 
-    trk_over = new bool             [tracks];
-    trk_data = new NVMidi::nv_byte* [tracks];
-    trk_ptr  = new NVMidi::nv_byte* [tracks];
-    grp_code = new NVMidi::nv_byte  [tracks];
-    
+    trk_over = new bool[tracks];
+    trk_data = new NVMidi::nv_byte *[tracks];
+    trk_ptr  = new NVMidi::nv_byte *[tracks];
+    grp_code = new NVMidi::nv_byte[tracks];
+
     Log::info("", "Loading MIDI file: %s", name);
     Log::info("Total track count: %d", tracks);
     Log::info("PPQ: %d", ppnq);
-    
-    total_track_count = tracks;
 
-    for(NVMidi::u16_t trk = 0; trk < tracks; ++trk)
+
+    for(NVMidi::u16_t trk = 0; trk < tracks; trk++)
     {
-        fread(&tmp , 4, 1, fp);
+        fread(&tmp, 4, 1, fp);
         fread(&size, 4, 1, fp);
 
         if(tmp != NVMidi::operator""_u64be("MTrk", 4))
@@ -78,40 +91,44 @@ bool NVmidiFile::mid_open(const char *name)
             return (fclose(fp), false);
         }
         else
-            Log::info("Loaded track: %hd", trk);
+        {
+            current_loaded_track = trk;
+            Log::info("Loaded track: %hd | %d", trk, tracks);
+        }
 
-        tmp = 0; NVMidi::revU32(size);
-        trk_data[trk] = new NVMidi::nv_byte [size];
-        fread(trk_data[trk], size,  1, fp);
+        tmp = 0;
+        NVMidi::revU32(size);
+        trk_data[trk] = new NVMidi::nv_byte[size];
+        fread(trk_data[trk], size, 1, fp);
     }
 
-    return(rewind_all(), fclose(fp), true);
+    return (rewind_all(), fclose(fp), true);
 }
 
 void NVmidiFile::rewind_all()
 {
-    for(NVMidi::u16_t trk = 0; trk < tracks; ++trk)
+    for(NVMidi::u16_t trk = 0; trk < tracks; trk++)
     {
         trk_over[trk] = false;
         grp_code[trk] = 0x0Fu;
-        trk_ptr [trk] = trk_data[trk];
+        trk_ptr[trk]  = trk_data[trk];
     }
 }
 
 void NVmidiFile::mid_close()
 {
-    for(NVMidi::u16_t trk = 0; trk < tracks; ++trk)
+    for(NVMidi::u16_t trk = 0; trk < tracks; trk++)
     {
         delete[] trk_data[trk];
     }
 
-    delete[]  trk_data; 
-    delete[]   trk_ptr;
-    trk_data = nullptr; 
+    delete[] trk_data;
+    delete[] trk_ptr;
+    trk_data = nullptr;
     trk_ptr  = nullptr;
-    delete[]  trk_over; 
-    delete[]  grp_code;
-    trk_over = nullptr; 
+    delete[] trk_over;
+    delete[] grp_code;
+    trk_over = nullptr;
     grp_code = nullptr;
 }
 
@@ -133,7 +150,7 @@ bool NVmidiEvent::get(NVMidi::u16_t track, NVmidiFile &midi)
     {
         return false;
     }
-    
+
     NVMidi::nv_byte code, **p = midi.trk_ptr + track;
 
     tick = getVLi_U32(p);
@@ -151,40 +168,42 @@ bool NVmidiEvent::get(NVMidi::u16_t track, NVmidiFile &midi)
 
     switch(type = (NV_METYPE)(code & 0xF0u))
     {
-        case(NV_METYPE::NOFF):
-        case(NV_METYPE::NOON):
-        case(NV_METYPE::NOAT):
-        case(NV_METYPE::CTRO):
-            num   = *(*p)++;
-        case(NV_METYPE::PROG):
-        case(NV_METYPE::CHAT):
-            value = *(*p)++;
+    case(NV_METYPE::NOTE_OFF):
+    case(NV_METYPE::NOTE_ON):
+    case(NV_METYPE::POLY_AFTERTOUCH):
+    case(NV_METYPE::CTRL_CHANGE):
+        num = *(*p)++;
+    case(NV_METYPE::PROG_CHANGE):
+    case(NV_METYPE::CHAN_PRESSURE):
+        value = *(*p)++;
         break;
-        case(NV_METYPE::PITH):
-            value = (*(*p)++) << 7;  // MSB first
-            value |= *(*p)++;         // LSB second
-        break;
-
-        case(NV_METYPE::SYSC):
-            if(code == 0xFFu)
-            {
-                if((num = *(*p)++) == 0x2Fu)
-                {
-                    midi.trk_over[track] = true;
-                }
-                type = NV_METYPE::META;
-            }
-            else
-            {
-                num = code & 0x0Fu;
-            }
-            datasz = getVLi_U32(p); data = *p;
-            *p = *p + datasz; chan = (NVMidi::nv_byte)-1;
+    case(NV_METYPE::PITCH_BEND):
+        value  = (*(*p)++) << 7; // MSB first
+        value |= *(*p)++;        // LSB second
         break;
 
-        default:
-            Log::warn("Unknown MIDI event type found on track: %hd", track);
-            Log::info("@%08x", *p - midi.trk_data[track]);
+    case(NV_METYPE::SYST_EXCL):
+        if(code == 0xFFu)
+        {
+            if((num = *(*p)++) == 0x2Fu)
+            {
+                midi.trk_over[track] = true;
+            }
+            type = NV_METYPE::META;
+        }
+        else
+        {
+            num = code & 0x0Fu;
+        }
+        datasz = getVLi_U32(p);
+        data   = *p;
+        *p     = *p + datasz;
+        chan   = (NVMidi::nv_byte)-1;
+        break;
+
+    default:
+        Log::warn("Unknown MIDI event type found on track: %hd", track);
+        Log::info("@%08x", *p - midi.trk_data[track]);
         return false;
     }
     return true;

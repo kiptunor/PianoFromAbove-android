@@ -1,5 +1,6 @@
 // File: 'fa-solid-900.ttf' (388460 bytes)
 // Exported using binary_to_compressed_c.cpp
+// clang-format off
 static const unsigned int fa_solid_900_compressed_size = 238367;
 static const unsigned int fa_solid_900_compressed_data[238368 / 4] =
 {

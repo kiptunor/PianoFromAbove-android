@@ -1,119 +1,82 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-
-
-
 #include <string>
 #include <vector>
-
-
-
 
 #ifdef PLATFORM_ANDROID
     #define CONFIG_FILE "/data/data/com.qsp.nvpfa/files/settings.json"
 #else
-    #define CONFIG_FILE "settings.json"
-    #define CONFIG_DIR "/.config/npfa"
+    #define CONFIG_FILE  "settings.json"
+    #define CONFIG_DIR   "/.config/npfa"
     #define CONFIG_LISTS "/.cache/npfa"
 #endif
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 class Config
 {
-    public:
-        typedef struct
-        {
-            int bass_voice_count;
-            int audio_device_index;
-            int note_speed;
-            // Deprecated
-            //int window_w;
-            //int window_h;
-            int bg_R;
-            int bg_G;
-            int bg_B;
-            int bg_A;
-            unsigned int channel_colors[16];
-            int vel_min;
-            int vel_max;
-            int midi_index;
-            bool audio_limiter;
-            bool vel_filter;
-            bool use_default_paths;
-            bool is_custom_ch_colors;          // Only for internal use!!!
-            bool use_default_colors;           // Only for internal use!!!
-            bool dont_show_missing_files;      // Only for internal use!!!
-            bool background_image;
-            bool no_midi_duplicates;
-            bool no_soundfont_duplicates;
-            bool loop_colors;
-            bool draw_vertical_lines;
-            bool vsync;
-            bool custom_ui_theme;
-            bool OR; // Overlap remover
-            std::string last_midi_file;
-            std::string last_ccol_file_path;
-            std::string background_image_path;
-            std::string ui_theme_file_path;
-            std::vector<std::string> current_soundfonts;
-            std::vector<std::string> extra_midi_paths;
-            std::vector<std::string> extra_sf_paths;
-            std::vector<std::string> extra_img_paths;
-        }configuration;
-        static configuration Load();
-        static void Save(configuration config);
-//#ifdef DEBUG
-        static void PrintLoadedConfig(configuration c);
-        static std::string config_path;
-        static unsigned int hexToUInt(const std::string& hex);
-//#endif
-};
-
-
-inline Config::configuration default_settings =
-{
-    .bass_voice_count = 500,
-    .audio_device_index = 1,
-    .note_speed = 4271,
-    .bg_R = 47,
-    .bg_G = 47,
-    .bg_B = 47,
-    .bg_A = 255,
-    .channel_colors = 
+  public:
+    typedef struct
     {
-        0x3366FF,
-        0xFF7E33,
-        0x33FF66,
-        0xFF3381,
-        0x33FFFF,
-        0xE433FF,
-        0x99FF33,
-        0x4B33FF,
-        0xFFCC33,
-        0x33B4FF,
-        0xFF3333,
-        0x33FFB1,
-        0xFF33CC,
-        0x4EFF33,
-        0x9933FF,
-        0xE7FF33
-    },
-    .vel_min = 0,
-    .vel_max = 32,
-    .midi_index = 0,
-    .audio_limiter = true,
-    .vel_filter = false,
-    .use_default_paths = true,
-    .background_image = false,
-    .no_midi_duplicates = false,
-    .no_soundfont_duplicates = false,
-    .loop_colors = false,
-    .draw_vertical_lines = true,
-    .vsync = true,
-    .custom_ui_theme = false,
-    .OR = true,
+        int                      bass_voice_count;
+        int                      audio_device_index;
+        int                      note_speed;
+        // Deprecated
+        // int window_w;
+        // int window_h;
+        int                      bg_R;
+        int                      bg_G;
+        int                      bg_B;
+        int                      bg_A;
+        unsigned int             channel_colors[16];
+        int                      vel_min;
+        int                      vel_max;
+        int                      midi_index;
+        int                      fps;
+        int                      builtin_ui_theme_idx;
+        bool                     audio_limiter;
+        bool                     vel_filter;
+        bool                     use_default_paths;
+        bool                     is_custom_ch_colors;     // Only for internal use!!!
+        bool                     use_default_colors;      // Only for internal use!!!
+        bool                     dont_show_missing_files; // Only for internal use!!!
+        bool                     background_image;
+        bool                     no_midi_duplicates;
+        bool                     no_soundfont_duplicates;
+        bool                     loop_colors;
+        bool                     draw_vertical_lines;
+        bool                     vsync;
+        bool                     internal_log_buffer;
+        bool                     log_to_file;
+        bool                     custom_ui_theme;
+        bool                     builtin_ui_theme;
+        bool                     OR; // Overlap remover
+        //std::string              last_midi_file; // Moved midi_list.h
+        std::string              last_ccol_file_path;
+        std::string              background_image_path;
+        std::string              ui_theme_file_path;
+        std::vector<std::string> current_soundfonts;
+        std::vector<std::string> extra_midi_paths;
+        std::vector<std::string> extra_sf_paths;
+        std::vector<std::string> extra_img_paths;
+    } configuration;
+
+    static configuration Load();
+    static void          Save(configuration config);
+    static std::string   config_path;
+    static unsigned int  hexToUInt(const std::string &hex);
 };
 
 #endif

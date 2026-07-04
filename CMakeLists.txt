@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.6)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
 
 project(my_app)
 
@@ -58,16 +60,23 @@ if(EXE_TYPE)
         set(NPROC 4)
     endif()
     
-    message(STATUS "Using ${NPROC} parallel LTO jobs")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto=${NPROC}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
-    set(CMAKE_CXX_FLAGS "-Ofast")
-    set(CMAKE_CXX_FLAGS "-Os")
-    set(CMAKE_CXX_FLAGS "-march=native")
-    set(CMAKE_CXX_FLAGS "-ffast-math")              # Fast math
-    set(CMAKE_CXX_FLAGS "-funroll-loops")           # Loop unrolling
-    set(CMAKE_CXX_FLAGS "-ftree-vectorize")         # SIMDvectorization
-    set(CMAKE_CXX_FLAGS "-flto")
+    # message(STATUS "Using ${NPROC} parallel LTO jobs")
+    # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto=${NPROC}")
+    # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
+    # set(CMAKE_CXX_FLAGS "-Ofast")
+    # set(CMAKE_CXX_FLAGS "-Os")
+    # set(CMAKE_CXX_FLAGS "-march=native")
+    # set(CMAKE_CXX_FLAGS "-ffast-math")              # Fast math
+    # set(CMAKE_CXX_FLAGS "-funroll-loops")           # Loop unrolling
+    # set(CMAKE_CXX_FLAGS "-ftree-vectorize")         # SIMDvectorization
+    # set(CMAKE_CXX_FLAGS "-flto")
+    add_compile_options(
+        -O3
+        -march=native
+        -ffast-math
+        -funroll-loops
+        -ftree-vectorize
+    )
 else()
 # Import BASS libs
     add_library(bass SHARED IMPORTED)
@@ -120,10 +129,26 @@ add_executable(nvi-pfa
     src/main.cpp
     src/nv_midi/seq.cpp
     src/nv_midi/utils.cpp
+    src/visualizer_handler.cpp
     src/render/render.cpp
+    src/render/note_buffer.cpp
     src/render/ui.cpp
 )
 target_link_libraries(nvi-pfa PRIVATE SDL3::SDL3 SDL3_image::SDL3_image bass bassmidi stdc++fs)
+# target_link_libraries(nvi-pfa PRIVATE bass bassmidi stdc++fs)
+# target_include_directories(nvi-pfa PRIVATE
+#     ${CMAKE_SOURCE_DIR}/extern/lib/x86_64_linux/include
+# )
+
+# target_link_libraries(nvi-pfa PRIVATE
+#     ${CMAKE_SOURCE_DIR}/extern/lib/x86_64_linux/libSDL3.a
+#     ${CMAKE_SOURCE_DIR}/extern/lib/x86_64_linux/libSDL3_image.a
+# )
+
+target_link_libraries(nvi-pfa PRIVATE
+    ${CMAKE_SOURCE_DIR}/extern/lib/x86_64_linux/libbass.so
+    ${CMAKE_SOURCE_DIR}/extern/lib/x86_64_linux/libbassmidi.so
+)
 endif()
 
 #add_definitions(-DPLATFORM_ANDROID=0)

@@ -1,5 +1,5 @@
 # NVirsual Piano From Above
-A clone of the original [Pano From Above](https://github.com/brian-pantano/PianoFromAbove) made by Brian Panatano.
+A clone of the original [Piano From Above](https://github.com/brian-pantano/PianoFromAbove) made by Brian Panatano.
 Now available on on android.
 
 This clone is powered by Qishipai's [midi processing library](https://github.com/qishipai/NVirsual) and using SDL3 to render the notes and the keyboard.
@@ -9,8 +9,7 @@ This clone is powered by Qishipai's [midi processing library](https://github.com
 > #### No public builds are allowed to be fully shared or redistributed!!!
 
 ## Features
-- [X] Default midi and soundfont
-- [ ] Default GM Soundfont
+- [x] Default soundfonts
 - [X] Custom background color support
 - [X] Custom themed GUI
 - [X] Settings storage to file (.json)
@@ -20,19 +19,23 @@ This clone is powered by Qishipai's [midi processing library](https://github.com
 - [X] Seek forward
 - [X] Seek backwards
 - [X] Live Note speed change
+- [x] Live Note color change
+- [x] Custom note colors presets trough .ccol files
 - [X] Improving the audio limiter
 - [X] Better UI layout on mobile
-- [ ] File information support
+- [x] File information support
 - [X] Custom note color array support
-- [ ] Veritcal lines on the background
-- [ ] Background image support
+- [x] Veritcal lines on the background
+- [x] Background image support
 - [ ] Setting custom key ranges
 - [X] Common midi and soundfont reloading (This must not require app restarting after each midi playing session)
-- [X] Seting for custom folders / directories to search for midi and soundfont files
-- [ ] More audio settings (like Realtime frame rate, frame fluctuation, enabling disabling limiter)
+- [x] MIDI File History
+- [X] Builtin File Dialog
 - [ ] Performance improvements
 - [ ] Loging to text file (This can be useful for development purposes)
 - [X] Custom icon and app name
+- [ ] GPU Renderer
+- [ ] Video capture
 
 # How to build an apk
 First you need to make sure you have the android studio and android-sdk installed.

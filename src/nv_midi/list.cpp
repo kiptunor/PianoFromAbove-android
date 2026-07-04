@@ -1,9 +1,9 @@
 #include "../logger.h"
 
-#include "utils.h"
 #include "MIDI.h"
-#include "seq.h"
 #include "list.h"
+#include "seq.h"
+#include "utils.h"
 
 
 
@@ -11,12 +11,25 @@
 
 
 
-template<typename T> struct rP    { using t = T; };
-template<typename T> struct rP<T*>{ using t = T; };
 
-NVnote::NVnote(double T, const NVseq_event &E):
-    track(E.track), Tstart(T), Tend(114514191981.0),
-    chn(E.chan), key(E.num), vel(E.value){ }
+
+
+
+
+
+
+template <typename T> struct rP
+{
+    using t = T;
+};
+template <typename T> struct rP<T *>
+{
+    using t = T;
+};
+
+NVnote::NVnote(f64 T, const NVseq_event &E) : track(E.track), Tstart(T), Tend(114514191981.0), chn(E.chan), key(E.num), vel(E.value)
+{
+}
 
 bool NVnoteList::start_parse(const char *name)
 {
@@ -34,34 +47,36 @@ bool NVnoteList::start_parse(const char *name)
 
     Evt_sequencer.seq_start(MIDI_File);
     abstick = 0;
-    Tread = 0.0;
-    dT = 0.5 / MIDI_File.ppnq;
-    keys = new rP<decltype(keys)>::t [MIDI_File.tracks];
+    Tread   = 0.0;
+    dT      = 0.5 / MIDI_File.ppnq;
+    keys    = new rP<decltype(keys)>::t[MIDI_File.tracks];
     return true;
 }
 
 void NVnoteList::destroy_all()
 {
     delete[] keys;
-    keys =  nullptr;
+    keys = nullptr;
     MIDI_File.mid_close();
     Evt_sequencer.seq_destroy();
 }
 
-void NVnoteList::list_seek(double T)
+void NVnoteList::list_seek(f64 T)
 {
     if(T < Tread)
     {
-        abstick = 0; Tread = 0.0; dT = 0.5 / MIDI_File.ppnq;
+        abstick = 0;
+        Tread   = 0.0;
+        dT      = 0.5 / MIDI_File.ppnq;
         MIDI_File.rewind_all();
         Evt_sequencer.seq_reset(MIDI_File);
     }
 
-    for(int i = 0; i < 128; ++i)
+    for(int i = 0; i < 128; i++)
     {
         Note_list[i].clear();
 
-        for(NVMidi::u16_t t = 0; t < MIDI_File.tracks; ++t)
+        for(NVMidi::u16_t t = 0; t < MIDI_File.tracks; t++)
         {
             while(!keys[t][i].empty())
             {
@@ -72,76 +87,83 @@ void NVnoteList::list_seek(double T)
 
     while(Evt_sequencer.event().track < MIDI_File.tracks)
     {
-        const NVseq_event  &Evt  =  Evt_sequencer.event();
-        Tread += dT * (Evt.abstick - abstick);
-        abstick = Evt.abstick;
+        const NVseq_event &Evt  = Evt_sequencer.event();
+        Tread                  += dT * (Evt.abstick - abstick);
+        abstick                 = Evt.abstick;
 
-        if(Tread >= T){ break; }
+        if(Tread >= T)
+        {
+            break;
+        }
 
         if(Evt.type == NV_METYPE::META && Evt.num == 0x51u)
         {
             NVMidi::u32_t speed = Evt.data[0];
-            speed = speed << 8 | Evt.data[1];
-            speed = speed << 8 | Evt.data[2];
-            dT = 0.000001 * speed / MIDI_File.ppnq;
+            speed               = speed << 8 | Evt.data[1];
+            speed               = speed << 8 | Evt.data[2];
+            dT                  = 0.000001 * speed / MIDI_File.ppnq;
         }
 
         Evt_sequencer.seq_next(MIDI_File);
     }
 }
 
-void NVnoteList::update_to(double T)
+void NVnoteList::update_to(f64 T)
 {
     while(Evt_sequencer.event().track < MIDI_File.tracks)
     {
-        const NVseq_event &Evt = Evt_sequencer.event();
-        Tread += dT * (Evt.abstick - abstick);
-        abstick = Evt.abstick;
+        const NVseq_event &Evt  = Evt_sequencer.event();
+        Tread                  += dT * (Evt.abstick - abstick);
+        abstick                 = Evt.abstick;
 
-        if(Tread >= T){ break; }
+        if(Tread >= T)
+        {
+            break;
+        }
 
         switch(Evt.type)
         {
-            case(NV_METYPE::META):
-                if(Evt.num == 0x51u)
-                {
-                    NVMidi::u32_t speed = Evt.data[0];
-                    speed = speed << 8 | Evt.data[1];
-                    speed = speed << 8 | Evt.data[2];
-                    dT = 0.000001 * speed / MIDI_File.ppnq;
-                }
+        case(NV_METYPE::META):
+            if(Evt.num == 0x51u)
+            {
+                NVMidi::u32_t speed = Evt.data[0];
+                speed               = speed << 8 | Evt.data[1];
+                speed               = speed << 8 | Evt.data[2];
+                dT                  = 0.000001 * speed / MIDI_File.ppnq;
+            }
             break;
 
-            case(NV_METYPE::NOON):
-                if(Evt.value > 0)
-                {
-                    Note_list[Evt.num].emplace_back(Tread, Evt);
-                    auto nt = Note_list[Evt.num].end();
-                    keys[Evt.track][Evt.num].push(--nt);
-                    break;
-                }
+        case(NV_METYPE::NOTE_ON):
+            if(Evt.value > 0)
+            {
+                Note_list[Evt.num].emplace_back(Tread, Evt);
+                auto nt = Note_list[Evt.num].end();
+                keys[Evt.track][Evt.num].push(--nt);
+                break;
+            }
             break;
-            case(NV_METYPE::NOFF):
-                if(!keys[Evt.track][Evt.num].empty())
-                {
-                    keys[Evt.track][Evt.num].top()->Tend = Tread;
-                    keys[Evt.track][Evt.num].pop();
-                }
+        case(NV_METYPE::NOTE_OFF):
+            if(!keys[Evt.track][Evt.num].empty())
+            {
+                keys[Evt.track][Evt.num].top()->Tend = Tread;
+                keys[Evt.track][Evt.num].pop();
+            }
             break;
-            default: break;
+        default:
+            break;
         }
 
         Evt_sequencer.seq_next(MIDI_File);
     }
 }
 
-void NVnoteList::OR()        // A presumably useful overlap remover
+void NVnoteList::OR() // A presumably useful overlap remover
 {
-    for(int i = 0; i < 128; ++i)
+    for(int i = 0; i < 128; i++)
     {
-        std::list<NVnote>::iterator p = Note_list[i].end();
-        double T0 = 114514191981.0;
-        double T1 = 114514191981.0;
+        std::list<NVnote>::iterator p  = Note_list[i].end();
+        f64                         T0 = 114514191981.0;
+        f64                         T1 = 114514191981.0;
 
         while(p-- != Note_list[i].begin())
         {
@@ -162,20 +184,21 @@ void NVnoteList::OR()        // A presumably useful overlap remover
     }
 }
 
-void NVnoteList::remove_to(double T)
+void NVnoteList::remove_to(f64 T)
 {
-    for(int i = 0; i < 128; ++i)
+    for(int i = 0; i < 128; i++)
     {
         std::list<NVnote>::iterator p = Note_list[i].begin();
 
         while(p != Note_list[i].end() && p->Tstart < T)
         {
-            p->Tend < T? (p = Note_list[i].erase(p)) : ++p;
+            p->Tend < T ? (p = Note_list[i].erase(p)) : p++;
         }
-        
-        Note_list[i].remove_if([T](const NVnote& n)
-        { 
-            return n.Tstart < T && n.Tend < T; 
-        });
+
+        //Note_list[i].remove_if(
+        //    [T](const NVnote &n)
+        //    {
+        //        return n.Tstart < T && n.Tend < T;
+        //    });
     }
 }

@@ -1,0 +1,141 @@
+[
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/extern/imgui/backend_render/imgui_impl_sdl3.cpp.o", "extern/imgui/backend_render/imgui_impl_sdl3.cpp"],
+  "file": "extern/imgui/backend_render/imgui_impl_sdl3.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/extern/imgui/backend_render/imgui_impl_sdlrenderer3.cpp.o", "extern/imgui/backend_render/imgui_impl_sdlrenderer3.cpp"],
+  "file": "extern/imgui/backend_render/imgui_impl_sdlrenderer3.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/extern/imgui/imgui_demo.cpp.o", "extern/imgui/imgui_demo.cpp"],
+  "file": "extern/imgui/imgui_demo.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/extern/imgui/imgui_draw.cpp.o", "extern/imgui/imgui_draw.cpp"],
+  "file": "extern/imgui/imgui_draw.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/extern/imgui/imgui_tables.cpp.o", "extern/imgui/imgui_tables.cpp"],
+  "file": "extern/imgui/imgui_tables.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/extern/imgui/imgui.cpp.o", "extern/imgui/imgui.cpp"],
+  "file": "extern/imgui/imgui.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/extern/imgui/imgui_widgets.cpp.o", "extern/imgui/imgui_widgets.cpp"],
+  "file": "extern/imgui/imgui_widgets.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/extern/imgui/extra/file_dlg/ImGuiFileDialog.cpp.o", "extern/imgui/extra/file_dlg/ImGuiFileDialog.cpp"],
+  "file": "extern/imgui/extra/file_dlg/ImGuiFileDialog.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/extern/imgui/extra/imgui_styles.cpp.o", "extern/imgui/extra/imgui_styles.cpp"],
+  "file": "extern/imgui/extra/imgui_styles.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/audio/audio_effects.cpp.o", "src/audio/audio_effects.cpp"],
+  "file": "src/audio/audio_effects.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/audio/playback.cpp.o", "src/audio/playback.cpp"],
+  "file": "src/audio/playback.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/config/channel_colors.cpp.o", "src/config/channel_colors.cpp"],
+  "file": "src/config/channel_colors.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/config/midi_list.cpp.o", "src/config/midi_list.cpp"],
+  "file": "src/config/midi_list.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/config/soundfont_list.cpp.o", "src/config/soundfont_list.cpp"],
+  "file": "src/config/soundfont_list.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/config/config.cpp.o", "src/config/config.cpp"],
+  "file": "src/config/config.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/config/file_dialog_state.cpp.o", "src/config/file_dialog_state.cpp"],
+  "file": "src/config/file_dialog_state.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/nv_midi/MIDI.cpp.o", "src/nv_midi/MIDI.cpp"],
+  "file": "src/nv_midi/MIDI.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/nv_midi/utils.cpp.o", "src/nv_midi/utils.cpp"],
+  "file": "src/nv_midi/utils.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/nv_midi/list.cpp.o", "src/nv_midi/list.cpp"],
+  "file": "src/nv_midi/list.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/nv_midi/seq.cpp.o", "src/nv_midi/seq.cpp"],
+  "file": "src/nv_midi/seq.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/render/render.cpp.o", "src/render/render.cpp"],
+  "file": "src/render/render.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/render/ui.cpp.o", "src/render/ui.cpp"],
+  "file": "src/render/ui.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/render/note_buffer.cpp.o", "src/render/note_buffer.cpp"],
+  "file": "src/render/note_buffer.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/logger.cpp.o", "src/logger.cpp"],
+  "file": "src/logger.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/file_helpers.cpp.o", "src/file_helpers.cpp"],
+  "file": "src/file_helpers.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/cli.cpp.o", "src/cli.cpp"],
+  "file": "src/cli.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/visualizer_handler.cpp.o", "src/visualizer_handler.cpp"],
+  "file": "src/visualizer_handler.cpp"
+},
+{
+  "directory": "/home/andre/disks/1_TB_1/Programing/repos/PFA-mob",
+  "arguments": ["/usr/bin/clang++", "-c", "-Qunused-arguments", "-m64", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-O3", "-Iextern/imgui", "-Iextern/imgui/extra", "-Iextern", "-Iextern/bass_libs", "-DNDEBUG", "-o", "build/.objs/nvi-pfa/linux/x86_64/release/src/main.cpp.o", "src/main.cpp"],
+  "file": "src/main.cpp"
+}]
