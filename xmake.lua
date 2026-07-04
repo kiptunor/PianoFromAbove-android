@@ -53,14 +53,9 @@ target("nvi-pfa")
     end
 
     if is_plat("android") then
-    
-        -- Android application packaging
-        -- add_rules("android.native_app", {
-        --     package_name = "com.raylib.custom_glue"
-        -- })
 
         add_rules("android.native_app", {
-            android_sdk_version = "35",
+            android_sdk_version = "21",
             android_manifest = "src/android/AndroidManifest.xml",
             android_res = "src/android/res",
             package_name = "com.qsp.nvpfa",
