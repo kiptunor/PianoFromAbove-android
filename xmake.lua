@@ -55,7 +55,7 @@ target("nvi-pfa")
     if is_plat("android") then
     
         -- Android application packaging
-        add_rules("utils.android.app")
+        add_rules("android.native_app")
 
         set_values("android.package", "com.qsp.nvpfa")
         set_values("android.versioncode", "1")
