@@ -14,12 +14,13 @@ target("nvi-pfa")
         set_kind("shared")
     else
         set_kind("binary")
+
+        add_packages(
+            "sdl3",
+            "sdl3-image"
+        )
     end
     
-    add_packages(
-        "sdl3",
-        "sdl3-image"
-    )
     add_includedirs(
         "extern/imgui/",
         "extern/imgui/extra",
