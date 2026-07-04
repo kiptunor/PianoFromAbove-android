@@ -55,14 +55,23 @@ target("nvi-pfa")
     if is_plat("android") then
     
         -- Android application packaging
-        add_rules("android.native_app")
+        -- add_rules("android.native_app", {
+        --     package_name = "com.raylib.custom_glue"
+        -- })
 
-        set_values("android.package", "com.qsp.nvpfa")
-        set_values("android.versioncode", "1")
-        set_values("android.versionname", "1.0")
+        add_rules("android.native_app", {
+            android_sdk_version = "35",
+            android_manifest = "src/android/AndroidManifest.xml",
+            android_res = "src/android/res",
+            package_name = "com.qsp.nvpfa",
+            native_app_glue = false -- Disable default glue
+        })
 
-        add_files("android/AndroidManifest.xml")
-        add_files("android/res/**")
+        -- set_values("android.package", "com.qsp.nvpfa")
+        -- set_values("android.versioncode", "1")
+        -- set_values("android.versionname", "1.0")
+
+       
 
         -- Android-specific native libraries
         add_linkdirs("extern/lib/android/arm64-v8a")
