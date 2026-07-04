@@ -7,15 +7,19 @@ add_rules("mode.debug", "mode.release", "plugin.compile_commands.autoupdate")
 set_toolchains("clang")
 
 
+
+if is_plat("linux") then
+    add_requires("sdl3", {system = true})
+    add_requires("sdl3-image", {system = true})
+end
+
+
 target("nvi-pfa")
     if is_plat("android") then
         add_defines("PLATFORM_ANDROID")
         set_kind("shared")
     else
 
-        add_requires("sdl3", {system = true})
-        add_requires("sdl3-image", {system = true})
-    
         set_kind("binary")
 
         add_packages(
