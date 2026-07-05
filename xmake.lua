@@ -1,9 +1,13 @@
 add_rules("mode.debug", "mode.release", "plugin.compile_commands.autoupdate")
-set_toolchains("ndk")
+
 
 if is_plat("linux") then
-    add_requires("sdl3", {system = true})
+    add_requires("sdl3",       {system = true})
     add_requires("sdl3-image", {system = true})
+end
+
+if is_plat("android") then
+    set_toolchains("ndk")
 end
 
 target("nvi-pfa")
@@ -16,8 +20,10 @@ target("nvi-pfa")
     end
 
     add_includedirs(
-        "extern/imgui/", "extern/imgui/extra",
-        "extern/", "extern/bass_libs"
+        "extern/imgui/",
+        "extern/imgui/extra",
+        "extern/",
+        "extern/bass_libs"
     )
 
     add_files(
@@ -82,6 +88,7 @@ target("nvi-pfa")
             })
         end)
 
+        -- idk if I should keep these
         on_install(function(target)
             if not target:is_plat("android") then return end
             local adb = "/usr/bin/adb"
