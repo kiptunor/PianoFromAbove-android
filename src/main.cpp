@@ -138,9 +138,8 @@ extern "C" int APP_ENTRY(int argc, char *argv[])
         loaded_midi_list = MidiList::load();
         live_midi_list   = loaded_midi_list;
     }
-    
-    Log::debug("Reaching FD State");
 
+    
     /* - - - - File Dialog State Handling - - - - */
     if(std::filesystem::exists(file_dialog_state_path.str()))
         live_fd_state = FileDialogState::load();
