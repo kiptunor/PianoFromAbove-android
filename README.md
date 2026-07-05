@@ -32,23 +32,12 @@ This clone is powered by Qishipai's [midi processing library](https://github.com
 - [x] MIDI File History
 - [X] Builtin File Dialog
 - [ ] Performance improvements
-- [ ] Loging to text file (This can be useful for development purposes)
+- [X] Loging to text file (useful for development purposes)
 - [X] Custom icon and app name
 - [ ] GPU Renderer
 - [ ] Video capture
 
-# How to build an apk
-First you need to make sure you have the android studio and android-sdk installed.
-
-2) Git clone this repo and cd into it.
-3) Set the path to the android sdk in [local.properties](local.properties)
-4) Run the following commands:
-```
-./gradlew assembleDebug
-```
-This only builds the debug version of the apk
-
-*) If you want to build the desktop version (which is currently available and works best on arch linux atm) check out [the guide build](app/jni/src/README.md) from the core source code of the app.
+## Build guide soon...
 
 
 
@@ -62,3 +51,4 @@ This only builds the debug version of the apk
 - Nerdly: UI Font Choice
 - Hex: Playback options: play / pause, seek backwards/forwards
 - Zeal: Custom Icon
+- SlothPlayer for few builtin themes
