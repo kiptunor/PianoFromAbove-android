@@ -2,23 +2,23 @@ function main(opts)
     local target = assert(opts.target, "sdl_android: 'target' is required")
     if not target:is_plat("android") then return end
 
-    local ndk = target:toolchain("ndk")
-    local ndk_root = ndk:config("ndk")
-    local sdk_root = ndk:config("android_sdk")
-    local bt_ver = ndk:config("build_toolver") or "35.0.0"
-    local sdk_tools = path.join(sdk_root, "build-tools", bt_ver)
-    local android_api = opts.android_sdk_version or "35"
-    local android_jar = path.join(sdk_root, "platforms", "android-" .. android_api, "android.jar")
-    local arch = target:arch()
-    local project = os.projectdir()
+    local ndk           = target:toolchain("ndk")
+    local ndk_root      = ndk:config("ndk")
+    local sdk_root      = ndk:config("android_sdk")
+    local bt_ver        = ndk:config("build_toolver") or "35.0.0"
+    local sdk_tools     = path.join(sdk_root, "build-tools", bt_ver)
+    local android_api   = opts.android_sdk_version or "35"
+    local android_jar   = path.join(sdk_root, "platforms", "android-" .. android_api, "android.jar")
+    local arch          = target:arch()
+    local project       = os.projectdir()
 
-    local manifest = path.join(project, opts.manifest)
-    local res_dir = opts.res and path.join(project, opts.res) or nil
-    local assets_dir = opts.assets and path.join(project, opts.assets) or nil
-    local keystore = path.join(project, opts.keystore)
+    local manifest      = path.join(project, opts.manifest)
+    local res_dir       = opts.res and path.join(project, opts.res) or nil
+    local assets_dir    = opts.assets and path.join(project, opts.assets) or nil
+    local keystore      = path.join(project, opts.keystore)
     local keystore_pass = opts.keystore_pass or "android"
-    local final_apk = path.join(target:targetdir(), target:basename() .. ".apk")
-    local tmp = path.absolute(path.join(target:autogendir(), "apk_pack"))
+    local final_apk     = path.join(target:targetdir(), target:basename() .. ".apk")
+    local tmp           = path.absolute(path.join(target:autogendir(), "apk_pack"))
 
     os.tryrm(tmp)
     os.mkdir(tmp)
@@ -30,16 +30,16 @@ function main(opts)
     -- 2. Process AARs (extract classes + native .so)
     local all_classes = path.join(tmp, "all_classes")
     os.mkdir(all_classes)
-    local classpath_entries = {android_jar}
+    local classpath_entries = { android_jar }
 
     local aar_cache = path.join(target:autogendir(), "aar_cache")
     for _, aar_rel in ipairs(opts.aar or {}) do
-        local aar = path.join(project, aar_rel)
+        local aar      = path.join(project, aar_rel)
         local aar_name = path.basename(aar)
-        local aar_dir = path.join(aar_cache, aar_name)
+        local aar_dir  = path.join(aar_cache, aar_name)
         if not os.isdir(aar_dir) then
             os.mkdir(aar_dir)
-            os.execv("unzip", {"-q", "-o", aar, "-d", aar_dir})
+            os.execv("unzip", { "-q", "-o", aar, "-d", aar_dir })
         end
         local lib_out = path.join(tmp, "lib", arch)
 
@@ -47,7 +47,7 @@ function main(opts)
         local aar_jar = path.join(aar_dir, "classes.jar")
         if os.isfile(aar_jar) then
             table.insert(classpath_entries, aar_jar)
-            os.vrunv("unzip", {"-q", "-o", aar_jar, "-d", all_classes})
+            os.vrunv("unzip", { "-q", "-o", aar_jar, "-d", all_classes })
         end
 
         -- Native .so from prefab-format AAR
@@ -70,9 +70,9 @@ function main(opts)
             table.insert(kotlin_sources, path.join(project, src))
         end
         import("kotlinc")({
-            sources = kotlin_sources,
+            sources   = kotlin_sources,
             classpath = classpath,
-            output = all_classes,
+            output    = all_classes,
         })
     end
 
@@ -86,9 +86,9 @@ function main(opts)
         end
         if #java_sources > 0 then
             import("javac")({
-                sources = java_sources,
+                sources   = java_sources,
                 classpath = classpath,
-                output = all_classes,
+                output    = all_classes,
             })
         end
     end
@@ -97,19 +97,19 @@ function main(opts)
     local dex_out = path.join(tmp, "dex")
     os.mkdir(dex_out)
     local merged_jar = path.join(tmp, "all_classes.jar")
-    os.vrunv("jar", {"cf", merged_jar, "-C", all_classes, "."})
+    os.vrunv("jar", { "cf", merged_jar, "-C", all_classes, "." })
 
-    local d8_inputs = {merged_jar}
+    local d8_inputs     = { merged_jar }
     local kotlin_stdlib = "/usr/share/kotlin/lib/kotlin-stdlib.jar"
     if os.isfile(kotlin_stdlib) then
         table.insert(d8_inputs, kotlin_stdlib)
     end
 
     import("d8")({
-        sdk_tools = sdk_tools,
+        sdk_tools   = sdk_tools,
         android_jar = android_jar,
-        output = dex_out,
-        inputs = d8_inputs,
+        output      = dex_out,
+        inputs      = d8_inputs,
     })
 
     local dex_file = path.join(dex_out, "classes.dex")
@@ -145,13 +145,13 @@ function main(opts)
     -- 7. Package resources with aapt
     local res_apk = path.join(tmp, "res_only.apk")
     import("aapt")({
-        sdk_tools = sdk_tools,
-        manifest = manifest,
+        sdk_tools   = sdk_tools,
+        manifest    = manifest,
         android_jar = android_jar,
-        res = res_dir,
-        assets = assets_dir,
-        output = res_apk,
-        curdir = tmp,
+        res         = res_dir,
+        assets      = assets_dir,
+        output      = res_apk,
+        curdir      = tmp,
     })
 
     -- 8. Add .so files and classes.dex to APK
@@ -165,27 +165,27 @@ function main(opts)
     if #add_files > 0 then
         import("aapt_add")({
             sdk_tools = sdk_tools,
-            apk = res_apk,
-            files = add_files,
-            curdir = tmp,
+            apk       = res_apk,
+            files     = add_files,
+            curdir    = tmp,
         })
     end
 
     -- 9. Zipalign
     import("zipalign")({
         sdk_tools = sdk_tools,
-        input = res_apk,
-        output = path.join(tmp, "unsigned.apk"),
+        input     = res_apk,
+        output    = path.join(tmp, "unsigned.apk"),
         alignment = 4,
     })
 
     -- 10. Sign APK
     import("apksigner")({
-        sdk_tools = sdk_tools,
-        keystore = keystore,
+        sdk_tools     = sdk_tools,
+        keystore      = keystore,
         keystore_pass = keystore_pass,
-        input = path.join(tmp, "unsigned.apk"),
-        output = final_apk,
+        input         = path.join(tmp, "unsigned.apk"),
+        output        = final_apk,
     })
 end
 
