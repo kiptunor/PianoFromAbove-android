@@ -38,17 +38,21 @@ target("nvi-pfa")
     end
 
     if is_plat("android") then
-        add_includedirs("src/android/libs/SDL3/prefab/modules/SDL3-Headers/include", {public = true})
-        add_includedirs("src/android/libs/SDL3_image/prefab/modules/SDL3_image-shared/include", {public = true})
+        local _arch = get_config("arch") or "arm64-v8a"
+
+        on_load(function(target)
+            import("apk_build_utils.sdl_android_headers")({
+                target = target,
+                arch = _arch,
+                aar = {
+                    "src/android/libs/SDL3-3.4.12.aar",
+                    "src/android/libs/SDL3_image-3.4.4.aar"
+                }
+            })
+        end)
+
         add_linkdirs("extern/lib/arm64-v8a")
         add_links("bass", "bassmidi")
-
-        local sdl3_lib_dir = "src/android/libs/SDL3/prefab/modules/SDL3-shared/libs/android." .. (get_config("arch") or "arm64-v8a")
-        local sdl3img_lib_dir = "src/android/libs/SDL3_image/prefab/modules/SDL3_image-shared/libs/android." .. (get_config("arch") or "arm64-v8a")
-        add_linkdirs(sdl3_lib_dir)
-        add_links("SDL3")
-        add_linkdirs(sdl3img_lib_dir)
-        add_links("SDL3_image")
 
         after_build(function(target)
             import("apk_build_utils.sdl_android")({
@@ -59,8 +63,8 @@ target("nvi-pfa")
                 res = "src/android/res",
 
                 package = "com.qsp.nvpfa",
-                keystore = "<path/to/keystore.jks>", -- Put here the path to your keystore
-                keystore_pass = "<keystore_password testpasdfjdh>", -- And the keystore password
+                keystore = "src/android/qsp-nvpfa_release.jks",
+                keystore_pass = os.getenv("KEYSTORE_PASS"), -- Better choice
 
                 aar = {
                     "src/android/libs/SDL3-3.4.12.aar",
