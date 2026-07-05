@@ -18,7 +18,7 @@
 #include "render.h"
 #include "ui.h"
 
-#include <DixelU/smic.h>
+// #include <DixelU/smic.h>
 #include <backend_render/imgui_impl_sdl3.h>
 #include <backend_render/imgui_impl_sdlrenderer3.h>
 #include <file_dlg/ImGuiFileDialog.h>
@@ -66,7 +66,7 @@ char                        file_name_buf[3100] = { 0 };
 char                        file_size_buf[3100] = { 0 };
 char                        last_mod_buf[3100]  = { 0 };
 bool                        is_midi_info        = false;
-single_midi_info_collector *smic_ptr            = nullptr;
+// single_midi_info_collector *smic_ptr            = nullptr;
 f32                         android_scale;
 
 // UI/Widget variables
@@ -285,6 +285,12 @@ void UI::SetSilvanaTheme()
     style.WindowBorderHoverPadding             = 6.0f; // Imgui asserts because of this so no scale multiplication
     style.WindowMenuButtonPosition             = ImGuiDir_Right;
     style.ColorMarkerSize                      = 8.0f;
+    
+    
+#ifdef PLATFORM_ANDROID
+    style.GrabMinSize = 40.700000047683716f;
+    style.ScrollbarSize = 48.60000038146973f;
+#endif
 
     ImVec4 *colors                             = style.Colors;
     colors[ImGuiCol_Text]                      = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
@@ -373,6 +379,13 @@ void UI::SetArcticHorizonTheme()
     style.FrameBorderSize                      = 0.0f;
     style.TabBorderSize                        = 0.0f;
 
+    
+
+#ifdef PLATFORM_ANDROID
+    style.GrabMinSize = 40.700000047683716f;
+    style.ScrollbarSize = 48.60000038146973f;
+#endif
+
     // Arctic Horizon color palette - Cool blues and icy whites
     ImVec4 *colors                             = style.Colors;
     colors[ImGuiCol_Text]                      = ImVec4(0.95f, 0.97f, 0.98f, 1.00f);
@@ -460,6 +473,13 @@ void UI::SetCrimsonAzureTheme()
     style.GrabMinSize                      = 10.0f;
     style.FrameBorderSize                  = 1.0f;
     style.WindowBorderSize                 = 1.0f;
+    
+    
+    
+#ifdef PLATFORM_ANDROID
+    style.GrabMinSize = 40.700000047683716f;
+    style.ScrollbarSize = 48.60000038146973f;
+#endif
 
     ImVec4 *colors                         = style.Colors;
 
@@ -557,6 +577,13 @@ void UI::SetCyberpunkTheme()
     style.ItemInnerSpacing                = ImVec2(8, 6);
 
     style.GrabMinSize                     = 10.0f;
+    
+#ifdef PLATFORM_ANDROID
+    style.GrabMinSize = 40.700000047683716f;
+    style.ScrollbarSize = 48.60000038146973f;
+#endif
+
+
     ImVec4 *colors                        = style.Colors;
 
     ImVec4  bg                            = ImVec4(0.06f, 0.07f, 0.10f, 1.00f);
@@ -632,6 +659,11 @@ void UI::SetNeonAbyssTheme()
     style.TabRounding                                = 3.0f;
     style.FrameBorderSize                            = 1.0f;
     style.TabBorderSize                              = 1.0f;
+    
+#ifdef PLATFORM_ANDROID
+    style.GrabMinSize = 40.700000047683716f;
+    style.ScrollbarSize = 48.60000038146973f;
+#endif
 
     style.Colors[ImGuiCol_Text]                      = ImVec4(0.00f, 1.00f, 1.00f, 1.00f);
     style.Colors[ImGuiCol_TextDisabled]              = ImVec4(0.00f, 0.40f, 0.41f, 1.00f);
@@ -2484,14 +2516,17 @@ void UI::Render(SDL_Renderer *r)
             ImGui::BeginDisabled();
             if(ImGui::Button("More MIDI Info (Soon)"))
             {
+                Log::debug("Todo...");
                 // Log::debug("Do the smic stuff here");
-                smic_ptr = new single_midi_info_collector(live_midi_list[selected_midi_index], true);
+                // smic_ptr = new single_midi_info_collector(live_midi_list[selected_midi_index], true);
 
-                smic_ptr->fetch_data();
+                // smic_ptr->fetch_data();
 
+                /*
                 Log::debug("PPQ: %d", smic_ptr->ppq);
                 Log::debug("", "Tracks: %s", std::to_string(smic_ptr->tracks.size()).c_str());
                 Log::debug("Note Count: %.3f", (f32)smic_ptr->note_count / 1000.0f);
+                */
                 // for(auto & [tick, poly] : smic_ptr->polyphony)
                 //{
                 //     f64 polyphony = poly;

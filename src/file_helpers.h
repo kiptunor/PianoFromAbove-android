@@ -34,8 +34,8 @@ class FileHelpers
     static FileInfo                 GetFileInfo(const std::string &path);
 #ifndef PLATFORM_ANDROID
     static void        createConfigDirs();
+#endif
     static std::string config_dir;
     static std::string lists_dir;
-#endif
 };
 #endif

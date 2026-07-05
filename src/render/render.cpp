@@ -55,13 +55,7 @@ const char *video_driver;
 
 bool Render::isDesktopSession()
 {
-    //Log::trace("", "video_driver: %s", video_driver);
-    if(strcmp(video_driver, "wayland") == 0 || strcmp(video_driver, "x11") == 0)
-        return true;
-    
-
-    if(strcmp(video_driver, "kmsdrm") != 0)
-        return false;
+    return strcmp(video_driver, "wayland") == 0 || strcmp(video_driver, "x11") == 0;
 }
 
 /*
@@ -100,6 +94,9 @@ Render::Render()
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error!!!!!", "Failed to create window", nullptr);
     }
 
+#ifdef PLATFORM_ANDROID
+    Ren = SDL_CreateRenderer(Win, "opengles2");
+#else
     Ren = SDL_CreateRenderer(Win, "gpu");
     if(Ren == nullptr)
     {
@@ -109,6 +106,7 @@ Render::Render()
         
         Ren = SDL_CreateRenderer(Win, "opengles2"); // This works well on DRM from tty sessions
     }
+#endif
 
     // const char *backend = SDL_GetRendererName(Ren);
     // Log::info("", "SDL_GetRendererName(): %s", backend);
@@ -135,6 +133,8 @@ Render::Render()
     BkeyW = scale(60), WkeyW = scale(94);
     BkeyH = scale(386), WkeyH = scale(608);
     fDeflate = WkeyW * 0.15f / 2.0f;
+
+    HandleResize(WinW, WinH);
 }
 
 /*

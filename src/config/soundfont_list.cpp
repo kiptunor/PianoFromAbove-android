@@ -40,6 +40,7 @@ std::vector<UI::SoundfontItem> SoundfontList::Get(std::vector<std::string> paths
 
 void SoundfontList::Save(std::vector<UI::SoundfontItem> sf_list)
 {
+    Log::debug("", "Saving SoundFont List: %s", soundfont_list_path.c_str());
     nlohmann::json sflist_arr = nlohmann::json::array();
     for(size_t i = 0; i < sf_list.size(); ++i)
     {
@@ -51,6 +52,9 @@ void SoundfontList::Save(std::vector<UI::SoundfontItem> sf_list)
 
     std::ofstream out_file(soundfont_list_path);
     out_file << sflist_arr;
+    
+    if(out_file.fail())
+        Log::error("", "Failed to save SoundFont list '%s', reason: %s", soundfont_list_path.c_str(), strerror(errno));
 }
 
 std::vector<UI::SoundfontItem> SoundfontList::Load()

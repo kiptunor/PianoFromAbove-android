@@ -11,8 +11,14 @@
 #include "../nv_midi/list.h"
 #include "../render/ui.h"
 
-#define DEFAULT_SOUND_FONT_PATH    "piano_maganda.sf2"
-#define DEFAULT_GM_SOUND_FONT_PATH "gm_generic.sf2"
+
+#ifdef PLATFORM_ANDROID
+    #define DEFAULT_SOUND_FONT_PATH    "/data/data/com.qsp.nvpfa/files/piano_maganda.sf2"
+    #define DEFAULT_GM_SOUND_FONT_PATH "/data/data/com.qsp.nvpfa/files/gm_generic.sf2"
+#else
+    #define DEFAULT_SOUND_FONT_PATH    "piano_maganda.sf2"
+    #define DEFAULT_GM_SOUND_FONT_PATH "gm_generic.sf2"
+#endif
 
 
 

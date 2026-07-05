@@ -32,10 +32,15 @@ void                     MidiList::save(const std::vector<std::string> files, co
     midi_list_arr["lastMidiFile"]      = last_midi_file;
     midi_list_arr["PreviousMidiFiles"] = files;
 
+    
+    //Log::debug("", "Saving MIDI List: %s", midi_list_path.c_str());
 
     std::ofstream file(midi_list_path);
 
     file << midi_list_arr.dump(4);
+    
+    if(file.fail())
+        Log::error("", "Failed to save midi list '%s', reason: %s", midi_list_path.c_str(), strerror(errno));
 }
 
 std::vector<std::string> MidiList::load()

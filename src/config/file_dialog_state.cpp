@@ -1,4 +1,5 @@
 #include <fstream>
+#include <string>
 #include <nlohmann/json.hpp>
 
 
@@ -22,9 +23,23 @@
 std::string               FileDialogState::json_file_path;
 
 
+
+
+
+
+
 FileDialogState::DirPaths FileDialogState::load()
 {
+    Log::debug("Loading FD State...");
     FileDialogState::DirPaths dir_paths;
+    
+    
+    
+
+    
+    
+    
+    
     std::ifstream             in_file(json_file_path);
 
     in_file.seekg(0, std::ios::end);
@@ -39,11 +54,11 @@ FileDialogState::DirPaths FileDialogState::load()
 
     nlohmann::json dir_paths_obj = json_in.value("directoryPaths", nlohmann::json::object());
 
-    dir_paths.midi_path          = dir_paths_obj.value("midi", "");
+    dir_paths.midi_path          = dir_paths_obj.value("midi",      "");
     dir_paths.soundfont_path     = dir_paths_obj.value("soundfont", "");
-    dir_paths.bg_image_path      = dir_paths_obj.value("bgImage", "");
-    dir_paths.ccol_path          = dir_paths_obj.value("ccol", "");
-    dir_paths.ui_theme_path      = dir_paths_obj.value("uiTheme", "");
+    dir_paths.bg_image_path      = dir_paths_obj.value("bgImage",   "");
+    dir_paths.ccol_path          = dir_paths_obj.value("ccol",      "");
+    dir_paths.ui_theme_path      = dir_paths_obj.value("uiTheme",   "");
 
     return dir_paths;
 }
@@ -68,7 +83,7 @@ void FileDialogState::save(DirPaths dir_paths)
 
     std::ostringstream     f_path;
 
-#ifndef PLATFORKM_ANDROID
+#ifndef PLATFORM_ANDROID
     f_path << FileHelpers::lists_dir << "/" << FD_STATE_FILE_PATH;
 #else
     f_path << FD_STATE_FILE_PATH;
@@ -76,4 +91,7 @@ void FileDialogState::save(DirPaths dir_paths)
 
     std::ofstream out_file(f_path.str());
     out_file << json_out;
+    
+    if(out_file.fail())
+        Log::error("", "Failed to save file dialog state '%s', reason: %s", f_path.str().c_str(), strerror(errno));
 }

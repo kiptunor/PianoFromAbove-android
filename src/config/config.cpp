@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+// #include <errno>
 
 #include <nlohmann/json.hpp>
 
@@ -49,6 +50,14 @@ Config::configuration Config::Load()
 {
     std::ifstream         in_file(config_path);
     Config::configuration in_conf;
+    
+    
+    if(!in_file)
+    {
+        Log::error("", "Failed to read configuration '%s', reason: %s", config_path.c_str(), strerror(errno));
+        in_conf = default_settings;
+        return in_conf;
+    }
 
 
     in_file.seekg(0, std::ios::end);
@@ -198,4 +207,7 @@ void Config::Save(configuration config)
 
     std::ofstream          out_file(config_path);
     out_file << json_out.dump(2);
+    
+    if(out_file.fail())
+        Log::error("", "Failed to save configuration '%s', reason: %s", config_path.c_str(), strerror(errno));
 }
