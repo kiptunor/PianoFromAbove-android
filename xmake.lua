@@ -10,6 +10,10 @@ if is_plat("android") then
     set_toolchains("ndk")
 end
 
+if is_plat("linux") then
+    set_toolchains("clang")
+end
+
 target("nvi-pfa")
     if is_plat("android") then
         add_defines("PLATFORM_ANDROID")
