@@ -60,7 +60,7 @@ target("nvi-pfa")
 
                 package = "com.qsp.nvpfa",
                 keystore = "<path/to/keystore.jks>", -- Put here the path to your keystore
-                keystore_pass = "1234_test",                 -- And the keystore password
+                keystore_pass = "<keystore_password>", -- And the keystore password
 
                 aar = {
                     "src/android/libs/SDL3-3.4.12.aar",
