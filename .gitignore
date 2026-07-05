@@ -2,5 +2,4 @@ build/
 build_old/
 src/android/qsp-nvpfa_release.jks
 compile_commands.json
-xmake.lua
 .cache/
