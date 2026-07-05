@@ -46,7 +46,7 @@ class NvpfaActivity : SDLActivity()
                 Log.d(TAG, "File already extracted: $filename")
                 continue
             }
-            try{
+            try {
                 assets.open(filename).use { is_ ->
                     FileOutputStream(outFile).use { fos ->
                         val buffer = ByteArray(8192)
@@ -67,9 +67,8 @@ class NvpfaActivity : SDLActivity()
         }
 
         Log.d(TAG, "Files directory contents:")
-        filesDir.listFiles()?.forEach
-        {
-            file -> Log.d(TAG, " - ${file.name}")
+        filesDir.listFiles()?.forEach { file ->
+            Log.d(TAG, " - ${file.name}")
         }
     }
 
@@ -80,8 +79,7 @@ class NvpfaActivity : SDLActivity()
             {
                 if(!Environment.isExternalStorageManager())
                 {
-                    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply
-                    {
+                    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
                         data = Uri.parse("package:$packageName")
                     }
                     startActivityForResult(intent, REQUEST_MANAGE_EXTERNAL_STORAGE)
