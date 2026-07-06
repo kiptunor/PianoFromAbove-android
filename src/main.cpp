@@ -106,9 +106,10 @@ extern "C" int APP_ENTRY(int argc, char *argv[])
     std::ostringstream file_dialog_state_path;
     file_dialog_state_path << FD_STATE_FILE_PATH;
     
-    Config::config_path = config_path.str();
-    MidiList::midi_list_path = midi_list_path.str();
+    Config::config_path                = config_path.str();
+    MidiList::midi_list_path           = midi_list_path.str();
     SoundfontList::soundfont_list_path = soundfont_list_path.str();
+    FileDialogState::json_file_path    = file_dialog_state_path.str();
 #endif
 
     /*
