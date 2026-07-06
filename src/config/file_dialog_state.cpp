@@ -30,7 +30,7 @@ std::string               FileDialogState::json_file_path;
 
 FileDialogState::DirPaths FileDialogState::load()
 {
-    Log::debug("Loading FD State...");
+    //Log::debug("Loading FD State...");
     FileDialogState::DirPaths dir_paths;
     
     

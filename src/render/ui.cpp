@@ -787,6 +787,12 @@ void RenderMidiList(const std::vector<std::string> &items, int &selectedIndex, s
 {
     ImGui::BeginChild("##midils", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
 
+#ifdef PLATFORM_ANDROID
+    ImGuiIO &io = ImGui::GetIO();
+    if(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+        ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+#endif
+
     for(size_t i = 0; i < items.size(); ++i)
     {
         std::string midi_filename = FilenameOnly(items[i]);
@@ -820,6 +826,12 @@ std::vector<std::string> GetCheckedSoundfonts(const std::vector<UI::SoundfontIte
 void RenderSoundfontList(std::vector<UI::SoundfontItem> &items, std::string find_item)
 {
     ImGui::BeginChild("##sfls", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
+
+#ifdef PLATFORM_ANDROID
+    ImGuiIO &io = ImGui::GetIO();
+    if(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+        ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+#endif
 
     bool soundfont_changed = false;
 
@@ -1238,6 +1250,13 @@ void UI::Render(SDL_Renderer *r)
     ImGuiIO &io = ImGui::GetIO();
 
 
+    // Finger scrolling without the need of the scrollbar
+#ifdef PLATFORM_ANDROID
+    if(ImGui::IsWindowHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+        ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+#endif
+
+
 #ifdef PLATFORM_ANDROID
     android_scale = UI_FONT_SIZE / 22.0f;
 #else
@@ -1361,6 +1380,16 @@ void UI::Render(SDL_Renderer *r)
         ImGui::SetNextWindowSize(ImVec2(1500.0f, 860.0f));
         ImGui::Begin("PFA Android", &main_gui_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 #endif
+
+        ImGuiIO& io = ImGui::GetIO();
+
+#ifdef PLATFORM_ANDROID
+        // Single finger drag scroll (More comfortable than the scrollbar on mobile)
+        if(ImGui::IsWindowHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+            ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+#endif
+        
+
 
         velocity_filter = live_conf.vel_filter;
         min_velocity    = live_conf.vel_min;
@@ -2486,6 +2515,13 @@ void UI::Render(SDL_Renderer *r)
         ImGui::Begin("File Information", &file_info_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 #endif
 
+
+#ifdef PLATFORM_ANDROID
+        // Single finger drag scroll (More comfortable than the scrollbar on mobile)
+        if(ImGui::IsWindowHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+            ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+#endif
+
         ImGui::Text("File:                         ");
         ImGui::SameLine();
         ImGui::InputText("##nu", file_name_buf, sizeof(file_name_buf));
@@ -2615,9 +2651,25 @@ void UI::Render(SDL_Renderer *r)
 
 
         ImGui::BeginChild("##logs_text", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
-
         bool scroll_to_bottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY();
 
+        /*
+        #ifdef PLATFORM_ANDROID
+                // Single finger drag scroll (More comfortable than the scrollbar on mobile)
+                if(ImGui::IsItemHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+                {
+                    ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+                    //ImGuiWindow* child = ImGui::GetCurrentWindow();
+                    //child->Scroll.y -= ImGui::GetIO().MouseDelta.y;
+                }
+        #endif
+        */
+
+#ifdef PLATFORM_ANDROID
+        if(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+            ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+#endif
+        
         if(Log::log_buffer.size() != 0)
             log_buffer_cleared = false;
 

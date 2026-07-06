@@ -52,10 +52,10 @@ void VisualizerHandler::shutdown()
     {
         std::ostringstream temp;
         temp << "Caught last Error: " << sdl_err;
-        
+
         if(Render::isDesktopSession())
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Last SDL Error: ", temp.str().c_str(), nullptr);
-        
+
         Log::error("", "SDL_GetError(): %s", sdl_err);
         exit_code = 1;
     }
@@ -86,7 +86,7 @@ VisualizerHandler::VisualizerHandler()
     // If not working fallback to the legacy visualizer
     // Then handle the mainloop, logic and GUI display
 
-  
+
 
     RenderWin = new Render();
 
@@ -114,7 +114,7 @@ VisualizerHandler::VisualizerHandler()
             // Save the position at the end
             Playback::saved_position = BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE);
         }
-        
+
 
         frameRate = UI::fps;
 
@@ -170,7 +170,7 @@ VisualizerHandler::VisualizerHandler()
                     case SDLK_RIGHT:
                         Playback::seek_playback(Playback::seek_amount);
                         break;
-                    case SDLK_D: // Only here for development purposes
+                    case SDLK_D: // Only for development purposes
                         UI::show_demo_window = true;
                         break;
                     case SDLK_RETURN:
@@ -201,7 +201,7 @@ VisualizerHandler::VisualizerHandler()
 
 
         note_buf.clear();
-        
+
 
         // Always draw notes
 
@@ -214,7 +214,7 @@ VisualizerHandler::VisualizerHandler()
                 NoteBuffer::DrawNotes(live_conf);  // Available only if no direct note drawing is set
             }
 
-        
+
 
         RenderWin->DrawKeyBoard();  // Render the piano keyboard
         UI::Render(RenderWin->Ren); // Render the GUI
