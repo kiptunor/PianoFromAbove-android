@@ -1514,6 +1514,7 @@ void UI::Render(SDL_Renderer *r)
 
                 ImGui::SameLine();
 
+                ImGui::BeginDisabled(live_midi_list.size() == 0);
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(179, 179, 179, 255));
                 if(ImGui::Button(ICON_FA_TRASH_CAN))
                 {
@@ -1521,6 +1522,7 @@ void UI::Render(SDL_Renderer *r)
                     MidiList::save(live_midi_list, midi_file);
                 }
                 ImGui::PopStyleColor();
+                ImGui::EndDisabled();
 
                 if(ImGui::BeginItemTooltip())
                 {
@@ -1530,10 +1532,13 @@ void UI::Render(SDL_Renderer *r)
 
                 ImGui::SameLine();
 
+                ImGui::BeginDisabled(live_midi_list.size() == 0);
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
                 if(ImGui::Button(ICON_FA_RECTANGLE_XMARK))
                     ImGui::OpenPopup("Clear Midi List Confirmation");
                 ImGui::PopStyleColor();
+                ImGui::EndDisabled();
+                
 
                 if(ImGui::BeginItemTooltip())
                 {
@@ -1543,6 +1548,7 @@ void UI::Render(SDL_Renderer *r)
 
                 ImGui::SameLine();
 
+                ImGui::BeginDisabled(live_midi_list.size() == 0);
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(51, 153, 255, 255));
                 if(ImGui::Button(ICON_FA_CIRCLE_INFO))
                 {
@@ -1556,6 +1562,7 @@ void UI::Render(SDL_Renderer *r)
                     is_midi_info     = true;
                 }
                 ImGui::PopStyleColor();
+                ImGui::EndDisabled();
 
                 if(ImGui::BeginItemTooltip())
                 {
@@ -1690,6 +1697,7 @@ void UI::Render(SDL_Renderer *r)
 
                 ImGui::SameLine();
 
+                ImGui::BeginDisabled(live_soundfont_list.size() == 0);
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(179, 179, 179, 255));
                 if(ImGui::Button(ICON_FA_TRASH_CAN))
                 {
@@ -1697,6 +1705,8 @@ void UI::Render(SDL_Renderer *r)
                     SoundfontList::Save(live_soundfont_list);
                 }
                 ImGui::PopStyleColor();
+                ImGui::EndDisabled();
+                
 
                 if(ImGui::BeginItemTooltip())
                 {
@@ -1764,10 +1774,13 @@ void UI::Render(SDL_Renderer *r)
 
                 ImGui::SameLine();
 
+                ImGui::BeginDisabled(live_soundfont_list.size() == 0);
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
                 if(ImGui::Button(ICON_FA_RECTANGLE_XMARK))
                     ImGui::OpenPopup("Confirm clearance");
                 ImGui::PopStyleColor();
+                ImGui::EndDisabled();
+                
 
                 if(ImGui::BeginItemTooltip())
                 {
@@ -1777,6 +1790,7 @@ void UI::Render(SDL_Renderer *r)
 
                 ImGui::SameLine();
 
+                ImGui::BeginDisabled(live_soundfont_list.size() == 0);
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(51, 153, 255, 255));
                 if(ImGui::Button(ICON_FA_CIRCLE_INFO))
                 {
@@ -1790,6 +1804,8 @@ void UI::Render(SDL_Renderer *r)
                     is_midi_info     = false;
                 }
                 ImGui::PopStyleColor();
+                ImGui::EndDisabled();
+                
 
                 if(ImGui::BeginItemTooltip())
                 {

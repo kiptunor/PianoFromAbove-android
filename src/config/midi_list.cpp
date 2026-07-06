@@ -48,7 +48,7 @@ std::vector<std::string> MidiList::load()
     std::ifstream            file(midi_list_path);
     std::vector<std::string> midi_files;
 
-    if(!file.is_open())
+    if(!file.is_open() || !file.good())
     {
         Log::error("Failed to open MIDI list file");
         return midi_files;

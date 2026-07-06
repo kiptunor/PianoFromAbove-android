@@ -141,24 +141,7 @@ extern "C" int APP_ENTRY(int argc, char *argv[])
 
     
     /* - - - - File Dialog State Handling - - - - */
-    if(std::filesystem::exists(file_dialog_state_path.str()))
-        live_fd_state = FileDialogState::load();
-    else
-    {
-#ifdef PLATFORM_ANDROID
-        live_fd_state.midi_path      = "/storage/emulated/0/Download";
-        live_fd_state.soundfont_path = "/storage/emulated/0/Download";
-        live_fd_state.bg_image_path  = "/storage/emulated/0/Download";
-        live_fd_state.ccol_path      = "/storage/emulated/0/Download";
-        live_fd_state.ui_theme_path  = "/storage/emulated/0/Download";
-#else
-        live_fd_state.midi_path      = "";
-        live_fd_state.soundfont_path = "";
-        live_fd_state.bg_image_path  = "";
-        live_fd_state.ccol_path      = "";
-        live_fd_state.ui_theme_path  = "";
-#endif
-    }
+    live_fd_state = FileDialogState::load();
 
     if(!std::filesystem::exists(DEFAULT_SOUND_FONT_PATH))
         Log::warn("", "Default soundfont not found: %s", DEFAULT_SOUND_FONT_PATH);

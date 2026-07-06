@@ -5,8 +5,10 @@
 
 #ifdef PLATFORM_ANDROID
     #define FD_STATE_FILE_PATH "/data/data/com.qsp.nvpfa/files/file_dialog_state.json"
+    #define DEFAULT_FD_LOCATION "/storage/emulated/0/Download"
 #else
     #define FD_STATE_FILE_PATH "file_dialog_state.json"
+    #define DEFAULT_FD_LOCATION "/home"
 #endif
 
 

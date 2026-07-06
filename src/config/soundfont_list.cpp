@@ -63,7 +63,7 @@ std::vector<UI::SoundfontItem> SoundfontList::Load()
 
     std::ifstream                  in_file(soundfont_list_path);
 
-    if(!in_file.is_open())
+    if(!in_file.is_open() || !in_file.good())
         return soundfonts;
 
     in_file.seekg(0, std::ios::end);

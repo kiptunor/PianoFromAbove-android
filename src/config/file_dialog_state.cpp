@@ -43,9 +43,14 @@ FileDialogState::DirPaths FileDialogState::load()
     std::ifstream             in_file(json_file_path);
 
     in_file.seekg(0, std::ios::end);
-    if(in_file.tellg() == 0)
+    if(in_file.tellg() == 0 || !in_file.good())
     {
-        Log::warn("File dialog state is empty!");
+        Log::warn("File dialog state is empty or not found!");
+        dir_paths.midi_path          = DEFAULT_FD_LOCATION;
+        dir_paths.soundfont_path     = DEFAULT_FD_LOCATION;
+        dir_paths.bg_image_path      = DEFAULT_FD_LOCATION;
+        dir_paths.ccol_path          = DEFAULT_FD_LOCATION;
+        dir_paths.ui_theme_path      = DEFAULT_FD_LOCATION;
         return dir_paths;
     }
     in_file.seekg(0, std::ios::beg);
@@ -54,11 +59,11 @@ FileDialogState::DirPaths FileDialogState::load()
 
     nlohmann::json dir_paths_obj = json_in.value("directoryPaths", nlohmann::json::object());
 
-    dir_paths.midi_path          = dir_paths_obj.value("midi",      "");
-    dir_paths.soundfont_path     = dir_paths_obj.value("soundfont", "");
-    dir_paths.bg_image_path      = dir_paths_obj.value("bgImage",   "");
-    dir_paths.ccol_path          = dir_paths_obj.value("ccol",      "");
-    dir_paths.ui_theme_path      = dir_paths_obj.value("uiTheme",   "");
+    dir_paths.midi_path          = dir_paths_obj.value("midi",      DEFAULT_FD_LOCATION);
+    dir_paths.soundfont_path     = dir_paths_obj.value("soundfont", DEFAULT_FD_LOCATION);
+    dir_paths.bg_image_path      = dir_paths_obj.value("bgImage",   DEFAULT_FD_LOCATION);
+    dir_paths.ccol_path          = dir_paths_obj.value("ccol",      DEFAULT_FD_LOCATION);
+    dir_paths.ui_theme_path      = dir_paths_obj.value("uiTheme",   DEFAULT_FD_LOCATION);
 
     return dir_paths;
 }
