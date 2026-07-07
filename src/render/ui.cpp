@@ -2159,6 +2159,8 @@ void UI::Render(SDL_Renderer *r)
 
                                     us_int *colors                = ChannelColors::getChannelColors(live_conf.last_ccol_file_path);
 
+                                    live_conf.is_custom_ch_colors = true;
+
                                     // Safety is on the edge D:
                                     if(colors != nullptr)
                                         std::copy(colors, colors + 16, live_conf.channel_colors);
@@ -2199,7 +2201,8 @@ void UI::Render(SDL_Renderer *r)
                                 temp_widget_id = "##Ch" + std::to_string(i);
 
                                 ImGui::BeginDisabled(!Playback::is_paused);
-                                ImGui::ColorEdit3(temp_widget_id.c_str(), (f32 *)&ui_chcolors[i], ImGuiColorEditFlags_NoInputs);
+                                if(ImGui::ColorEdit3(temp_widget_id.c_str(), (f32 *)&ui_chcolors[i], ImGuiColorEditFlags_NoInputs))
+                                    live_conf.is_custom_ch_colors = true;
                                 ImGui::EndDisabled();
 
                                 ImGui::SameLine();
