@@ -1,6 +1,6 @@
 # NVirsual Piano From Above
 A clone of the original [Piano From Above](https://github.com/brian-pantano/PianoFromAbove) made by Brian Pantano.
-Now available on on android.
+Now available on android.
 
 This clone is powered by Qishipai's [midi processing library](https://github.com/qishipai/NVirsual) and using SDL3 to render the notes and the keyboard.
 
