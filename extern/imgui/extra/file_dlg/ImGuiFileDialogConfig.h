@@ -201,7 +201,7 @@
 
 // a group for system devices (returned by IFileSystem), but you can also add yours
 // by ex if you would like to display a specific icon for some devices
-// #define USE_PLACES_DEVICES
+#define USE_PLACES_DEVICES
 // #define PLACES_DEVICES_DEFAULT_OPEPEND true
 // #define placesDevicesGroupName "Devices"
 // #define placesDevicesDisplayOrder 10  // to the end
