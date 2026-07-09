@@ -5,7 +5,7 @@ Now available on android.
 This clone is powered by Qishipai's [midi processing library](https://github.com/qishipai/NVirsual) and using SDL3 to render the notes and the keyboard.
 
 > [!WARNING]
-> This project is still in early development and any release could be unstable. Consider building and testing them at your own risk!!
+> This project is still in early development and any release could be unstable. Consider building and testing it at your own risk!!
 > #### No public builds are allowed to be fully shared or redistributed!!!
 
 ## Features
@@ -20,19 +20,19 @@ This clone is powered by Qishipai's [midi processing library](https://github.com
 - [X] Seek backwards
 - [X] Live Note speed change
 - [x] Live Note color change
-- [x] Custom note colors presets trough .ccol files
+- [x] Custom note colors presets through .ccol files
 - [X] Improving the audio limiter
 - [X] Better UI layout on mobile
 - [x] File information support
 - [X] Custom note color array support
-- [x] Veritcal lines on the background
+- [x] Vertical lines on the background
 - [x] Background image support
-- [ ] Setting custom key ranges
-- [X] Common midi and soundfont reloading (This must not require app restarting after each midi playing session)
+- [X] Setting custom key ranges (Keyboard re-scaling to be exact, both using settings and on MIDI File load)
+- [X] Common midi and soundfont reloading (This must not require restarting the app after each midi playing session)
 - [x] MIDI File History
-- [X] Builtin File Dialog
+- [X] Built-in File Dialog
 - [ ] Performance improvements
-- [X] Loging to text file (useful for development purposes)
+- [X] Logging to text file (useful for development purposes)
 - [X] Custom icon and app name
 - [ ] GPU Renderer
 - [ ] Video capture
@@ -45,10 +45,10 @@ This clone is powered by Qishipai's [midi processing library](https://github.com
 
 
 ### All Contributors
-- Qishipai: provider of his c++ midi processing library
-- Tweak: Creating the PFA imitation and upgrading to SDL3, implementing a simple overlap remover
-- Kpitunor: Most UI design, settings and translations
+- Qishipai: Provider of his C++ MIDI processing library
+- Tweak: Creating the PFA imitation and upgrading to SDL3, Implementing a simple overlap remover
+- Kpitunor: Most of the UI design, settings, and translations
 - Nerdly: UI Font Choice
-- Hex: Playback options: play / pause, seek backwards/forwards
+- Hex: Playback options: Play/Pause, seek backward/forward
 - Zeal: Custom Icon
-- SlothPlayer for few builtin themes
+- SlothPlayer: A few built-in themes
