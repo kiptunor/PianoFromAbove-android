@@ -58,19 +58,14 @@ xmake run
 
 ### Android
 ```bash
-# Configure for Android
 xmake f -p android -a arm64-v8a --toolchain=ndk \
   --android_sdk=~/Android/Sdk --ndk=~/Android/Sdk/ndk/<version>
-
-# Set keystore password
-export KEYSTORE_PASS=android
 
 # Build APK (Java 17 must be in PATH)
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 export PATH=$JAVA_HOME/bin:$PATH
 xmake build
 
-# Install to connected device
 adb install -r build/android/arm64-v8a/release/nvi-pfa.apk
 ```
 
