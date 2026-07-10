@@ -126,6 +126,7 @@ class UI
     static bool                     show_full_path_lost_soundfonts;
     static bool                     no_midi_duplicates;
     static bool                     vertical_lines;
+    static bool                     draw_measure_lines;
     static bool                     no_soundfont_duplicates;
     static bool                     background_image;
     static bool                     internal_logging;
