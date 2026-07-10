@@ -26,6 +26,7 @@ This clone is powered by Qishipai's [midi processing library](https://github.com
 - [x] File information support
 - [X] Custom note color array support
 - [x] Vertical lines on the background
+- [X] Horizontal lines on the background
 - [x] Background image support
 - [X] Setting custom key ranges (Keyboard re-scaling to be exact, both using settings and on MIDI File load)
 - [X] Common midi and soundfont reloading (This must not require restarting the app after each midi playing session)
