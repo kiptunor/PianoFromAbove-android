@@ -73,7 +73,6 @@ Config::configuration Config::Load()
     // clang-format off
     nlohmann::json        general_obj   = json_in.value("general",                   nlohmann::json::object());
     in_conf.use_default_paths           = general_obj.value("useDefaultPaths",       default_settings.use_default_paths);
-    in_conf.extra_sf_paths              = general_obj.value("soundfontPaths",        std::vector<std::string> {});
     in_conf.no_soundfont_duplicates     = general_obj.value("noSoundfontDuplicates", default_settings.no_soundfont_duplicates);
     in_conf.no_midi_duplicates          = general_obj.value("noMidiDuplicates",      default_settings.no_midi_duplicates);
     in_conf.internal_log_buffer         = general_obj.value("internalLogBuffer",     default_settings.internal_log_buffer);
@@ -175,7 +174,6 @@ void Config::Save(configuration config)
     {
         { "general", {
                 { "defaultPaths",          config.use_default_paths       },
-                { "soundfontPaths",        config.extra_sf_paths          },
                 { "noMidiDuplicates",      config.no_midi_duplicates      },
                 { "noSoundfontDuplicates", config.no_soundfont_duplicates },
                 { "internalLogBuffer",     config.internal_log_buffer     },

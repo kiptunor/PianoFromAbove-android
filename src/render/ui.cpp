@@ -55,8 +55,6 @@ static std::string         midi_search_text;
 static std::string         sf_search_text;
 static std::string         midi_file;
 static bool                trigger_scroll_sf_list;
-static char                soundfons_path_entry[1024];
-int                        selected_soundfont_path_etry;
 int                        selected_img_path_entry;
 static int                 selected_soundfont      = 0;
 int                        selected_lost_midi      = 0;
@@ -109,7 +107,6 @@ ImVec4                     UI::clear_color;
 UI::RGBAint                UI::liveColor;
 ImVec4                     UI::ui_chcolors[16];
 int                        UI::current_audio_dev;
-std::vector<std::string>   UI::soundfont_paths;
 std::vector<std::string>   UI::prev_images;
 static int                 builtin_ui_theme_idx = 0;
 // clang-format off
@@ -935,6 +932,7 @@ void RenderSoundfontList(std::vector<UI::SoundfontItem> &items, std::string find
     }
 }
 
+/*
 void RenderSoundfontsPathsList(const std::vector<std::string> &items, int &selectedIndex)
 {
     ImGui::BeginChild("##soundfontspathls", ImVec2(0, 230), true, ImGuiWindowFlags_HorizontalScrollbar);
@@ -953,6 +951,7 @@ void RenderSoundfontsPathsList(const std::vector<std::string> &items, int &selec
 
     ImGui::EndChild();
 }
+*/
 
 void ShowAudioDeviceList(const std::vector<Playback::AudioDevice> &audioDevices)
 {
@@ -1222,7 +1221,7 @@ void UI::UpdateWidgetValues()
     UI::internal_logging        = live_conf.internal_log_buffer;
     UI::log_to_file             = live_conf.log_to_file;
     UI::fps                     = live_conf.fps;
-    UI::soundfont_paths         = live_conf.extra_sf_paths;
+    //UI::soundfont_paths         = live_conf.extra_sf_paths;
     UI::last_sf_path            = live_fd_state.soundfont_path;
     UI::no_midi_duplicates      = live_conf.no_midi_duplicates;
     UI::vertical_lines          = live_conf.draw_vertical_lines;
@@ -2039,69 +2038,6 @@ void UI::Render(SDL_Renderer *r)
 
                         live_conf.no_midi_duplicates      = no_midi_duplicates;
                         live_conf.no_soundfont_duplicates = no_soundfont_duplicates;
-
-                        ImGui::Text("Add directories to scan and create soundfont lists");
-                        ImGui::InputTextWithHint("##idk", "New entry", soundfons_path_entry, IM_ARRAYSIZE(soundfons_path_entry));
-                        ImGui::SameLine();
-                        if(ImGui::Button(ICON_FA_SQUARE_PLUS))
-                        {
-                            if(strlen(soundfons_path_entry) > 0)
-                            {
-                                if(std::filesystem::exists(soundfons_path_entry))
-                                {
-                                    soundfont_paths.emplace_back(soundfons_path_entry);
-                                    soundfons_path_entry[0] = '\0';
-                                }
-                                else
-                                    ImGui::OpenPopup("Directory Error");
-                            }
-                        }
-                        if(ImGui::BeginItemTooltip())
-                        {
-                            ImGui::Text("Add new soundfonts path entry");
-                            ImGui::EndTooltip();
-                        }
-
-                        live_conf.extra_sf_paths = soundfont_paths; // Dont forger to update config lol
-
-                        ImVec2 center            = ImGui::GetMainViewport()->GetCenter();
-                        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-
-                        if(ImGui::BeginPopupModal("Directory Error", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-                        {
-                            ImGui::Text("Failed to add directory entry to the list !");
-                            ImGui::Text("Please make sure the directory path is correct.");
-
-                            f32 button_width = 120.0f;
-
-                            f32 window_width = ImGui::GetContentRegionAvail().x;
-                            f32 button_pos_x = (window_width - button_width) * 0.5f;
-
-                            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + button_pos_x);
-
-                            if(ImGui::Button("OK", ImVec2(button_width, 0)))
-                                ImGui::CloseCurrentPopup();
-
-                            ImGui::EndPopup();
-                        }
-
-                        ImGui::SameLine();
-
-                        if(ImGui::Button(ICON_FA_TRASH_CAN))
-                        {
-                            if(selected_soundfont_path_etry >= 0 && selected_soundfont_path_etry < (int)soundfont_paths.size())
-                            {
-                                soundfont_paths.erase(soundfont_paths.begin() + selected_soundfont_path_etry);
-                                selected_soundfont_path_etry = -1;
-                            }
-                        }
-                        if(ImGui::BeginItemTooltip())
-                        {
-                            ImGui::Text("Remove soundfonts path entry");
-                            ImGui::EndTooltip();
-                        }
-
-                        RenderSoundfontsPathsList(soundfont_paths, selected_soundfont_path_etry);
 
                         if(MidiList::missing_files)
                         {

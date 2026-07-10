@@ -134,7 +134,7 @@
 // #define cancelButtonString " Cancel"
 // #define cancelButtonWidth 0.0f
 // alignement [0:1], 0.0 is left, 0.5 middle, 1.0 right, and other ratios
-#define okCancelButtonAlignement 1.0f
+#define okCancelButtonAlignement 0.5f
 // #define invertOkAndCancelButtons 0
 
 // DateTimeFormat

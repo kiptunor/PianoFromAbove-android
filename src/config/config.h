@@ -70,7 +70,6 @@ class Config
         std::string              ui_theme_file_path;
         std::vector<std::string> current_soundfonts;
         std::vector<std::string> extra_midi_paths;
-        std::vector<std::string> extra_sf_paths;
         std::vector<std::string> extra_img_paths;
     } configuration;
 
