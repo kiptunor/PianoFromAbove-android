@@ -44,7 +44,7 @@ target("nvi-pfa")
 
     if is_plat("linux") then
         add_linkdirs("extern/lib/x86_64_linux")
-        add_links("bass", "bassmidi")
+        add_links("bass", "bassmidi", "GL")
     end
 
     if is_plat("android") then
