@@ -1,6 +1,8 @@
 build/
 build_old/
-src/android/qsp-nvpfa_release.jks
+.xmake/
+src/android/qsp-nvpfa_beta_release.jks
 compile_commands.json
 app_crash.txt
 .cache/
+PianoFromAbove-viz/

@@ -73,7 +73,7 @@ target("nvi-pfa")
                 res = "src/android/res",
 
                 package = "com.qsp.nvpfa",
-                keystore = "src/android/qsp-nvpfa_release.jks",
+                keystore = "src/android/qsp-nvpfa_beta_release.jks",
                 keystore_pass = os.getenv("KEYSTORE_PASS"), -- Better choice
 
                 aar = {

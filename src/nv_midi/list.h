@@ -8,7 +8,7 @@
 #include "seq.h"
 
 #include <list>
-//#include <vector>
+#include <vector>
 #include <stack>
 
 
@@ -33,6 +33,12 @@ struct NVnote /* ===== Note class rendering ===== */
     NVnote(f64 T, const NVseq_event &E);
 };
 
+struct NVtempoEvent /* ===== Tempo change for grid rendering ===== */
+{
+    f64 T;          // Time in seconds
+    f64 usPerQuarter; // Microseconds per quarter note
+};
+
 class NVnoteList /* ===== Note queue class ===== */
 {
   public:
@@ -42,6 +48,9 @@ class NVnoteList /* ===== Note queue class ===== */
 
     /* MIDI Parsing */
     bool              start_parse(const char *name);
+
+    /* Tempo map for horizontal grid lines */
+    std::vector<NVtempoEvent> TempoEvents;
 
     /* Close component */
     void              destroy_all();

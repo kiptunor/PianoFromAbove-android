@@ -4323,6 +4323,41 @@ void IGFD::FileDialog::m_DrawFileListView(ImVec2 vSize) {
         ;
     const auto listViewID = ImGui::GetID("FileTable");
     if (ImGui::BeginTableEx("FileTable", listViewID, 4, flags, vSize, 0.0f)) {
+#ifdef PLATFORM_ANDROID
+        {
+            static double ksFileVel = 0.0;
+            static bool ksFileDecel = false;
+            static bool ksFileWasDrag = false;
+            ImGuiIO &io = ImGui::GetIO();
+            bool isHover = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+            bool isDrag = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+            if (isDrag && isHover)
+            {
+                double vel = -io.MouseDelta.y / std::max(io.DeltaTime, 0.0001f);
+                ksFileVel = ksFileVel * 0.85 + vel * 0.15;
+                ksFileDecel = false;
+                ksFileWasDrag = true;
+                ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+            }
+            else if (ksFileWasDrag)
+            {
+                ksFileWasDrag = false;
+                ksFileDecel = true;
+            }
+            else if (ksFileDecel)
+            {
+                ksFileVel *= (1.0 - 7.0 * io.DeltaTime);
+                double absVel = ksFileVel < 0.0 ? -ksFileVel : ksFileVel;
+                if (absVel < 1.0)
+                {
+                    ksFileDecel = false;
+                    ksFileVel = 0.0;
+                }
+                else
+                    ImGui::SetScrollY(ImGui::GetScrollY() + ksFileVel * io.DeltaTime);
+            }
+        }
+#endif
         ImGui::TableSetupScrollFreeze(0, 1);  // Make header always visible
         ImGui::TableSetupColumn(fdi.headerFileName.c_str(), ImGuiTableColumnFlags_WidthStretch | (defaultSortOrderFilename ? ImGuiTableColumnFlags_PreferSortAscending : ImGuiTableColumnFlags_PreferSortDescending), -1, 0);
         ImGui::TableSetupColumn(fdi.headerFileType.c_str(),

@@ -53,7 +53,7 @@ class NvpfaActivity : SDLActivity()
 
     private fun extractAssets()
     {
-        val assetFiles = listOf("piano_maganda.sf2")
+        val assetFiles = listOf("piano_maganda.sf2", "gm_generic.sf2")
         val filesDir = filesDir
 
         for(filename in assetFiles)

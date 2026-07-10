@@ -678,24 +678,83 @@ void Render::LoadBackgroundImage(std::string file)
 
 */
 
+static void DeriveGridColors(int bgR, int bgG, int bgB,
+                             us_int &outDark, us_int &outVeryDark)
+{
+    // PianoFromAbove style: dark = 0.7x brightness, verydark = 1.3x (brighter, capped)
+    int dR  = (int)(bgR * 0.7f), dG = (int)(bgG * 0.7f), dB = (int)(bgB * 0.7f);
+    int vdR = std::min(255, (int)(bgR * 1.3f));
+    int vdG = std::min(255, (int)(bgG * 1.3f));
+    int vdB = std::min(255, (int)(bgB * 1.3f));
+    outDark     = 0xFF000000 | (dB << 16) | (dG << 8) | dR;
+    outVeryDark = 0xFF000000 | (vdB << 16) | (vdG << 8) | vdR;
+}
+
 void Render::DrawBackgroundGrid()
 {
+    us_int iDark = 0, iVeryDark = 0;
+    DeriveGridColors(live_conf.bg_R, live_conf.bg_G, live_conf.bg_B, iDark, iVeryDark);
+
     for(int i = 1; i <= 127; i++)
     {
         if(!IsSharp(i - 1) && !IsSharp(i))
         {
             f32 x = KeyX[i - 1] + _KeyWidth[i - 1];
-            x     = floorf(x + 0.03f);
-            // DrawRect(Ren, x - 1.0f, 0.0f, 1.8f, WinH, 0x402A2A2A, 0x601F1F1F,
-            // 0x601F1F1F, 0x402A2A2A);// Old
-            //  Todo: Add color blending with the background color
-            DrawRect(Ren, x, 0.05f, 2.8f, WinH,
-                0xff292929, // top-left: darker (left side)
-                0x14FFFFFF, // top-right: lighter (right side)
-                0x14FFFFFF, // bottom-right: lighter (right side)
-                0xff292929  // bottom-left: darker (left side)
-            );
+            x     = floorf(x + 0.5f);
+            // 3px vertical line with left/right gradient (PianoFromAbove)
+            DrawRect(Ren, x - 1.0f, 0.0f, 3.0f, (f32)_WinH,
+                iDark, iVeryDark, iVeryDark, iDark);
         }
+    }
+}
+
+void Render::DrawHorizontalLines()
+{
+    if(!Playback::is_playback_started) return;
+
+    us_int iDark = 0, iVeryDark = 0;
+    DeriveGridColors(live_conf.bg_R, live_conf.bg_G, live_conf.bg_B, iDark, iVeryDark);
+
+    auto &te = Midi_ctx.TempoEvents;
+    if(te.empty()) return;
+
+    const int  beatsPerMeasure = 4;
+    f64        pps             = (f64)_WinH / Tscr; // pixels per second
+    f64        t_cur           = Playback::Tplay;
+    f64        t_end           = t_cur + Tscr;
+
+    // Walk tempo segments, drawing a measure line every beatsPerMeasure beats
+    f64 beatAccum = 0.0;
+    for(size_t s = 0; s < te.size(); s++)
+    {
+        f64 segStart = te[s].T;
+        f64 segEnd   = (s + 1 < te.size()) ? te[s + 1].T : t_end + 1e12;
+        if(segEnd <= t_cur)
+        {
+            beatAccum += (segEnd - segStart) / (te[s].usPerQuarter * 1e-6);
+            continue;
+        }
+
+        f64 segStartClamped = std::max(segStart, t_cur);
+        f64 spb             = te[s].usPerQuarter * 1e-6;
+        if(spb <= 0) spb = 0.5;
+
+        f64 relBeat         = beatAccum + (segStartClamped - segStart) / spb;
+        f64 nextMeasureBeat = std::ceil(relBeat / beatsPerMeasure) * beatsPerMeasure;
+        f64 t               = segStart + (nextMeasureBeat - beatAccum) * spb;
+
+        while(t <= segEnd && t <= t_end)
+        {
+            f32 y = (f32)_WinH - (f32)((t - t_cur) * pps);
+            y = floorf(y + 0.5f);
+            if(y >= 0.0f && y <= (f32)_WinH)
+                // 3px horizontal line with top/bottom gradient (PianoFromAbove)
+                DrawRect(Ren, 0.0f, y - 1.0f, (f32)WinW, 3.0f,
+                    iDark, iDark, iVeryDark, iVeryDark);
+            nextMeasureBeat += beatsPerMeasure;
+            t = segStart + (nextMeasureBeat - beatAccum) * spb;
+        }
+        beatAccum += (segEnd - segStart) / spb;
     }
 }
 

@@ -197,7 +197,10 @@ VisualizerHandler::VisualizerHandler()
 
         // and on top of the background image draw the vertical lines
         if(live_conf.draw_vertical_lines)
+        {
             RenderWin->DrawBackgroundGrid();
+            RenderWin->DrawHorizontalLines();
+        }
 
 
         note_buf.clear();
