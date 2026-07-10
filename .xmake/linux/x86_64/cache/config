@@ -1,0 +1,15 @@
+{
+    recheck = false,
+    mtimes = {
+        ["xmake.lua"] = 1783411328
+    },
+    options = {
+        android_sdk = "/home/Noobie/Android/sdk",
+        toolchain = "ndk",
+        ndk = "/home/Noobie/Android/sdk/ndk/27.0.12077973",
+        arch = "arm64-v8a",
+        mode = "release",
+        plat = "android",
+        clean = true
+    }
+}
