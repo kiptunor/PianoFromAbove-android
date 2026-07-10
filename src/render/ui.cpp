@@ -18,6 +18,11 @@
 #include "render.h"
 #include "ui.h"
 
+#include <SDL3/SDL_opengl.h> // brings in GL/gl.h
+// or for modern OpenGL:
+// #include <glad/gl.h> // if you use glad
+#include <SDL3/SDL_opengles2.h> // for GLES2/3
+
 // #include <DixelU/smic.h>
 #include <backend_render/imgui_impl_sdl3.h>
 #include <backend_render/imgui_impl_sdlrenderer3.h>
@@ -35,7 +40,7 @@
 
 
 
-// #define PLATFORM_ANDROID
+#define PLATFORM_ANDROID
 
 
 
@@ -69,41 +74,42 @@ bool                        is_midi_info        = false;
 FileHelpers::MidiParseInfo  cached_midi_info;
 bool                        show_midi_details   = false;
 // single_midi_info_collector *smic_ptr            = nullptr;
-f32                         android_scale;
+f32                      android_scale;
+ImVec4                   text_color;
 
 // UI/Widget variables
-bool                        UI::show_demo_window    = false;
-bool                        UI::main_gui_window     = false;
-int                         UI::live_note_speed     = 6000;
-int                         UI::selected_midi_index = 0;
-bool                        UI::velocity_filter     = true;
-bool                        UI::loop_colors         = false;
-bool                        UI::overlap_remover     = true;
-bool                        UI::use_bg_image        = false;
-bool                        UI::no_midi_duplicates;
-bool                        UI::no_soundfont_duplicates;
-bool                        UI::vsync;
-bool                        UI::internal_logging;
-bool                        UI::log_to_file;
-int                         UI::fps;
-bool                        UI::vertical_lines;
-bool                        UI::use_default_media_paths = true;
-bool                        UI::background_image;
-bool                        UI::show_full_path_lost_midis      = false;
-bool                        UI::show_full_path_lost_soundfonts = false;
-bool                        UI::ui_theming                     = false;
-int                         UI::min_velocity;
-int                         UI::max_velocity;
-std::string                 UI::last_midi_path;
-std::string                 UI::last_midi_file;
-std::string                 UI::last_sf_path;
-ImVec4                      UI::clear_color;
-UI::RGBAint                 UI::liveColor;
-ImVec4                      UI::ui_chcolors[16];
-int                         UI::current_audio_dev;
-std::vector<std::string>    UI::soundfont_paths;
-std::vector<std::string>    UI::prev_images;
-static int                  builtin_ui_theme_idx = 0;
+bool                     UI::show_demo_window    = false;
+bool                     UI::main_gui_window     = false;
+int                      UI::live_note_speed     = 6000;
+int                      UI::selected_midi_index = 0;
+bool                     UI::velocity_filter     = true;
+bool                     UI::loop_colors         = false;
+bool                     UI::overlap_remover     = true;
+bool                     UI::use_bg_image        = false;
+bool                     UI::no_midi_duplicates;
+bool                     UI::no_soundfont_duplicates;
+bool                     UI::vsync;
+bool                     UI::internal_logging;
+bool                     UI::log_to_file;
+int                      UI::fps;
+bool                     UI::vertical_lines;
+bool                     UI::use_default_media_paths = true;
+bool                     UI::background_image;
+bool                     UI::show_full_path_lost_midis      = false;
+bool                     UI::show_full_path_lost_soundfonts = false;
+bool                     UI::ui_theming                     = false;
+int                      UI::min_velocity;
+int                      UI::max_velocity;
+std::string              UI::last_midi_path;
+std::string              UI::last_midi_file;
+std::string              UI::last_sf_path;
+ImVec4                   UI::clear_color;
+UI::RGBAint              UI::liveColor;
+ImVec4                   UI::ui_chcolors[16];
+int                      UI::current_audio_dev;
+std::vector<std::string> UI::soundfont_paths;
+std::vector<std::string> UI::prev_images;
+static int               builtin_ui_theme_idx = 0;
 // clang-format off
 const char                 *builtin_ui_theme_names[] =
 {
@@ -126,7 +132,70 @@ const char                 *builtin_ui_theme_names[] =
 
 
 
+void ApplyScaleToStyle(ImGuiStyle &style, float scale)
+{
+    /*
+style.WindowPadding *= scale;
+style.FramePadding *= scale;
+style.CellPadding *= scale;
+style.ItemSpacing *= scale;
+style.ItemInnerSpacing *= scale;
+style.IndentSpacing *= scale;
+style.ScrollbarSize *= scale;
+style.ScrollbarPadding *= scale;
+style.GrabMinSize *= scale;
 
+style.WindowRounding *= scale;
+style.ChildRounding *= scale;
+style.FrameRounding *= scale;
+style.PopupRounding *= scale;
+style.GrabRounding *= scale;
+style.ScrollbarRounding *= scale;
+style.TabRounding *= scale;
+
+style.WindowBorderSize *= scale;
+style.ChildBorderSize *= scale;
+style.PopupBorderSize *= scale;
+style.FrameBorderSize *= scale;
+style.TabBorderSize *= scale;
+style.TabBarBorderSize *= scale;
+
+style.WindowMinSize *= scale;
+style.ColumnsMinSpacing *= scale;
+style.WindowBorderHoverPadding = std::max(6.0f, style.WindowBorderHoverPadding * scale); // clamp to avoid assert
+style.ColorMarkerSize *= scale;
+style.AntiAliasedLinesUseTex = true; // keep on mobile
+*/
+    style.WindowPadding *= scale;
+    style.FramePadding *= scale;
+    style.CellPadding *= scale;
+    style.ItemSpacing *= scale;
+    style.ItemInnerSpacing *= scale;
+    style.IndentSpacing *= scale;
+    style.ScrollbarSize *= scale + 1.0f;
+    style.ScrollbarPadding *= scale;
+    style.GrabMinSize *= scale + 0.95f;
+    
+    style.WindowRounding *= scale;
+    style.ChildRounding *= scale;
+    style.FrameRounding *= scale + 1.8f;
+    style.PopupRounding *= scale;
+    style.GrabRounding *= scale;
+    style.ScrollbarRounding *= scale + 2.0f;
+    style.TabRounding *= scale + 2.0f;
+    
+    style.WindowBorderSize *= scale;
+    style.ChildBorderSize *= scale;
+    style.PopupBorderSize *= scale + 2.0f;
+    style.FrameBorderSize *= scale + 2.0f;
+    style.TabBorderSize *= scale + 2.0f;
+    style.TabBarBorderSize *= scale;
+    
+    style.WindowMinSize *= scale;
+    style.ColumnsMinSpacing *= scale;
+    style.WindowBorderHoverPadding = std::max(6.0f, style.WindowBorderHoverPadding * scale);
+    style.ColorMarkerSize *= scale;
+}
 
 
 /*
@@ -146,7 +215,7 @@ const char                 *builtin_ui_theme_names[] =
 
 */
 
-void                        UI::SetMoonlightTheme()
+void                     UI::SetMoonlightTheme()
 {
     /*
     Theme: Moonlight
@@ -178,18 +247,19 @@ void                        UI::SetMoonlightTheme()
     style.ScrollbarPadding         = 2.0f;
 
     // Different size for the scrollbar so user can actually grab it lol
-#ifndef PLATFORM_ANDROID
+//#ifndef PLATFORM_ANDROID
     style.ScrollbarSize = 20.60000038146973f;
-#else
-    style.ScrollbarSize = 48.60000038146973f;
-#endif
-
-    style.ScrollbarRounding = 15.89999961853027f;
-#ifndef PLATFORM_ANDROID
     style.GrabMinSize = 12.700000047683716f;
-#else
-    style.GrabMinSize = 40.700000047683716f;
-#endif
+//#else
+//    style.ScrollbarSize = 48.60000038146973f;
+//#endif
+
+//    style.ScrollbarRounding = 15.89999961853027f;
+//#ifndef PLATFORM_ANDROID
+//    style.GrabMinSize = 12.700000047683716f;
+//#else
+//    style.GrabMinSize = 40.700000047683716f;
+//#endif
 
     style.GrabRounding                           = 8.0f; // Modified
     style.TabRounding                            = 8.89999961853027f;
@@ -252,47 +322,52 @@ void                        UI::SetMoonlightTheme()
     style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0.4980392158031464f, 0.5137255191802979f, 1.0f, 1.0f);
     style.Colors[ImGuiCol_NavWindowingDimBg]     = ImVec4(0.196078434586525f, 0.1764705926179886f, 0.5450980663299561f, 0.501960813999176f);
     style.Colors[ImGuiCol_ModalWindowDimBg]      = ImVec4(0.196078434586525f, 0.1764705926179886f, 0.5450980663299561f, 0.501960813999176f);
+
+#ifdef PLATFORM_ANDROID
+    float scale = ImGui::GetFontSize() / UI_FONT_SIZE; // e.g., 55/22 = 2.5
+    ApplyScaleToStyle(style, scale);
+#endif
 }
 
 void UI::SetSilvanaTheme()
 {
-    ImGuiStyle &style                          = ImGui::GetStyle();
+    ImGuiStyle &style                 = ImGui::GetStyle();
 
-    style.Alpha                                = 1.0f;
-    style.WindowRounding                       = 10.0f;
-    style.ChildRounding                        = 6.0f;
-    style.FrameRounding                        = 6.0f;
-    style.PopupRounding                        = 10.0f;
-    style.GrabRounding                         = 3.0f;
-    style.ScrollbarRounding                    = 4.0f;
-    style.TabRounding                          = 3.0f;
-    style.WindowPadding                        = ImVec2(14, 14);
-    style.FramePadding                         = ImVec2(12, 5);
-    style.ItemSpacing                          = ImVec2(8, 7);
-    style.ItemInnerSpacing                     = ImVec2(6, 4);
-    style.IndentSpacing                        = 21.0f;
-    style.ScrollbarSize                        = 28.0f;
-    style.ScrollbarPadding                     = 6.0f;
-    style.GrabMinSize                          = 12.0f;
-    style.WindowBorderSize                     = 1.0f;
-    style.ChildBorderSize                      = 1.0f;
-    style.PopupBorderSize                      = 1.0f;
-    style.FrameBorderSize                      = 1.0f;
-    style.TabBorderSize                        = 1.0f;
-    style.TabBarBorderSize                     = 2.0f;
-    style.TabRounding                          = 8.0f;
-    style.CellPadding                          = ImVec2(8, 12);
-    style.TableAngledHeadersTextAlign          = ImVec2(0.50, 0.50);
-    style.WindowTitleAlign                     = ImVec2(0.50, 0.50);
-    style.WindowBorderHoverPadding             = 6.0f; // Imgui asserts because of this so no scale multiplication
-    style.WindowMenuButtonPosition             = ImGuiDir_Right;
-    style.ColorMarkerSize                      = 8.0f;
-    
-    
-#ifdef PLATFORM_ANDROID
-    style.GrabMinSize = 40.700000047683716f;
-    style.ScrollbarSize = 48.60000038146973f;
-#endif
+    style.Alpha                       = 1.0f;
+    style.WindowRounding              = 10.0f;
+    style.ChildRounding               = 6.0f;
+    style.FrameRounding               = 6.0f;
+    style.PopupRounding               = 10.0f;
+    style.GrabRounding                = 3.0f;
+    style.ScrollbarRounding           = 4.0f;
+    style.TabRounding                 = 3.0f;
+    style.WindowPadding               = ImVec2(14, 14);
+    style.FramePadding                = ImVec2(12, 5);
+    style.ItemSpacing                 = ImVec2(8, 7);
+    style.ItemInnerSpacing            = ImVec2(6, 4);
+    style.IndentSpacing               = 21.0f;
+    style.ScrollbarSize               = 28.0f;
+    style.ScrollbarPadding            = 6.0f;
+    style.GrabMinSize                 = 12.0f;
+    style.WindowBorderSize            = 1.0f;
+    style.ChildBorderSize             = 1.0f;
+    style.PopupBorderSize             = 1.0f;
+    style.FrameBorderSize             = 1.0f;
+    style.TabBorderSize               = 1.0f;
+    style.TabBarBorderSize            = 2.0f;
+    style.TabRounding                 = 8.0f;
+    style.CellPadding                 = ImVec2(8, 12);
+    style.TableAngledHeadersTextAlign = ImVec2(0.50, 0.50);
+    style.WindowTitleAlign            = ImVec2(0.50, 0.50);
+    style.WindowBorderHoverPadding    = 6.0f; // Imgui asserts because of this so no scale multiplication
+    style.WindowMenuButtonPosition    = ImGuiDir_Right;
+    style.ColorMarkerSize             = 8.0f;
+
+
+//#ifdef PLATFORM_ANDROID
+//    style.GrabMinSize   = 40.700000047683716f;
+//    style.ScrollbarSize = 48.60000038146973f;
+//#endif
 
     ImVec4 *colors                             = style.Colors;
     colors[ImGuiCol_Text]                      = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
@@ -355,38 +430,43 @@ void UI::SetSilvanaTheme()
     colors[ImGuiCol_NavWindowingHighlight]     = ImVec4(0.91f, 0.50f, 0.23f, 1.00f);
     colors[ImGuiCol_NavWindowingDimBg]         = ImVec4(0.55f, 0.30f, 0.18f, 0.50f);
     colors[ImGuiCol_ModalWindowDimBg]          = ImVec4(0.41f, 0.21f, 0.07f, 0.50f);
+
+#ifdef PLATFORM_ANDROID
+    float scale = ImGui::GetFontSize() / UI_FONT_SIZE; // e.g., 55/22 = 2.5
+    ApplyScaleToStyle(style, scale);
+#endif
 }
 
 // All these themes are made by SlothPlayer
 void UI::SetArcticHorizonTheme()
 {
-    ImGuiStyle &style                          = ImGui::GetStyle();
+    ImGuiStyle &style       = ImGui::GetStyle();
 
     // Arctic Horizon theme - Cool, icy theme with blues and whites
-    style.Alpha                                = 1.0f;
-    style.WindowRounding                       = 6.0f;
-    style.ChildRounding                        = 4.0f;
-    style.FrameRounding                        = 3.0f;
-    style.GrabRounding                         = 2.0f;
-    style.ScrollbarRounding                    = 4.0f;
-    style.ScrollbarPadding                     = 3.0f;
-    style.TabRounding                          = 3.0f;
-    style.WindowPadding                        = ImVec2(12, 12);
-    style.FramePadding                         = ImVec2(8, 6);
-    style.ItemSpacing                          = ImVec2(8, 6);
-    style.ItemInnerSpacing                     = ImVec2(6, 4);
-    style.IndentSpacing                        = 20.0f;
-    style.ScrollbarSize                        = 25.0f;
-    style.GrabMinSize                          = 12.0f;
-    style.FrameBorderSize                      = 0.0f;
-    style.TabBorderSize                        = 0.0f;
+    style.Alpha             = 1.0f;
+    style.WindowRounding    = 6.0f;
+    style.ChildRounding     = 4.0f;
+    style.FrameRounding     = 3.0f;
+    style.GrabRounding      = 2.0f;
+    style.ScrollbarRounding = 4.0f;
+    style.ScrollbarPadding  = 3.0f;
+    style.TabRounding       = 3.0f;
+    style.WindowPadding     = ImVec2(12, 12);
+    style.FramePadding      = ImVec2(8, 6);
+    style.ItemSpacing       = ImVec2(8, 6);
+    style.ItemInnerSpacing  = ImVec2(6, 4);
+    style.IndentSpacing     = 20.0f;
+    style.ScrollbarSize     = 25.0f;
+    style.GrabMinSize       = 12.0f;
+    style.FrameBorderSize   = 0.0f;
+    style.TabBorderSize     = 0.0f;
 
-    
 
-#ifdef PLATFORM_ANDROID
-    style.GrabMinSize = 40.700000047683716f;
-    style.ScrollbarSize = 48.60000038146973f;
-#endif
+
+//#ifdef PLATFORM_ANDROID
+//    style.GrabMinSize   = 40.700000047683716f;
+//    style.ScrollbarSize = 48.60000038146973f;
+//#endif
 
     // Arctic Horizon color palette - Cool blues and icy whites
     ImVec4 *colors                             = style.Colors;
@@ -450,38 +530,44 @@ void UI::SetArcticHorizonTheme()
     colors[ImGuiCol_NavWindowingHighlight]     = ImVec4(0.07f, 0.48f, 0.73f, 0.83f);
     colors[ImGuiCol_NavWindowingDimBg]         = ImVec4(0.10f, 0.66f, 0.87f, 0.42f);
     colors[ImGuiCol_ModalWindowDimBg]          = ImVec4(0.02f, 0.05f, 0.12f, 0.70f);
+
+#ifdef PLATFORM_ANDROID
+    float scale = ImGui::GetFontSize() / UI_FONT_SIZE; // e.g., 55/22 = 2.5
+    ApplyScaleToStyle(style, scale);
+#endif
 }
 
 void UI::SetCrimsonAzureTheme()
 {
-    ImGuiStyle &style                      = ImGui::GetStyle();
+    ImGuiStyle &style       = ImGui::GetStyle();
 
     // -------------------------
     // Layout / Feel
     // -------------------------
-    style.WindowRounding                   = 10.0f;
-    style.ChildRounding                    = 8.0f;
-    style.FrameRounding                    = 6.0f;
-    style.PopupRounding                    = 8.0f;
-    style.ScrollbarRounding                = 12.0f;
-    style.GrabRounding                     = 6.0f;
-    style.TabRounding                      = 7.0f;
-    style.WindowPadding                    = ImVec2(12, 10);
-    style.FramePadding                     = ImVec2(10, 6);
-    style.ItemSpacing                      = ImVec2(10, 8);
-    style.ItemInnerSpacing                 = ImVec2(8, 6);
-    style.ScrollbarSize                    = 25.0f;
-    style.ScrollbarPadding                 = 4.0f;
-    style.GrabMinSize                      = 10.0f;
-    style.FrameBorderSize                  = 1.0f;
-    style.WindowBorderSize                 = 1.0f;
-    
-    
-    
-#ifdef PLATFORM_ANDROID
-    style.GrabMinSize = 40.700000047683716f;
-    style.ScrollbarSize = 48.60000038146973f;
-#endif
+    style.WindowRounding    = 10.0f;
+    style.ChildRounding     = 8.0f;
+    style.FrameRounding     = 6.0f;
+    style.PopupRounding     = 8.0f;
+    style.ScrollbarRounding = 12.0f;
+    style.GrabRounding      = 6.0f;
+    style.TabRounding       = 7.0f;
+    style.TabBorderSize     = 1.0f;
+    style.WindowPadding     = ImVec2(12, 10);
+    style.FramePadding      = ImVec2(10, 6);
+    style.ItemSpacing       = ImVec2(10, 8);
+    style.ItemInnerSpacing  = ImVec2(8, 6);
+    style.ScrollbarSize     = 25.0f;
+    style.ScrollbarPadding  = 4.0f;
+    style.GrabMinSize       = 10.0f;
+    style.FrameBorderSize   = 1.0f;
+    style.WindowBorderSize  = 1.0f;
+
+
+
+//#ifdef PLATFORM_ANDROID
+//    style.GrabMinSize   = 40.700000047683716f;
+//    style.ScrollbarSize = 48.60000038146973f;
+//#endif
 
     ImVec4 *colors                         = style.Colors;
 
@@ -554,36 +640,41 @@ void UI::SetCrimsonAzureTheme()
     colors[ImGuiCol_DragDropTargetBg]      = ImVec4(0.200f, 0.549f, 1.000f, 0.387f);
     colors[ImGuiCol_NavCursor]             = blue;
     colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0.200f, 0.549f, 1.000f, 0.387f);
+
+#ifdef PLATFORM_ANDROID
+    float scale = ImGui::GetFontSize() / UI_FONT_SIZE; // e.g., 55/22 = 2.5
+    ApplyScaleToStyle(style, scale);
+#endif
 }
 
 void UI::SetCyberpunkTheme()
 {
-    ImGuiStyle &style                     = ImGui::GetStyle();
+    ImGuiStyle &style       = ImGui::GetStyle();
 
     // -------------------------
     // Layout / Sizing
     // -------------------------
-    style.WindowRounding                  = 10.0f;
-    style.ChildRounding                   = 8.0f;
-    style.FrameRounding                   = 6.0f;
-    style.PopupRounding                   = 8.0f;
-    style.ScrollbarRounding               = 12.0f;
-    style.ScrollbarSize                   = 24.0f;
-    style.ScrollbarPadding                = 6.0f;
-    style.GrabRounding                    = 6.0f;
-    style.TabRounding                     = 6.0f;
+    style.WindowRounding    = 10.0f;
+    style.ChildRounding     = 8.0f;
+    style.FrameRounding     = 6.0f;
+    style.PopupRounding     = 8.0f;
+    style.ScrollbarRounding = 12.0f;
+    style.ScrollbarSize     = 24.0f;
+    style.ScrollbarPadding  = 6.0f;
+    style.GrabRounding      = 6.0f;
+    style.TabRounding       = 6.0f;
 
-    style.WindowPadding                   = ImVec2(12, 10);
-    style.FramePadding                    = ImVec2(10, 6);
-    style.ItemSpacing                     = ImVec2(10, 8);
-    style.ItemInnerSpacing                = ImVec2(8, 6);
+    style.WindowPadding     = ImVec2(12, 10);
+    style.FramePadding      = ImVec2(10, 6);
+    style.ItemSpacing       = ImVec2(10, 8);
+    style.ItemInnerSpacing  = ImVec2(8, 6);
 
-    style.GrabMinSize                     = 10.0f;
-    
-#ifdef PLATFORM_ANDROID
-    style.GrabMinSize = 40.700000047683716f;
-    style.ScrollbarSize = 48.60000038146973f;
-#endif
+    style.GrabMinSize       = 10.0f;
+
+//#ifdef PLATFORM_ANDROID
+//    style.GrabMinSize   = 40.700000047683716f;
+//    style.ScrollbarSize = 48.60000038146973f;
+//#endif
 
 
     ImVec4 *colors                        = style.Colors;
@@ -638,34 +729,39 @@ void UI::SetCyberpunkTheme()
     colors[ImGuiCol_ScrollbarGrabHovered] = accent;
     colors[ImGuiCol_ScrollbarGrabActive]  = accent2;
     colors[ImGuiCol_ModalWindowDimBg]     = ImVec4(0, 0, 0, 0.6f);
+
+#ifdef PLATFORM_ANDROID
+    float scale = ImGui::GetFontSize() / UI_FONT_SIZE; // e.g., 55/22 = 2.5
+    ApplyScaleToStyle(style, scale);
+#endif
 }
 
 void UI::SetNeonAbyssTheme()
 {
-    ImGuiStyle &style                                = ImGui::GetStyle();
+    ImGuiStyle &style       = ImGui::GetStyle();
 
-    style.Alpha                                      = 1.0f;
-    style.WindowRounding                             = 3.0f;
-    style.ChildRounding                              = 3.0f;
-    style.FrameRounding                              = 3.0f;
-    style.GrabRounding                               = 1.0f;
-    style.ScrollbarRounding                          = 3.0f;
-    style.GrabMinSize                                = 20.0f;
-    style.WindowPadding                              = ImVec2(8.0f, 8.0f);
-    style.FramePadding                               = ImVec2(6.0f, 4.0f);
-    style.ItemSpacing                                = ImVec2(8.0f, 8.0f);
-    style.ItemInnerSpacing                           = ImVec2(4.0f, 4.0f);
-    style.IndentSpacing                              = 20.0f;
-    style.ScrollbarSize                              = 20.0f;
-    style.ScrollbarPadding                           = 4.0f;
-    style.TabRounding                                = 3.0f;
-    style.FrameBorderSize                            = 1.0f;
-    style.TabBorderSize                              = 1.0f;
-    
-#ifdef PLATFORM_ANDROID
-    style.GrabMinSize = 40.700000047683716f;
-    style.ScrollbarSize = 48.60000038146973f;
-#endif
+    style.Alpha             = 1.0f;
+    style.WindowRounding    = 3.0f;
+    style.ChildRounding     = 3.0f;
+    style.FrameRounding     = 3.0f;
+    style.GrabRounding      = 1.0f;
+    style.ScrollbarRounding = 3.0f;
+    style.GrabMinSize       = 20.0f;
+    style.WindowPadding     = ImVec2(8.0f, 8.0f);
+    style.FramePadding      = ImVec2(6.0f, 4.0f);
+    style.ItemSpacing       = ImVec2(8.0f, 8.0f);
+    style.ItemInnerSpacing  = ImVec2(4.0f, 4.0f);
+    style.IndentSpacing     = 20.0f;
+    style.ScrollbarSize     = 20.0f;
+    style.ScrollbarPadding  = 4.0f;
+    style.TabRounding       = 3.0f;
+    style.FrameBorderSize   = 1.0f;
+    style.TabBorderSize     = 1.0f;
+
+//#ifdef PLATFORM_ANDROID
+//    style.GrabMinSize   = 40.700000047683716f;
+//    style.ScrollbarSize = 48.60000038146973f;
+//#endif
 
     style.Colors[ImGuiCol_Text]                      = ImVec4(0.00f, 1.00f, 1.00f, 1.00f);
     style.Colors[ImGuiCol_TextDisabled]              = ImVec4(0.00f, 0.40f, 0.41f, 1.00f);
@@ -727,6 +823,11 @@ void UI::SetNeonAbyssTheme()
     style.Colors[ImGuiCol_NavWindowingHighlight]     = ImVec4(0.16f, 0.79f, 0.79f, 1.00f);
     style.Colors[ImGuiCol_NavWindowingDimBg]         = ImVec4(0.00f, 0.29f, 0.24f, 0.40f);
     style.Colors[ImGuiCol_ModalWindowDimBg]          = ImVec4(0.00f, 0.29f, 0.24f, 0.27f);
+
+#ifdef PLATFORM_ANDROID
+    float scale = ImGui::GetFontSize() / UI_FONT_SIZE; // e.g., 55/22 = 2.5
+    ApplyScaleToStyle(style, scale);
+#endif
 }
 
 /*
@@ -1125,6 +1226,8 @@ void UI::SetBuiltinTheme(int idx)
         SetArcticHorizonTheme();
     else if(idx == 5)
         SetCyberpunkTheme();
+
+    text_color = ImGui::GetStyleColorVec4(ImGuiCol_Text);
 }
 
 ImVec4 UI::UIntToImVec4(us_int rgb)
@@ -1370,6 +1473,8 @@ void UI::Render(SDL_Renderer *r)
 
     */
 
+
+
     ConstrainWindowMove("PFA Android");
 
     // Show the main GUI window
@@ -1385,7 +1490,8 @@ void UI::Render(SDL_Renderer *r)
         ImGui::Begin("PFA Android", &main_gui_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 #endif
 
-        ImGuiIO& io = ImGui::GetIO();
+        ImGuiIO    &io             = ImGui::GetIO();
+        ImGuiStyle &internal_style = ImGui::GetStyle();
 
 #ifdef PLATFORM_ANDROID
         {
@@ -1395,7 +1501,7 @@ void UI::Render(SDL_Renderer *r)
             ImGui::SetScrollY((f32)ks_gui.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
         }
 #endif
-        
+
 
 
         velocity_filter = live_conf.vel_filter;
@@ -1443,15 +1549,30 @@ void UI::Render(SDL_Renderer *r)
 
                 ImGui::SameLine();
 
+                static bool button_click;
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(60, 177, 195, 255));
                 if(ImGui::Button(ICON_FA_FOLDER_OPEN))
+                    button_click = true;
+                else
+                    button_click = false;
+                ImGui::PopStyleColor();
+
+                if(button_click)
                 {
                     IGFD::FileDialogConfig config;
                     config.path  = live_fd_state.midi_path;
                     config.flags = ImGuiFileDialogFlags_HideColumnType;
+
+                    ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".mid", internal_style.Colors[ImGuiCol_Text], ICON_FA_MUSIC);
+                    ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".midi", internal_style.Colors[ImGuiCol_Text], ICON_FA_MUSIC);
+                    ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".smf", internal_style.Colors[ImGuiCol_Text], ICON_FA_MUSIC);
+                    ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".MID", internal_style.Colors[ImGuiCol_Text], ICON_FA_MUSIC);
+                    ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".MIDI", internal_style.Colors[ImGuiCol_Text], ICON_FA_MUSIC);
+                    ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".SMF", internal_style.Colors[ImGuiCol_Text], ICON_FA_MUSIC);
+
                     ImGuiFileDialog::Instance()->OpenDialog("MidiFileFD", "Choose a MIDI File", ".mid,.midi,.smf,.MID,.MIDI,.SMF", config);
                 }
-                ImGui::PopStyleColor();
+
 
                 if(ImGui::BeginItemTooltip())
                 {
@@ -1574,7 +1695,7 @@ void UI::Render(SDL_Renderer *r)
                     ImGui::OpenPopup("Clear Midi List Confirmation");
                 ImGui::PopStyleColor();
                 ImGui::EndDisabled();
-                
+
 
                 if(ImGui::BeginItemTooltip())
                 {
@@ -1666,15 +1787,25 @@ void UI::Render(SDL_Renderer *r)
 
                 ImGui::SameLine();
 
+                static bool button_click;
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
                 if(ImGui::Button(ICON_FA_SQUARE_PLUS))
+                    button_click = true;
+                else
+                    button_click = false;
+                ImGui::PopStyleColor();
+
+                if(button_click)
                 {
                     IGFD::FileDialogConfig config;
                     config.path  = live_fd_state.soundfont_path;
                     config.flags = ImGuiFileDialogFlags_HideColumnType;
+                    ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".sf2", internal_style.Colors[ImGuiCol_Text], ICON_FA_FILE_AUDIO);
+                    ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".sfz", internal_style.Colors[ImGuiCol_Text], ICON_FA_FILE_CODE);
+                    ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".SF2", internal_style.Colors[ImGuiCol_Text], ICON_FA_FILE_AUDIO);
+                    ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".SFZ", internal_style.Colors[ImGuiCol_Text], ICON_FA_FILE_CODE);
                     ImGuiFileDialog::Instance()->OpenDialog("SoundfontFD", "Choose Soundfont File", ".sf2,.sfz,.SF2,.SFZ", config);
                 }
-                ImGui::PopStyleColor();
 
                 if(ImGui::BeginItemTooltip())
                 {
@@ -1745,7 +1876,7 @@ void UI::Render(SDL_Renderer *r)
                 }
                 ImGui::PopStyleColor();
                 ImGui::EndDisabled();
-                
+
 
                 if(ImGui::BeginItemTooltip())
                 {
@@ -1819,7 +1950,7 @@ void UI::Render(SDL_Renderer *r)
                     ImGui::OpenPopup("Confirm clearance");
                 ImGui::PopStyleColor();
                 ImGui::EndDisabled();
-                
+
 
                 if(ImGui::BeginItemTooltip())
                 {
@@ -1844,7 +1975,7 @@ void UI::Render(SDL_Renderer *r)
                 }
                 ImGui::PopStyleColor();
                 ImGui::EndDisabled();
-                
+
 
                 if(ImGui::BeginItemTooltip())
                 {
@@ -2260,6 +2391,13 @@ void UI::Render(SDL_Renderer *r)
                                 IGFD::FileDialogConfig config;
                                 config.path  = live_fd_state.bg_image_path;
                                 config.flags = ImGuiFileDialogFlags_HideColumnType;
+                                ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".png", internal_style.Colors[ImGuiCol_Text], ICON_FA_FILE_IMAGE);
+                                ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".jpg", internal_style.Colors[ImGuiCol_Text], ICON_FA_FILE_IMAGE);
+                                ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".jpeg", internal_style.Colors[ImGuiCol_Text], ICON_FA_FILE_IMAGE);
+                                ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".webp", internal_style.Colors[ImGuiCol_Text], ICON_FA_FILE_IMAGE);
+                                ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".bmp", internal_style.Colors[ImGuiCol_Text], ICON_FA_FILE_IMAGE);
+                                ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".svg", internal_style.Colors[ImGuiCol_Text], ICON_FA_FILE_IMAGE);
+
                                 ImGuiFileDialog::Instance()->OpenDialog("ImageFileFD", "Choose Image File", ".png,.jpg,.jpeg,.webp,.bmp,.svg", config);
                             }
                             if(ImGui::BeginItemTooltip())
@@ -2296,7 +2434,10 @@ void UI::Render(SDL_Renderer *r)
                                     // SetMoonlightTheme();
                                     SetBuiltinTheme(builtin_ui_theme_idx);
                                 else if(std::filesystem::exists(live_conf.ui_theme_file_path))
+                                {
                                     ImGui::LoadStyleFrom(live_conf.ui_theme_file_path.c_str());
+                                    text_color = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+                                }
                                 // Warn the user if the theme file is missing
                                 else
                                     // SetMoonlightTheme();
@@ -2505,6 +2646,7 @@ void UI::Render(SDL_Renderer *r)
             ImGui::EndTabBar();
         }
         ImGui::End();
+        internal_style = ImGui::GetStyle();
     } // Main window
 
     /*
@@ -2685,7 +2827,7 @@ void UI::Render(SDL_Renderer *r)
             ImGui::SetScrollY((f32)ks_log.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
         }
 #endif
-        
+
         if(Log::log_buffer.size() != 0)
             log_buffer_cleared = false;
 

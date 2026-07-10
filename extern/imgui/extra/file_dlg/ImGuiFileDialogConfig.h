@@ -38,22 +38,22 @@
 //// THUMBNAILS /////////////////
 /////////////////////////////////
 
-//#define USE_THUMBNAILS
-// the thumbnail generation use the stb_image and stb_resize lib who need to define the implementation
-// btw if you already use them in your app, you can have compiler error due to "implemntation found in double"
-// so uncomment these line for prevent the creation of implementation of these libs again
-// #define DONT_DEFINE_AGAIN__STB_IMAGE_IMPLEMENTATION
-// #define DONT_DEFINE_AGAIN__STB_IMAGE_RESIZE_IMPLEMENTATION
-//#define IMGUI_RADIO_BUTTON RadioButton
-//#define DisplayMode_ThumbailsList_ImageHeight 100.0f
-// #define tableHeaderFileThumbnailsString "Thumbnails"
-//#define DisplayMode_FilesList_ButtonString ICON_FA_LIST
-//#define DisplayMode_FilesList_ButtonHelp "Switch to file list"
-//#define DisplayMode_ThumbailsList_ButtonString ICON_FA_IMAGE
-//#define DisplayMode_ThumbailsList_ButtonHelp "Switch to thumbnail List"
-// todo
-// #define DisplayMode_ThumbailsGrid_ButtonString "TG"
-// #define DisplayMode_ThumbailsGrid_ButtonHelp "Thumbnails Grid"
+// #define USE_THUMBNAILS
+//  the thumbnail generation use the stb_image and stb_resize lib who need to define the implementation
+//  btw if you already use them in your app, you can have compiler error due to "implemntation found in double"
+//  so uncomment these line for prevent the creation of implementation of these libs again
+//  #define DONT_DEFINE_AGAIN__STB_IMAGE_IMPLEMENTATION
+//  #define DONT_DEFINE_AGAIN__STB_IMAGE_RESIZE_IMPLEMENTATION
+// #define IMGUI_RADIO_BUTTON RadioButton
+// #define DisplayMode_ThumbailsList_ImageHeight 300.0f
+//  #define tableHeaderFileThumbnailsString "Thumbnails"
+// #define DisplayMode_FilesList_ButtonString ICON_FA_LIST
+// #define DisplayMode_FilesList_ButtonHelp "Switch to file list"
+// #define DisplayMode_ThumbailsList_ButtonString ICON_FA_IMAGE
+// #define DisplayMode_ThumbailsList_ButtonHelp "Switch to thumbnail List"
+//  todo
+//  #define DisplayMode_ThumbailsGrid_ButtonString "TG"
+//  #define DisplayMode_ThumbailsGrid_ButtonHelp "Thumbnails Grid"
 
 /////////////////////////////////
 //// EXPLORATION BY KEYS ////////
@@ -83,7 +83,7 @@
 
 // by ex you can quit the dialog by pressing the key excape
 #define USE_DIALOG_EXIT_WITH_KEY
-#define IGFD_EXIT_KEY ImGuiKey_Escape
+#define IGFD_EXIT_KEY            ImGuiKey_Escape
 
 /////////////////////////////////
 //// WIDGETS ////////////////////
@@ -108,21 +108,21 @@
 /////////////////////////////////
 
 // locales string
-#define createDirButtonString ICON_FA_FOLDER_PLUS
-#define resetButtonString ICON_FA_ARROW_ROTATE_RIGHT
-//#define devicesButtonString "Devices"
-#define editPathButtonString ICON_FA_PENCIL
+#define createDirButtonString    ICON_FA_FOLDER_PLUS
+#define resetButtonString        ICON_FA_ARROW_ROTATE_RIGHT
+// #define devicesButtonString "Devices"
+#define editPathButtonString     ICON_FA_PENCIL
 // #define searchString "Search"
-#define dirEntryString ICON_FA_FOLDER " "
+#define dirEntryString           ICON_FA_FOLDER " "
 // #define linkEntryString "[LINK] "
-#define fileEntryString ICON_FA_FILE " "
+#define fileEntryString          ICON_FA_FILE " "
 // #define fileNameString "File Name : "
 // #define dirNameString "Directory Path :"
-#define buttonResetSearchString "Reset path"
-#define buttonDriveString ICON_FA_HARD_DRIVE
+#define buttonResetSearchString  "Reset path"
+#define buttonDriveString        ICON_FA_HARD_DRIVE
 // #define buttonEditPathString "Edit path\nYou can also right click on path buttons"
 // #define buttonResetPathString "Reset to current directory"
-#define buttonCreateDirString "Create new directory"
+#define buttonCreateDirString    "Create new directory"
 // #define OverWriteDialogTitleString "The file Already Exist !"
 // #define OverWriteDialogMessageString "Would you like to OverWrite it ?"
 // #define OverWriteDialogConfirmButtonString "Confirm"
@@ -134,7 +134,7 @@
 // #define cancelButtonString " Cancel"
 // #define cancelButtonWidth 0.0f
 // alignement [0:1], 0.0 is left, 0.5 middle, 1.0 right, and other ratios
-// #define okCancelButtonAlignement 0.0f
+#define okCancelButtonAlignement 1.0f
 // #define invertOkAndCancelButtons 0
 
 // DateTimeFormat
@@ -174,11 +174,11 @@
 //// PLACES FEATURES ////////////
 /////////////////////////////////
 
-// #define USE_PLACES_FEATURE
-// #define PLACES_PANE_DEFAULT_SHOWN false
-// #define placesPaneWith 150.0f
+#define USE_PLACES_FEATURE
+#define PLACES_PANE_DEFAULT_SHOWN true
+#define placesPaneWith 450.0f
 // #define IMGUI_TOGGLE_BUTTON ToggleButton
-// #define placesButtonString "Place"
+#define placesButtonString        ICON_FA_BARS
 // #define placesButtonHelpString "Places"
 // #define addPlaceButtonString "+"
 // #define removePlaceButtonString "-"
@@ -190,7 +190,7 @@
 //////////////////////////////////////
 
 // a group for bookmarks will be added by default, but you can also create it yourself and many more
-// #define USE_PLACES_BOOKMARKS
+#define USE_PLACES_BOOKMARKS
 // #define PLACES_BOOKMARK_DEFAULT_OPEPEND true
 // #define placesBookmarksGroupName "Bookmarks"
 // #define placesBookmarksDisplayOrder 0  // to the first
@@ -201,7 +201,7 @@
 
 // a group for system devices (returned by IFileSystem), but you can also add yours
 // by ex if you would like to display a specific icon for some devices
-// #define USE_PLACES_DEVICES
-// #define PLACES_DEVICES_DEFAULT_OPEPEND true
+#define USE_PLACES_DEVICES
+#define PLACES_DEVICES_DEFAULT_OPEPEND true
 // #define placesDevicesGroupName "Devices"
 // #define placesDevicesDisplayOrder 10  // to the end

@@ -64,7 +64,7 @@ struct KineticState
 #else
     #define IMGUI_INI_FILE_PATH "imgui.ini"
 #endif
-//#define PLATFORM_ANDROID
+#define PLATFORM_ANDROID
 #ifdef PLATFORM_ANDROID
     #define FONT_AWESOME_ICON_SIZE 45
     #define UI_FONT_SIZE           55.0f
@@ -78,7 +78,7 @@ struct KineticState
 
 
 
-//#undef PLATFORM_ANDROID
+#undef PLATFORM_ANDROID
 
 
 
