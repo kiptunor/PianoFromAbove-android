@@ -37,7 +37,42 @@ This clone is powered by Qishipai's [midi processing library](https://github.com
 - [ ] GPU Renderer
 - [ ] Video capture
 
-## Build guide soon...
+## Build Guide
+
+### Prerequisites
+- [xmake](https://xmake.io) (v2.8+)
+- C++ compiler with C++17 support (gcc, clang, or MSVC)
+- [SDL3](https://github.com/libsdl-org/SDL) development libraries
+- [Android NDK](https://developer.android.com/ndk) & SDK (for Android builds)
+- Java 17+ (for Android builds)
+
+### Linux Desktop
+```bash
+# Install dependencies (Debian/Ubuntu)
+sudo apt install build-essential xmake libsdl3-dev
+
+# Build & run
+xmake build
+xmake run
+```
+
+### Android
+```bash
+# Configure for Android
+xmake f -p android -a arm64-v8a --toolchain=ndk \
+  --android_sdk=~/Android/Sdk --ndk=~/Android/Sdk/ndk/<version>
+
+# Set keystore password
+export KEYSTORE_PASS=android
+
+# Build APK (Java 17 must be in PATH)
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export PATH=$JAVA_HOME/bin:$PATH
+xmake build
+
+# Install to connected device
+adb install -r build/android/arm64-v8a/release/nvi-pfa.apk
+```
 
 
 
