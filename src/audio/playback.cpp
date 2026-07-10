@@ -348,6 +348,13 @@ void Playback::pause()
     }
 }
 
+f64 Playback::GetTotalTime()
+{
+    if(!main_stream || !is_midi_loaded) return 0.0;
+    QWORD len = BASS_ChannelGetLength(main_stream, BASS_POS_BYTE);
+    return BASS_ChannelBytes2Seconds(main_stream, len);
+}
+
 std::vector<Playback::AudioDevice> Playback::GetAudioOutputs()
 {
     std::vector<Playback::AudioDevice> res;

@@ -4316,7 +4316,7 @@ void IGFD::FileDialog::m_DrawFileListView(ImVec2 vSize) {
 
     ImGui::PushID(this);
 
-    static ImGuiTableFlags flags = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_RowBg | ImGuiTableFlags_Hideable | ImGuiTableFlags_ScrollY | ImGuiTableFlags_NoHostExtendY
+    static ImGuiTableFlags flags = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_RowBg | ImGuiTableFlags_Hideable | ImGuiTableFlags_ScrollY | ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoHostExtendY
 #ifndef USE_CUSTOM_SORTING_ICON
                                    | ImGuiTableFlags_Sortable
 #endif  // USE_CUSTOM_SORTING_ICON
@@ -4325,7 +4325,8 @@ void IGFD::FileDialog::m_DrawFileListView(ImVec2 vSize) {
     if (ImGui::BeginTableEx("FileTable", listViewID, 4, flags, vSize, 0.0f)) {
 #ifdef PLATFORM_ANDROID
         {
-            static double ksFileVel = 0.0;
+            static double ksFileVelY = 0.0;
+            static double ksFileVelX = 0.0;
             static bool ksFileDecel = false;
             static bool ksFileWasDrag = false;
             ImGuiIO &io = ImGui::GetIO();
@@ -4333,11 +4334,14 @@ void IGFD::FileDialog::m_DrawFileListView(ImVec2 vSize) {
             bool isDrag = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
             if (isDrag && isHover)
             {
-                double vel = -io.MouseDelta.y / std::max(io.DeltaTime, 0.0001f);
-                ksFileVel = ksFileVel * 0.85 + vel * 0.15;
+                double velY = -io.MouseDelta.y / std::max(io.DeltaTime, 0.0001f);
+                double velX = -io.MouseDelta.x / std::max(io.DeltaTime, 0.0001f);
+                ksFileVelY = ksFileVelY * 0.85 + velY * 0.15;
+                ksFileVelX = ksFileVelX * 0.85 + velX * 0.15;
                 ksFileDecel = false;
                 ksFileWasDrag = true;
                 ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+                ImGui::SetScrollX(ImGui::GetScrollX() - io.MouseDelta.x);
             }
             else if (ksFileWasDrag)
             {
@@ -4346,15 +4350,21 @@ void IGFD::FileDialog::m_DrawFileListView(ImVec2 vSize) {
             }
             else if (ksFileDecel)
             {
-                ksFileVel *= (1.0 - 7.0 * io.DeltaTime);
-                double absVel = ksFileVel < 0.0 ? -ksFileVel : ksFileVel;
-                if (absVel < 1.0)
+                ksFileVelY *= (1.0 - 7.0 * io.DeltaTime);
+                ksFileVelX *= (1.0 - 7.0 * io.DeltaTime);
+                double absVelY = ksFileVelY < 0.0 ? -ksFileVelY : ksFileVelY;
+                double absVelX = ksFileVelX < 0.0 ? -ksFileVelX : ksFileVelX;
+                if (absVelY < 1.0 && absVelX < 1.0)
                 {
                     ksFileDecel = false;
-                    ksFileVel = 0.0;
+                    ksFileVelY = 0.0;
+                    ksFileVelX = 0.0;
                 }
                 else
-                    ImGui::SetScrollY(ImGui::GetScrollY() + ksFileVel * io.DeltaTime);
+                {
+                    ImGui::SetScrollY(ImGui::GetScrollY() + ksFileVelY * io.DeltaTime);
+                    ImGui::SetScrollX(ImGui::GetScrollX() + ksFileVelX * io.DeltaTime);
+                }
             }
         }
 #endif
