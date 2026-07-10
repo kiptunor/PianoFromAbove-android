@@ -32,6 +32,17 @@ class FileHelpers
 
     static std::vector<std::string> GetFilesByExtension(const std::string &path, const std::string &extensions);
     static FileInfo                 GetFileInfo(const std::string &path);
+
+    struct MidiParseInfo
+    {
+        int    ppqn        = 0;
+        double bpm         = 0.0;
+        int    timeSigNum  = 0;
+        int    timeSigDen  = 0;
+        bool   success     = false;
+    };
+    static MidiParseInfo ParseMidiFile(const std::string &path);
+
 #ifndef PLATFORM_ANDROID
     static void        createConfigDirs();
 #endif

@@ -49,6 +49,8 @@ bool NVnoteList::start_parse(const char *name)
     abstick = 0;
     Tread   = 0.0;
     dT      = 0.5 / MIDI_File.ppnq;
+    TempoEvents.clear();
+    TempoEvents.push_back({ 0.0, 500000.0 });
     keys    = new rP<decltype(keys)>::t[MIDI_File.tracks];
     return true;
 }
@@ -70,6 +72,8 @@ void NVnoteList::list_seek(f64 T)
         dT      = 0.5 / MIDI_File.ppnq;
         MIDI_File.rewind_all();
         Evt_sequencer.seq_reset(MIDI_File);
+        TempoEvents.clear();
+        TempoEvents.push_back({ 0.0, 500000.0 });
     }
 
     for(int i = 0; i < 128; i++)
@@ -102,6 +106,7 @@ void NVnoteList::list_seek(f64 T)
             speed               = speed << 8 | Evt.data[1];
             speed               = speed << 8 | Evt.data[2];
             dT                  = 0.000001 * speed / MIDI_File.ppnq;
+            TempoEvents.push_back({ Tread, (f64)speed });
         }
 
         Evt_sequencer.seq_next(MIDI_File);
@@ -130,6 +135,7 @@ void NVnoteList::update_to(f64 T)
                 speed               = speed << 8 | Evt.data[1];
                 speed               = speed << 8 | Evt.data[2];
                 dT                  = 0.000001 * speed / MIDI_File.ppnq;
+                TempoEvents.push_back({ Tread, (f64)speed });
             }
             break;
 

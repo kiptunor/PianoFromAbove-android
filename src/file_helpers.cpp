@@ -1,7 +1,7 @@
 #include <algorithm>
-
+#include <cstdio>
+#include <cstring>
 #include <filesystem>
-
 #include <sys/stat.h>
 
 #include "config/config.h"
@@ -122,6 +122,113 @@ FileHelpers::FileInfo FileHelpers::GetFileInfo(const std::string &path)
     }
 
     return res;
+}
+
+static u32 ReadVLQ(const u8 *data, size_t maxSize, size_t &pos)
+{
+    u32 value = 0;
+    u32 shift = 0;
+    while(pos < maxSize)
+    {
+        u8 byte = data[pos++];
+        value |= (byte & 0x7F) << shift;
+        shift += 7;
+        if(!(byte & 0x80))
+            break;
+    }
+    return value;
+}
+
+FileHelpers::MidiParseInfo FileHelpers::ParseMidiFile(const std::string &path)
+{
+    MidiParseInfo info;
+    FILE *fp = std::fopen(path.c_str(), "rb");
+    if(!fp) return info;
+
+    u8 header[14];
+    if(std::fread(header, 1, 14, fp) != 14) { std::fclose(fp); return info; }
+    if(std::memcmp(header, "MThd", 4) != 0) { std::fclose(fp); return info; }
+
+    info.ppqn = (header[12] << 8) | header[13];
+    if(info.ppqn & 0x8000) { std::fclose(fp); info.ppqn = 0; return info; }
+
+    while(true)
+    {
+        u8 chunk[8];
+        if(std::fread(chunk, 1, 8, fp) != 8) break;
+
+        if(std::memcmp(chunk, "MTrk", 4) != 0)
+        {
+            u32 skip = (chunk[4] << 24) | (chunk[5] << 16) | (chunk[6] << 8) | chunk[7];
+            std::fseek(fp, skip, SEEK_CUR);
+            continue;
+        }
+
+        u32 trackLen = (chunk[4] << 24) | (chunk[5] << 16) | (chunk[6] << 8) | chunk[7];
+        if(trackLen == 0) break;
+
+        std::vector<u8> td(trackLen);
+        if(std::fread(td.data(), 1, trackLen, fp) != trackLen) break;
+
+        size_t pos = 0;
+        u8 lastStatus = 0;
+        while(pos < td.size())
+        {
+            ReadVLQ(td.data(), td.size(), pos);
+            if(pos >= td.size()) break;
+
+            u8 ev = td[pos++];
+            if(ev == 0xFF)
+            {
+                if(pos >= td.size()) break;
+                u8 metaType = td[pos++];
+                size_t dataStart = pos;
+                u32 dataLen = ReadVLQ(td.data(), td.size(), pos);
+                if(pos + dataLen > td.size()) break;
+
+                if(metaType == 0x51 && dataLen >= 3)
+                {
+                    u32 usPerQ = (td[pos] << 16) | (td[pos+1] << 8) | td[pos+2];
+                    if(usPerQ > 0)
+                        info.bpm = 60000000.0 / usPerQ;
+                    if(info.timeSigNum > 0 && info.bpm > 0.0) break;
+                }
+                else if(metaType == 0x58 && dataLen >= 4)
+                {
+                    info.timeSigNum = td[pos];
+                    int denomPow = td[pos+1];
+                    info.timeSigDen = 1 << denomPow;
+                    if(info.timeSigNum > 0 && info.bpm > 0.0) break;
+                }
+                pos += dataLen;
+            }
+            else if(ev == 0xF0 || ev == 0xF7)
+            {
+                u32 dataLen = ReadVLQ(td.data(), td.size(), pos);
+                pos += dataLen;
+            }
+            else if(ev >= 0x80 && ev <= 0xEF)
+            {
+                lastStatus = ev;
+                int statusNib = ev & 0xF0;
+                if(statusNib == 0xC0 || statusNib == 0xD0)
+                    { if(pos < td.size()) pos++; }
+                else
+                    { if(pos + 1 < td.size()) pos += 2; }
+            }
+            else
+            {
+                int statusNib = lastStatus & 0xF0;
+                if(statusNib == 0xC0 || statusNib == 0xD0) {}
+                else { if(pos < td.size()) pos++; }
+            }
+        }
+        break;
+    }
+
+    std::fclose(fp);
+    info.success = (info.ppqn > 0);
+    return info;
 }
 
 #ifndef PLATFORM_ANDROID

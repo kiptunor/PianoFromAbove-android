@@ -45,32 +45,34 @@
 
 
 // - - - - [Internal variables] - - - -
-bool                     file_info_window  = false;
-bool                     log_buffer_window = false;
-bool                     allow_audio_dev_ssave;
-bool                     log_buffer_cleared = false;
-static char              midi_search[128];
-static char              sf_search[128];
-static std::string       midi_search_text;
-static std::string       sf_search_text;
-static std::string       midi_file;
-static bool              trigger_scroll_sf_list;
-static char              soundfons_path_entry[1024];
-int                      selected_soundfont_path_etry;
-int                      selected_img_path_entry;
-static int               selected_soundfont      = 0;
-int                      selected_lost_midi      = 0;
-int                      selected_lost_soundfont = 0;
-int                      selected_log_line       = 0;
-ImFont                  *FONT_icon_set;
-std::string              temp_widget_id;
-std::ostringstream       file_info_fields;
-std::vector<std::string> current_soundfonts;
-FileHelpers::FileInfo    current_file_info;
-char                     file_name_buf[3100] = { 0 };
-char                     file_size_buf[3100] = { 0 };
-char                     last_mod_buf[3100]  = { 0 };
-bool                     is_midi_info        = false;
+bool                        file_info_window  = false;
+bool                        log_buffer_window = false;
+bool                        allow_audio_dev_ssave;
+bool                        log_buffer_cleared = false;
+static char                 midi_search[128];
+static char                 sf_search[128];
+static std::string          midi_search_text;
+static std::string          sf_search_text;
+static std::string          midi_file;
+static bool                 trigger_scroll_sf_list;
+static char                 soundfons_path_entry[1024];
+int                         selected_soundfont_path_etry;
+int                         selected_img_path_entry;
+static int                  selected_soundfont      = 0;
+int                         selected_lost_midi      = 0;
+int                         selected_lost_soundfont = 0;
+int                         selected_log_line       = 0;
+ImFont                     *FONT_icon_set;
+std::string                 temp_widget_id;
+std::ostringstream          file_info_fields;
+std::vector<std::string>    current_soundfonts;
+FileHelpers::FileInfo       current_file_info;
+char                        file_name_buf[3100] = { 0 };
+char                        file_size_buf[3100] = { 0 };
+char                        last_mod_buf[3100]  = { 0 };
+bool                        is_midi_info        = false;
+FileHelpers::MidiParseInfo  cached_midi_info;
+bool                        show_midi_details   = false;
 // single_midi_info_collector *smic_ptr            = nullptr;
 f32                      android_scale;
 ImVec4                   text_color;
@@ -886,12 +888,16 @@ bool searchDuplicatedSoundfontItem(const std::vector<UI::SoundfontItem> &items, 
 
 void RenderMidiList(const std::vector<std::string> &items, int &selectedIndex, std::string find_item)
 {
+    static KineticState ks_midi;
     ImGui::BeginChild("##midils", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
 
 #ifdef PLATFORM_ANDROID
     ImGuiIO &io = ImGui::GetIO();
-    if(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-        ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+    {
+        bool hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+        bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+        ImGui::SetScrollY((f32)ks_midi.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+    }
 #endif
 
     for(size_t i = 0; i < items.size(); ++i)
@@ -926,12 +932,16 @@ std::vector<std::string> GetCheckedSoundfonts(const std::vector<UI::SoundfontIte
 
 void RenderSoundfontList(std::vector<UI::SoundfontItem> &items, std::string find_item)
 {
+    static KineticState ks_sf;
     ImGui::BeginChild("##sfls", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
 
 #ifdef PLATFORM_ANDROID
     ImGuiIO &io = ImGui::GetIO();
-    if(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-        ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+    {
+        bool hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+        bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+        ImGui::SetScrollY((f32)ks_sf.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+    }
 #endif
 
     bool soundfont_changed = false;
@@ -1355,12 +1365,6 @@ void UI::Render(SDL_Renderer *r)
 
     // Finger scrolling without the need of the scrollbar
 #ifdef PLATFORM_ANDROID
-    if(ImGui::IsWindowHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-        ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
-#endif
-
-
-#ifdef PLATFORM_ANDROID
     android_scale = UI_FONT_SIZE / 22.0f;
 #else
     android_scale = 1.0f;
@@ -1490,9 +1494,12 @@ void UI::Render(SDL_Renderer *r)
         ImGuiStyle &internal_style = ImGui::GetStyle();
 
 #ifdef PLATFORM_ANDROID
-        // Single finger drag scroll (More comfortable than the scrollbar on mobile)
-        if(ImGui::IsWindowHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-            ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+        {
+            static KineticState ks_gui;
+            bool hovered = ImGui::IsWindowHovered();
+            bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+            ImGui::SetScrollY((f32)ks_gui.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+        }
 #endif
 
 
@@ -1707,6 +1714,9 @@ void UI::Render(SDL_Renderer *r)
                     strncpy(file_name_buf, current_file_info.file_name.c_str(), sizeof(file_name_buf) - 1);
                     strncpy(file_size_buf, current_file_info.size.c_str(), sizeof(file_size_buf) - 1);
                     strncpy(last_mod_buf, current_file_info.last_mod.c_str(), sizeof(last_mod_buf) - 1);
+
+                    cached_midi_info = FileHelpers::ParseMidiFile(live_midi_list[selected_midi_index]);
+                    show_midi_details = false;
 
                     file_info_window = true;
                     is_midi_info     = true;
@@ -2613,6 +2623,14 @@ void UI::Render(SDL_Renderer *r)
             if(ImGui::BeginTabItem("About"))
             {
                 ImGui::BeginChild("ScrollRegion", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+#ifdef PLATFORM_ANDROID
+                {
+                    static KineticState ks_about;
+                    bool hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+                    bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+                    ImGui::SetScrollY((f32)ks_about.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+                }
+#endif
                 ImGui::Text("A clone of the original Piano From Above for mobile based on Qishipai's midi processing library.");
                 ImGui::Text("Authors:");
                 ImGui::Text("NVirsual: Qishipai");
@@ -2662,9 +2680,12 @@ void UI::Render(SDL_Renderer *r)
 
 
 #ifdef PLATFORM_ANDROID
-        // Single finger drag scroll (More comfortable than the scrollbar on mobile)
-        if(ImGui::IsWindowHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-            ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+        {
+            static KineticState ks_fi;
+            bool hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+            bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+            ImGui::SetScrollY((f32)ks_fi.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+        }
 #endif
 
         ImGui::Text("File:                         ");
@@ -2710,33 +2731,21 @@ void UI::Render(SDL_Renderer *r)
 
         if(is_midi_info)
         {
-            ImGui::BeginDisabled();
-            if(ImGui::Button("More MIDI Info (Soon)"))
+            if(ImGui::Button("More MIDI Information (for professionals)"))
+                show_midi_details = !show_midi_details;
+
+            if(show_midi_details && cached_midi_info.success)
             {
-                Log::debug("Todo...");
-                // Log::debug("Do the smic stuff here");
-                // smic_ptr = new single_midi_info_collector(live_midi_list[selected_midi_index], true);
-
-                // smic_ptr->fetch_data();
-
-                /*
-                Log::debug("PPQ: %d", smic_ptr->ppq);
-                Log::debug("", "Tracks: %s", std::to_string(smic_ptr->tracks.size()).c_str());
-                Log::debug("Note Count: %.3f", (f32)smic_ptr->note_count / 1000.0f);
-                */
-                // for(auto & [tick, poly] : smic_ptr->polyphony)
-                //{
-                //     f64 polyphony = poly;
-                //     Log::debug("", "Polyphony %d: %f", tick, polyphony);
-                // }
-
-                // for(auto & [tick, raw_tempo] : smic_ptr->tempo_map)
-                //{
-                //     f64 bpm = raw_tempo;
-                //     Log::debug("", "{Tempo Map} Tick: %d | Tempo: %f", tick, bpm);
-                // }
+                ImGui::Text("PPQN: %d", cached_midi_info.ppqn);
+                if(cached_midi_info.bpm > 0.0)
+                    ImGui::Text("BPM: %.2f", cached_midi_info.bpm);
+                else
+                    ImGui::Text("BPM: N/A");
+                if(cached_midi_info.timeSigNum > 0)
+                    ImGui::Text("Time Sig: %d/%d", cached_midi_info.timeSigNum, cached_midi_info.timeSigDen);
+                else
+                    ImGui::Text("Time Sig: N/A");
             }
-            ImGui::EndDisabled();
         }
 
         ImGui::End();
@@ -2811,8 +2820,12 @@ void UI::Render(SDL_Renderer *r)
         */
 
 #ifdef PLATFORM_ANDROID
-        if(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-            ImGui::SetScrollY(ImGui::GetScrollY() - io.MouseDelta.y);
+        {
+            static KineticState ks_log;
+            bool hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+            bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+            ImGui::SetScrollY((f32)ks_log.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+        }
 #endif
 
         if(Log::log_buffer.size() != 0)
