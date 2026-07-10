@@ -176,7 +176,11 @@
 
 #define USE_PLACES_FEATURE
 #define PLACES_PANE_DEFAULT_SHOWN true
-#define placesPaneWith 450.0f
+#ifdef PLATFORM_ANDROID
+#define defaultPlacePaneWith 350.0f
+#else
+#define defaultPlacePaneWith 160.0f
+#endif
 // #define IMGUI_TOGGLE_BUTTON ToggleButton
 #define placesButtonString        ICON_FA_BARS
 // #define placesButtonHelpString "Places"
@@ -202,6 +206,6 @@
 // a group for system devices (returned by IFileSystem), but you can also add yours
 // by ex if you would like to display a specific icon for some devices
 #define USE_PLACES_DEVICES
-#define PLACES_DEVICES_DEFAULT_OPEPEND true
+#define PLACES_DEVICES_DEFAULT_OPEPEND false
 // #define placesDevicesGroupName "Devices"
 // #define placesDevicesDisplayOrder 10  // to the end

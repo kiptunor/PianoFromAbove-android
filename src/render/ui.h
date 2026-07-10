@@ -1,9 +1,9 @@
 #ifndef UI_H
 #define UI_H
 
+#include <cmath>
 #include <string>
 #include <vector>
-#include <cmath>
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -12,33 +12,33 @@
 
 struct KineticState
 {
-    f64 velocity = 0.0;
-    bool inDecel = false;
+    f64  velocity    = 0.0;
+    bool inDecel     = false;
     bool wasDragging = false;
 
-    f64 Update(f64 scrollY, f64 mouseDeltaY, f64 dt, bool isHovered, bool isDragging)
+    f64  Update(f64 scrollY, f64 mouseDeltaY, f64 dt, bool isHovered, bool isDragging)
     {
-        if (isDragging && isHovered)
+        if(isDragging && isHovered)
         {
-            f64 vel = -mouseDeltaY / std::max(dt, 0.0001);
-            velocity = velocity * 0.85 + vel * 0.15;
-            inDecel = false;
+            f64 vel     = -mouseDeltaY / std::max(dt, 0.0001);
+            velocity    = velocity * 0.85 + vel * 0.15;
+            inDecel     = false;
             wasDragging = true;
             return scrollY - mouseDeltaY;
         }
-        if (wasDragging)
+        if(wasDragging)
         {
             wasDragging = false;
-            inDecel = true;
+            inDecel     = true;
             return scrollY;
         }
-        if (inDecel)
+        if(inDecel)
         {
-            velocity *= std::pow(0.93, dt * 60.0);
-            f64 delta = velocity * dt;
-            if (std::fabs(velocity) < 1.0)
+            velocity  *= std::pow(0.93, dt * 60.0);
+            f64 delta  = velocity * dt;
+            if(std::fabs(velocity) < 1.0)
             {
-                inDecel = false;
+                inDecel  = false;
                 velocity = 0.0;
                 return scrollY;
             }
@@ -64,7 +64,7 @@ struct KineticState
 #else
     #define IMGUI_INI_FILE_PATH "imgui.ini"
 #endif
-#define PLATFORM_ANDROID
+// #define PLATFORM_ANDROID
 #ifdef PLATFORM_ANDROID
     #define FONT_AWESOME_ICON_SIZE 45
     #define UI_FONT_SIZE           55.0f
@@ -78,7 +78,7 @@ struct KineticState
 
 
 
-#undef PLATFORM_ANDROID
+// #undef PLATFORM_ANDROID
 
 
 
@@ -162,5 +162,5 @@ class UI
 
 inline std::vector<UI::SoundfontItem> live_soundfont_list;
 
-//void                                  Exit();
+// void                                  Exit();
 #endif
