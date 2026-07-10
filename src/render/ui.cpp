@@ -888,7 +888,8 @@ bool searchDuplicatedSoundfontItem(const std::vector<UI::SoundfontItem> &items, 
 
 void RenderMidiList(const std::vector<std::string> &items, int &selectedIndex, std::string find_item)
 {
-    static KineticState ks_midi;
+    static KineticState ks_midi_y;
+    static KineticState ks_midi_x;
     ImGui::BeginChild("##midils", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
 
 #ifdef PLATFORM_ANDROID
@@ -896,7 +897,8 @@ void RenderMidiList(const std::vector<std::string> &items, int &selectedIndex, s
     {
         bool hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
         bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
-        ImGui::SetScrollY((f32)ks_midi.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+        ImGui::SetScrollY((f32)ks_midi_y.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+        ImGui::SetScrollX((f32)ks_midi_x.Update(ImGui::GetScrollX(), io.MouseDelta.x, io.DeltaTime, hovered, dragging));
     }
 #endif
 
@@ -932,7 +934,8 @@ std::vector<std::string> GetCheckedSoundfonts(const std::vector<UI::SoundfontIte
 
 void RenderSoundfontList(std::vector<UI::SoundfontItem> &items, std::string find_item)
 {
-    static KineticState ks_sf;
+    static KineticState ks_sf_y;
+    static KineticState ks_sf_x;
     ImGui::BeginChild("##sfls", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
 
 #ifdef PLATFORM_ANDROID
@@ -940,7 +943,8 @@ void RenderSoundfontList(std::vector<UI::SoundfontItem> &items, std::string find
     {
         bool hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
         bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
-        ImGui::SetScrollY((f32)ks_sf.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+        ImGui::SetScrollY((f32)ks_sf_y.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+        ImGui::SetScrollX((f32)ks_sf_x.Update(ImGui::GetScrollX(), io.MouseDelta.x, io.DeltaTime, hovered, dragging));
     }
 #endif
 
@@ -1432,9 +1436,15 @@ void UI::Render(SDL_Renderer *r)
 
     if(ImGui::IsItemActive())
     {
-        f32 holdDuration = ImGui::GetIO().MouseDownDuration[0]; // [0] is for the left mouse button
+        if(ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+        {
+            f32 dragDelta = io.MouseDelta.x;
+            if(fabsf(dragDelta) > 2.0f)
+                Playback::seek_playback(-dragDelta * 0.05);
+        }
 
-        // Handling long click / tap event to open up the settings window
+        f32 holdDuration = ImGui::GetIO().MouseDownDuration[0];
+
         if(holdDuration > longClickThreshold)
             main_gui_window = true;
     }
@@ -1456,6 +1466,8 @@ void UI::Render(SDL_Renderer *r)
     }
 
     ImGui::Columns(1); // Reset to single column
+
+
 
     /*
         ▗▖  ▗▖ ▗▄▖ ▗▄▄▄▖▗▖  ▗▖
@@ -1487,7 +1499,7 @@ void UI::Render(SDL_Renderer *r)
 #else // Setting up a different ui layout for mobile users
         ImGui::SetNextWindowPos(center, ImGuiCond_Once, ImVec2(0.5f, 0.5f)); // Pivot 0.5 = center
         ImGui::SetNextWindowSize(ImVec2(1500.0f, 860.0f));
-        ImGui::Begin("PFA Android", &main_gui_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+        ImGui::Begin("PFA Android", &main_gui_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_HorizontalScrollbar);
 #endif
 
         ImGuiIO    &io             = ImGui::GetIO();
@@ -1495,10 +1507,12 @@ void UI::Render(SDL_Renderer *r)
 
 #ifdef PLATFORM_ANDROID
         {
-            static KineticState ks_gui;
+            static KineticState ks_gui_y;
+            static KineticState ks_gui_x;
             bool hovered = ImGui::IsWindowHovered();
             bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
-            ImGui::SetScrollY((f32)ks_gui.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+            ImGui::SetScrollY((f32)ks_gui_y.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+            ImGui::SetScrollX((f32)ks_gui_x.Update(ImGui::GetScrollX(), io.MouseDelta.x, io.DeltaTime, hovered, dragging));
         }
 #endif
 
@@ -1516,68 +1530,6 @@ void UI::Render(SDL_Renderer *r)
         {
             ImGui::Text("Quit NVi PFA");
             ImGui::EndTooltip();
-        }
-
-        if(Playback::is_playback_started)
-        {
-            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 2));
-
-            // Play/Pause button
-            if(ImGui::Button(Playback::is_paused ? ICON_FA_PLAY : ICON_FA_PAUSE))
-                Playback::pause();
-
-            ImGui::SameLine();
-
-            f64 totalSec = Playback::GetTotalTime();
-            if(totalSec <= 0.0) totalSec = 1.0;
-
-            int curMin = (int)Playback::Tplay / 60;
-            int curSec = (int)Playback::Tplay % 60;
-            int totMin = (int)totalSec / 60;
-            int totSec = (int)totalSec % 60;
-
-            char timeStr[32];
-            snprintf(timeStr, sizeof(timeStr), "%02d:%02d / %02d:%02d", curMin, curSec, totMin, totSec);
-
-            f32 timeWidth  = ImGui::CalcTextSize(timeStr).x;
-            f32 availWidth = ImGui::GetContentRegionAvail().x;
-            f32 barWidth   = availWidth - timeWidth - ImGui::GetStyle().ItemSpacing.x;
-
-            if(barWidth > 20.0f)
-            {
-                f32 frameH = ImGui::GetFrameHeight();
-
-                ImGui::InvisibleButton("##prog_bar", ImVec2(barWidth, frameH));
-
-                ImDrawList *dl = ImGui::GetWindowDrawList();
-                ImVec2 barMin = ImGui::GetItemRectMin();
-                ImVec2 barMax = ImGui::GetItemRectMax();
-
-                float progress = (float)(Playback::Tplay / totalSec);
-
-                // Background
-                dl->AddRectFilled(barMin, barMax, IM_COL32(50, 50, 50, 200), frameH * 0.5f);
-
-                // Filled portion
-                f32 filledW = (barMax.x - barMin.x) * progress;
-                if(filledW > 0.0f)
-                    dl->AddRectFilled(barMin, ImVec2(barMin.x + filledW, barMax.y),
-                        IM_COL32(51, 153, 255, 255), frameH * 0.5f);
-
-                // Handle seek on click or drag
-                if(ImGui::IsItemClicked(ImGuiMouseButton_Left) || ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-                {
-                    float clickFrac = (ImGui::GetIO().MousePos.x - barMin.x) / (barMax.x - barMin.x);
-                    clickFrac = (clickFrac < 0.0f) ? 0.0f : (clickFrac > 1.0f ? 1.0f : clickFrac);
-                    f64 seekTo = clickFrac * totalSec;
-                    Playback::seek_playback(seekTo - Playback::Tplay);
-                }
-            }
-
-            ImGui::SameLine();
-            ImGui::Text("%s", timeStr);
-
-            ImGui::PopStyleVar();
         }
 
         if(ImGui::BeginTabBar("tabs", ImGuiTabBarFlags_None))
@@ -2687,10 +2639,12 @@ void UI::Render(SDL_Renderer *r)
                 ImGui::BeginChild("ScrollRegion", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
 #ifdef PLATFORM_ANDROID
                 {
-                    static KineticState ks_about;
+                    static KineticState ks_about_y;
+                    static KineticState ks_about_x;
                     bool hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
                     bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
-                    ImGui::SetScrollY((f32)ks_about.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+                    ImGui::SetScrollY((f32)ks_about_y.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+                    ImGui::SetScrollX((f32)ks_about_x.Update(ImGui::GetScrollX(), io.MouseDelta.x, io.DeltaTime, hovered, dragging));
                 }
 #endif
                 ImGui::Text("A clone of the original Piano From Above for mobile based on Qishipai's midi processing library.");
@@ -2737,16 +2691,18 @@ void UI::Render(SDL_Renderer *r)
         ImGui::Begin("File Information", &file_info_window);
 #else // Setting up a different ui layout for mobile users
         ImGui::SetNextWindowSize(ImVec2(1290.0f, 600.0f));
-        ImGui::Begin("File Information", &file_info_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+        ImGui::Begin("File Information", &file_info_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_HorizontalScrollbar);
 #endif
 
 
 #ifdef PLATFORM_ANDROID
         {
-            static KineticState ks_fi;
+            static KineticState ks_fi_y;
+            static KineticState ks_fi_x;
             bool hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
             bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
-            ImGui::SetScrollY((f32)ks_fi.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+            ImGui::SetScrollY((f32)ks_fi_y.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+            ImGui::SetScrollX((f32)ks_fi_x.Update(ImGui::GetScrollX(), io.MouseDelta.x, io.DeltaTime, hovered, dragging));
         }
 #endif
 
@@ -2883,10 +2839,12 @@ void UI::Render(SDL_Renderer *r)
 
 #ifdef PLATFORM_ANDROID
         {
-            static KineticState ks_log;
+            static KineticState ks_log_y;
+            static KineticState ks_log_x;
             bool hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
             bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
-            ImGui::SetScrollY((f32)ks_log.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+            ImGui::SetScrollY((f32)ks_log_y.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
+            ImGui::SetScrollX((f32)ks_log_x.Update(ImGui::GetScrollX(), io.MouseDelta.x, io.DeltaTime, hovered, dragging));
         }
 #endif
 
