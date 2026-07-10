@@ -68,6 +68,7 @@ class Playback
     static void                     seek_playback(f64 seconds);
     static void                     bassErrorHandler();
     static void                     pause();
+    static f64                      GetTotalTime();
     static void                     PlayerStateUpdate();
 };
 #endif

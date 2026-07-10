@@ -1518,6 +1518,68 @@ void UI::Render(SDL_Renderer *r)
             ImGui::EndTooltip();
         }
 
+        if(Playback::is_playback_started)
+        {
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 2));
+
+            // Play/Pause button
+            if(ImGui::Button(Playback::is_paused ? ICON_FA_PLAY : ICON_FA_PAUSE))
+                Playback::pause();
+
+            ImGui::SameLine();
+
+            f64 totalSec = Playback::GetTotalTime();
+            if(totalSec <= 0.0) totalSec = 1.0;
+
+            int curMin = (int)Playback::Tplay / 60;
+            int curSec = (int)Playback::Tplay % 60;
+            int totMin = (int)totalSec / 60;
+            int totSec = (int)totalSec % 60;
+
+            char timeStr[32];
+            snprintf(timeStr, sizeof(timeStr), "%02d:%02d / %02d:%02d", curMin, curSec, totMin, totSec);
+
+            f32 timeWidth  = ImGui::CalcTextSize(timeStr).x;
+            f32 availWidth = ImGui::GetContentRegionAvail().x;
+            f32 barWidth   = availWidth - timeWidth - ImGui::GetStyle().ItemSpacing.x;
+
+            if(barWidth > 20.0f)
+            {
+                f32 frameH = ImGui::GetFrameHeight();
+
+                ImGui::InvisibleButton("##prog_bar", ImVec2(barWidth, frameH));
+
+                ImDrawList *dl = ImGui::GetWindowDrawList();
+                ImVec2 barMin = ImGui::GetItemRectMin();
+                ImVec2 barMax = ImGui::GetItemRectMax();
+
+                float progress = (float)(Playback::Tplay / totalSec);
+
+                // Background
+                dl->AddRectFilled(barMin, barMax, IM_COL32(50, 50, 50, 200), frameH * 0.5f);
+
+                // Filled portion
+                f32 filledW = (barMax.x - barMin.x) * progress;
+                if(filledW > 0.0f)
+                    dl->AddRectFilled(barMin, ImVec2(barMin.x + filledW, barMax.y),
+                        IM_COL32(51, 153, 255, 255), frameH * 0.5f);
+
+                // Handle seek on click or drag
+                if(ImGui::IsItemClicked(ImGuiMouseButton_Left) || ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+                {
+                    float clickFrac = (ImGui::GetIO().MousePos.x - barMin.x) / (barMax.x - barMin.x);
+                    clickFrac = (clickFrac < 0.0f) ? 0.0f : (clickFrac > 1.0f ? 1.0f : clickFrac);
+                    f64 seekTo = clickFrac * totalSec;
+                    Playback::seek_playback(seekTo - Playback::Tplay);
+                }
+            }
+
+            ImGui::SameLine();
+            ImGui::Text("%s", timeStr);
+
+            ImGui::PopStyleVar();
+        }
+
         if(ImGui::BeginTabBar("tabs", ImGuiTabBarFlags_None))
         {
             /*
