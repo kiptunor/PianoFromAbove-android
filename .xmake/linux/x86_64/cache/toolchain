@@ -1,0 +1,37 @@
+{
+    ["tool_target_nvi-pfa_android_arm64-v8a_cxx"] = {
+        toolchain_info = {
+            name = "ndk",
+            cachekey = "ndk_arch_arm64-v8a_plat_android",
+            plat = "android",
+            arch = "arm64-v8a"
+        },
+        toolname = "clangxx",
+        program = "/home/Noobie/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++"
+    },
+    ["tool_target_nvi-pfa_android_arm64-v8a_sh"] = {
+        toolchain_info = {
+            name = "ndk",
+            cachekey = "ndk_arch_arm64-v8a_plat_android",
+            plat = "android",
+            arch = "arm64-v8a"
+        },
+        toolname = "clangxx",
+        program = "/home/Noobie/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++"
+    },
+    ["ndk_arch_arm64-v8a_plat_android"] = {
+        build_toolver = "34.0.0",
+        cross = "aarch64-linux-android-",
+        ndk = "/home/Noobie/Android/sdk/ndk/27.0.12077973",
+        llvm_toolchain = "/home/Noobie/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64",
+        __checked = true,
+        bindir = "/home/Noobie/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/bin",
+        android_sdk = "/home/Noobie/Android/sdk",
+        ndkver = 27,
+        plat = "android",
+        ndk_sdkver = "21",
+        __global = true,
+        arch = "arm64-v8a",
+        ndk_sysroot = "/home/Noobie/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
+    }
+}
