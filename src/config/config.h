@@ -57,6 +57,7 @@ class Config
         bool                     no_soundfont_duplicates;
         bool                     loop_colors;
         bool                     draw_vertical_lines;
+        bool                     draw_measure_lines;
         bool                     vsync;
         bool                     internal_log_buffer;
         bool                     log_to_file;
@@ -69,7 +70,6 @@ class Config
         std::string              ui_theme_file_path;
         std::vector<std::string> current_soundfonts;
         std::vector<std::string> extra_midi_paths;
-        std::vector<std::string> extra_sf_paths;
         std::vector<std::string> extra_img_paths;
     } configuration;
 

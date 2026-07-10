@@ -81,6 +81,7 @@ inline Config::configuration              default_settings = {
     .no_soundfont_duplicates = false,
     .loop_colors             = false,
     .draw_vertical_lines     = true,
+    .draw_measure_lines      = true,
     .vsync                   = true,
     .internal_log_buffer     = true,
     .custom_ui_theme         = false,
