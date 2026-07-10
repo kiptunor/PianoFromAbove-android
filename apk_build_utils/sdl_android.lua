@@ -39,6 +39,7 @@ function main(opts)
         local aar_dir  = path.join(aar_cache, aar_name)
         if not os.isdir(aar_dir) then
             os.mkdir(aar_dir)
+            cprint("${green}[AAR]:${clear} unpacking: %s", aar_name)
             os.execv("unzip", { "-q", "-o", aar, "-d", aar_dir })
         end
         local lib_out = path.join(tmp, "lib", arch)
@@ -94,6 +95,7 @@ function main(opts)
     end
 
     -- 5. Convert merged classes to DEX
+    cprint("${green}[D8]:${clear} Generating Classes")
     local dex_out = path.join(tmp, "dex")
     os.mkdir(dex_out)
     local merged_jar = path.join(tmp, "all_classes.jar")
@@ -143,6 +145,7 @@ function main(opts)
     end
 
     -- 7. Package resources with aapt
+    cprint("${green}[APK Packing]:${clear} Packaging resources")
     local res_apk = path.join(tmp, "res_only.apk")
     import("aapt")({
         sdk_tools   = sdk_tools,
@@ -157,8 +160,10 @@ function main(opts)
     -- 8. Add .so files and classes.dex to APK
     local add_files = {}
     for _, so in ipairs(os.files(path.join(tmp, "lib", arch, "*.so"))) do
+        cprint("${green}[APK Packing]:${clear} Adding Native JNI Libs: %s", path.relative(so, tmp))
         table.insert(add_files, path.relative(so, tmp))
     end
+    cprint("${green}[APK Packing]:${clear} Adding Classes", so)
     if os.isfile(path.join(tmp, "classes.dex")) then
         table.insert(add_files, "classes.dex")
     end
@@ -180,6 +185,7 @@ function main(opts)
     })
 
     -- 10. Sign APK
+    cprint("${green}[APK Finishing]:${clear} Signing APK", so)
     import("apksigner")({
         sdk_tools     = sdk_tools,
         keystore      = keystore,
