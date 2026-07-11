@@ -100,7 +100,7 @@ Render::Render()
     Ren = SDL_CreateRenderer(Win, "gpu");
     if(Ren == nullptr)
     {
-        Log::trace("", "Your GPU isn't cooperating with us today. Let's get revenge on it!!! | SDL_GetError(): %s", SDL_GetError());
+        Log::trace("", "GPU Ain't cooerating with us so lets go the good old way XD | SDL_GetError(): %s", SDL_GetError());
         if(isDesktopSession())
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error!!!!!", "Failed to create render context", nullptr);
         
