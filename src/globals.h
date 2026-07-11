@@ -43,7 +43,7 @@ inline std::vector<NoteBuffer::Note>      note_buf;
 inline Config::configuration              default_settings = {
     .bass_voice_count        = 500,
     .audio_device_index      = 1,
-    .note_speed              = 800,
+    .note_speed              = 4271,
     .bg_R                    = 47,
     .bg_G                    = 47,
     .bg_B                    = 47,

@@ -27,7 +27,7 @@
 
 
 int                _KeyWidth[128];
-const f32          SharpRatio = 0.64f;
+const f32          SharpRatio = 0.65f;
 f32                fDeflate;
 
 // Define the vertex structure
@@ -435,12 +435,18 @@ void Render::DrawKeyBoard()
     for(int i = 75; i != 128; i++)
     {
         int j                 = KeyMap[i];
-        f32 fNudgeX           = 0.2; // Black key spacing
+        f32 fNudgeX           = 0.2f;
+        {
+            int n = j % 12;
+            if(n == 1 || n == 6)      fNudgeX =  0.203f;  // C#, F# — match PFA center
+            else if(n == 3 || n == 10) fNudgeX =  0.297f;  // D#, A#
+            else if(n == 8)            fNudgeX =  0.278f;  // G#
+        }
         fCurX                 = KeyX[j];
         const f32 cx          = _KeyWidth[0] * SharpRatio;
         const f32 x           = fCurX - _KeyWidth[0] * (SharpRatio / 2.0f - fNudgeX);
-        const f32 fSharpTopX1 = x + _KeyWidth[0] * (SharpRatio - fSharpTop) / 2.0f + cx * 0.01f;
-        const f32 fSharpTopX2 = fSharpTopX1 + _KeyWidth[0] * fSharpTop - cx * 0.01f;
+        const f32 fSharpTopX1 = x + _KeyWidth[0] * (SharpRatio - fSharpTop) / 2.0f;
+        const f32 fSharpTopX2 = fSharpTopX1 + _KeyWidth[0] * fSharpTop;
 
         if(!KeyPress[j]) // If the key is not pressed
         {
@@ -525,7 +531,15 @@ void Render::CreateNote(int k, int yb, int ye, us_int c)
     int x = KeyX[KeyMap[k]] - 1;
     int w = (k >= 75) ? (int)(_KeyWidth[0] * SharpRatio) : WkeyW + 1;
     if(k >= 75)
-        x -= (int)(_KeyWidth[0] * (SharpRatio / 2.0f - 0.2f));
+    {
+        int j = KeyMap[k];
+        f32 fNudge = 0.2f;
+        int n = j % 12;
+        if(n == 1 || n == 6)      fNudge = 0.203f;
+        else if(n == 3 || n == 10) fNudge = 0.297f;
+        else if(n == 8)            fNudge = 0.278f;
+        x -= (int)(_KeyWidth[0] * (SharpRatio / 2.0f - fNudge));
+    }
 
     int      h       = yb - ye;
 

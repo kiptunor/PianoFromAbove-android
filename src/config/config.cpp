@@ -85,7 +85,6 @@ Config::configuration Config::Load()
     in_conf.vsync                       = visual_obj.value("vsync",             default_settings.vsync);
     in_conf.fps                         = visual_obj.value("fps",               default_settings.fps);
     in_conf.note_speed                  = visual_obj.value("noteSpeed",         default_settings.note_speed);
-    if(in_conf.note_speed == 4271 || in_conf.note_speed == 700) in_conf.note_speed = default_settings.note_speed;
     in_conf.loop_colors                 = visual_obj.value("loopNoteColors",    default_settings.loop_colors);
     in_conf.draw_vertical_lines         = visual_obj.value("drawVerticalLines", default_settings.draw_vertical_lines);
     in_conf.draw_measure_lines          = visual_obj.value("drawMeasureLines",  default_settings.draw_measure_lines);
