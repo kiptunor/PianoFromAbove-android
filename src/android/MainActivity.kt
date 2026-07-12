@@ -65,6 +65,10 @@ class NvpfaActivity : SDLActivity()
         extractAssets()
         requestStorageAccess()
 
+        Handler(Looper.getMainLooper()).postDelayed({
+            hideSystemBars()
+        }, 3000L)
+
         val density = resources.displayMetrics.density
         val shadowColor = Color.argb(255, 0x40, 0x40, 0x40)
         val tahoma = Typeface.createFromAsset(assets, "tahoma.ttf")
@@ -130,21 +134,23 @@ class NvpfaActivity : SDLActivity()
             FrameLayout.LayoutParams.WRAP_CONTENT,
             Gravity.TOP or Gravity.END
         ).apply {
-            rightMargin = (45 * density).toInt()
+            //rightMargin = (15 * density).toInt()
+            rightMargin = 0 // Terrible for phones that have rounded corners but it also triggers my OCD
             topMargin = 0
         }
         addContentView(overlayLayout, params)
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            hideSystemBars()
-        }, 3000L)
     }
 
     private fun hideSystemBars()
     {
         @Suppress("DEPRECATION")
         window.decorView.systemUiVisibility = (
-            View.SYSTEM_UI_FLAG_FULLSCREEN
+            View.SYSTEM_UI_FLAG_FULLSCREEN or
+            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+            View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
         )
     }
 

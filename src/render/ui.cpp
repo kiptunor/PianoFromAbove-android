@@ -641,6 +641,7 @@ void UI::SetCyberpunkTheme()
     style.TabRounding                     = 6.0f;
     style.PopupBorderSize                 = 1.0f;
     style.FrameBorderSize                 = 0.0f;
+    style.TabBorderSize                   = 0.0f;
 
     style.WindowPadding                   = ImVec2(12, 10);
     style.FramePadding                    = ImVec2(10, 6);
