@@ -15,6 +15,7 @@ if is_plat("linux") then
 end
 
 target("nvi-pfa")
+    set_languages("c++17")
     if is_plat("android") then
         add_defines("PLATFORM_ANDROID")
         set_kind("shared")

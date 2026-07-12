@@ -104,6 +104,7 @@ class UI
     static std::string              last_midi_path;
     static std::string              last_sf_path;
     static std::string              last_midi_file;
+    static std::vector<std::string> soundfont_paths;
     static std::vector<std::string> prev_images;
 
     static bool                     show_demo_window;

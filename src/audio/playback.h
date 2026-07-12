@@ -56,6 +56,7 @@ class Playback
     static u64                      saved_position;
     static const f64                seek_amount;
     static bool                     is_paused;
+    static bool                     preRollActive;
     static f64                      Tplay, Tscr;
 
     static std::vector<AudioDevice> GetAudioOutputs();
