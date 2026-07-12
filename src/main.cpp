@@ -71,7 +71,7 @@ void               AudioSetup()
 extern "C" int APP_ENTRY(int argc, char *argv[])
 {
     // CLI Parsing
-    //if(argc > 1)
+    // if(argc > 1)
     //    CLI::parseArgs(argc, argv); // The same CLI should also work on Android
 
     // Log::createFile("nv_pfa.log");
@@ -105,7 +105,7 @@ extern "C" int APP_ENTRY(int argc, char *argv[])
 
     std::ostringstream file_dialog_state_path;
     file_dialog_state_path << FD_STATE_FILE_PATH;
-    
+
     Config::config_path                = config_path.str();
     MidiList::midi_list_path           = midi_list_path.str();
     SoundfontList::soundfont_list_path = soundfont_list_path.str();
@@ -140,7 +140,7 @@ extern "C" int APP_ENTRY(int argc, char *argv[])
         live_midi_list   = loaded_midi_list;
     }
 
-    
+
     /* - - - - File Dialog State Handling - - - - */
     live_fd_state = FileDialogState::load();
 

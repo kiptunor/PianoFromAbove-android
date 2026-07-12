@@ -200,11 +200,5 @@ void NVnoteList::remove_to(f64 T)
         {
             p->Tend < T ? (p = Note_list[i].erase(p)) : p++;
         }
-
-        //Note_list[i].remove_if(
-        //    [T](const NVnote &n)
-        //    {
-        //        return n.Tstart < T && n.Tend < T;
-        //    });
     }
 }

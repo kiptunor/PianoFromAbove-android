@@ -49,7 +49,7 @@ inline Config::configuration              default_settings = {
     .bg_B                    = 47,
     .bg_A                    = 255,
     // clang-format off
-    .channel_colors          = { 
+    .channel_colors          = {
         0x3366FF,
         0xFF7E33,
         0x33FF66,

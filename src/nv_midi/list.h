@@ -8,8 +8,8 @@
 #include "seq.h"
 
 #include <list>
-#include <vector>
 #include <stack>
+#include <vector>
 
 
 
@@ -35,36 +35,36 @@ struct NVnote /* ===== Note class rendering ===== */
 
 struct NVtempoEvent /* ===== Tempo change for grid rendering ===== */
 {
-    f64 T;          // Time in seconds
+    f64 T;            // Time in seconds
     f64 usPerQuarter; // Microseconds per quarter note
 };
 
 class NVnoteList /* ===== Note queue class ===== */
 {
   public:
-    NVmidiFile        MIDI_File;      // MIDI File
-    f64               Tread;          // Current read position
-    std::list<NVnote> Note_list[128]; // Note List
+    NVmidiFile                MIDI_File;      // MIDI File
+    f64                       Tread;          // Current read position
+    std::list<NVnote>         Note_list[128]; // Note List
 
     /* MIDI Parsing */
-    bool              start_parse(const char *name);
+    bool                      start_parse(const char *name);
 
     /* Tempo map for horizontal grid lines */
     std::vector<NVtempoEvent> TempoEvents;
 
     /* Close component */
-    void              destroy_all();
+    void                      destroy_all();
 
     /* Locate to T seconds and clear the list */
-    void              list_seek(f64 T);
+    void                      list_seek(f64 T);
 
     /* Put the notes before the Tth second into the list */
-    void              update_to(f64 T);
+    void                      update_to(f64 T);
 
-    void              OR(); // ppl in the Black MIDI Community knows what that means lol
+    void                      OR(); // ppl in the Black MIDI Community knows what that means lol
 
     /* Remove notes in the list up to T seconds ago */
-    void              remove_to(f64 T);
+    void                      remove_to(f64 T);
 
   private:
     NVsequencer                             Evt_sequencer; // Event sequencer
