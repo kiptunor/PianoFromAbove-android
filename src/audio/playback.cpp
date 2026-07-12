@@ -31,6 +31,7 @@
 
 
 f64               Playback::Tplay                   = 0.0;
+bool              Playback::preRollActive            = false;
 bool              Playback::is_midi_loaded          = false;
 bool              Playback::is_playback_started     = false;
 bool              Playback::playback_ended          = false;
@@ -188,6 +189,7 @@ void Playback::updateBassVoiceCount(int voiceCount)
 
 void Playback::loadMidiFile(const std::string &midi_path)
 {
+    preRollActive = true;
     std::thread midi_loading_thread(LoadMidi, midi_path);
 
 
@@ -234,8 +236,12 @@ void Playback::PlayerStateUpdate()
 
         Playback::is_midi_loaded = true;
 
-        // Start playback
+        // Start playback (mute before play to prevent audio blip)
+        if(preRollActive)
+            BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_VOL, 0.0f);
         BASS_ChannelPlay(Playback::main_stream, 1);
+        if(preRollActive)
+            BASS_ChannelPause(Playback::main_stream);
 
         Log::debug("Player started.");
 

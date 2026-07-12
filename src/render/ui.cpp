@@ -1435,13 +1435,14 @@ void UI::Render(SDL_Renderer *r)
     // Show the main GUI window
     if(main_gui_window)
     {
-        ImVec2 center = ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f);
 #ifndef PLATFORM_ANDROID
         ImGui::SetNextWindowSizeConstraints(ImVec2(758, 380), ImVec2(FLT_MAX, FLT_MAX));
         ImGui::Begin("PFA Android", &main_gui_window);
 #else // Setting up a different ui layout for mobile users
-        ImGui::SetNextWindowPos(center, ImGuiCond_Once, ImVec2(0.5f, 0.5f)); // Pivot 0.5 = center
-        ImGui::SetNextWindowSize(ImVec2(1500.0f, 860.0f));
+        f32 guiW = ImMin(1500.0f, io.DisplaySize.x - 40.0f);
+        f32 guiH = ImMin(860.0f, io.DisplaySize.y - 40.0f);
+        ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+        ImGui::SetNextWindowSize(ImVec2(guiW, guiH));
         ImGui::Begin("PFA Android", &main_gui_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 #endif
 
@@ -1496,7 +1497,7 @@ void UI::Render(SDL_Renderer *r)
             if(ImGui::BeginTabItem("Play MIDI Files"))
             {
 #ifdef PLATFORM_ANDROID
-                ImGui::SetNextItemWidth(500);
+                ImGui::SetNextItemWidth(ImMin(500.0f, ImGui::GetContentRegionAvail().x - 60.0f));
 #else
                 ImGui::SetNextItemWidth(310);
 #endif

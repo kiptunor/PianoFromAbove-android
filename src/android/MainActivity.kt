@@ -13,6 +13,13 @@ import android.app.AlertDialog
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import android.view.Gravity
+import android.widget.TextView
+import android.widget.LinearLayout
+import android.widget.FrameLayout
+import android.graphics.Color
+import android.graphics.Typeface
+import android.content.Context
 
 import org.libsdl.app.SDLActivity
 import java.io.File
@@ -21,12 +28,34 @@ import java.io.IOException
 
 class NvpfaActivity : SDLActivity()
 {
-
     companion object
     {
-        private const val REQUEST_STORAGE_PERMISSION = 1
-        private const val REQUEST_MANAGE_EXTERNAL_STORAGE = 2
         private const val TAG = "NvpfaActivity"
+        private const val REQUEST_MANAGE_EXTERNAL_STORAGE = 1001
+        private const val REQUEST_STORAGE_PERMISSION = 1002
+
+        private var overlayLayout: LinearLayout? = null
+        private val uiHandler = Handler(Looper.getMainLooper())
+
+        private var timeValueViews = mutableListOf<TextView>()
+        private var fpsValueView: TextView? = null
+
+        @JvmStatic
+        fun updateTime(timeStr: String)
+        {
+            uiHandler.post {
+                if (timeValueViews.size < 1) return@post
+                timeValueViews[0].text = timeStr
+            }
+        }
+
+        @JvmStatic
+        fun updateFps(fps: String)
+        {
+            uiHandler.post {
+                fpsValueView?.text = fps
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?)
@@ -35,6 +64,76 @@ class NvpfaActivity : SDLActivity()
 
         extractAssets()
         requestStorageAccess()
+
+        val density = resources.displayMetrics.density
+        val shadowColor = Color.argb(255, 0x40, 0x40, 0x40)
+        val tahoma = Typeface.createFromAsset(assets, "tahoma.ttf")
+        var rowCount = 0
+
+        overlayLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.argb(128, 0, 0, 0))
+            setPadding(4, 3, 6, 3)
+        }
+
+        fun makeRow(label: String, valueInit: String): TextView
+        {
+            val labelTv = TextView(this).apply {
+                text = label
+                setTextColor(Color.WHITE)
+                setShadowLayer(0f, 1f, 1f, shadowColor)
+                textSize = 11f
+                typeface = tahoma
+            }
+
+            val spacer = View(this).apply {
+                layoutParams = LinearLayout.LayoutParams(0, 0, 1f)
+            }
+
+            val valueTv = TextView(this).apply {
+                text = valueInit
+                setTextColor(Color.WHITE)
+                setShadowLayer(0f, 1f, 1f, shadowColor)
+                textSize = 11f
+                typeface = tahoma
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { rightMargin = (4 * density).toInt() }
+            }
+
+            val row = LinearLayout(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    if (rowCount > 0) topMargin = (1 * density).toInt()
+                }
+                orientation = LinearLayout.HORIZONTAL
+                addView(labelTv)
+                addView(spacer)
+                addView(valueTv)
+            }
+
+            overlayLayout?.addView(row)
+            rowCount++
+            return valueTv
+        }
+
+        timeValueViews = mutableListOf(makeRow("Time:", "-:-- / -:--"))
+        fpsValueView = makeRow("FPS:", "0")
+        makeRow("Score:", "N/A")
+
+        val overlayWidth = (135 * density).toInt()
+        val params = FrameLayout.LayoutParams(
+            overlayWidth,
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            Gravity.TOP or Gravity.END
+        ).apply {
+            rightMargin = (45 * density).toInt()
+            topMargin = 0
+        }
+        addContentView(overlayLayout, params)
 
         Handler(Looper.getMainLooper()).postDelayed({
             hideSystemBars()
@@ -45,9 +144,7 @@ class NvpfaActivity : SDLActivity()
     {
         @Suppress("DEPRECATION")
         window.decorView.systemUiVisibility = (
-            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            or View.SYSTEM_UI_FLAG_FULLSCREEN
-            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            View.SYSTEM_UI_FLAG_FULLSCREEN
         )
     }
 

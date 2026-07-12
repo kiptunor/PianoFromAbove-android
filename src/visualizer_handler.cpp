@@ -1,5 +1,11 @@
 #include <sstream>
+#include <cmath>
 #include <backend_render/imgui_impl_sdl3.h>
+#include <imgui.h>
+#ifdef PLATFORM_ANDROID
+#include <SDL3/SDL_system.h>
+#include <jni.h>
+#endif
 
 
 
@@ -19,6 +25,7 @@ int       vis_type_num = 0;
 SDL_Event Evt;
 u32       frameStart;
 int       frameRate = 60;
+f64       preRollStartTime = 0;
 
 
 
@@ -131,6 +138,14 @@ VisualizerHandler::VisualizerHandler()
         // Start visualizing only if bass thread is ready
         if(BASS_ChannelIsActive(Playback::main_stream))
         {
+            if(!Playback::is_playback_started)
+            {
+                if(Playback::preRollActive)
+                {
+                    preRollStartTime = SDL_GetTicks();
+                    Playback::Tplay = -3.0;
+                }
+            }
             Playback::is_playback_started = true;
             Midi_ctx.update_to(Playback::Tplay + Tscr);
             Midi_ctx.remove_to(Playback::Tplay);
@@ -223,6 +238,65 @@ VisualizerHandler::VisualizerHandler()
         RenderWin->DrawKeyBoard();  // Render the piano keyboard
         UI::Render(RenderWin->Ren); // Render the GUI
 
+#ifdef PLATFORM_ANDROID
+        // Update Android native stats overlay via JNI (only when playback is active)
+        if(Playback::is_playback_started)
+        {
+            JNIEnv *env = (JNIEnv*)SDL_GetAndroidJNIEnv();
+            jobject activity = (jobject)SDL_GetAndroidActivity();
+            if(env && activity)
+            {
+                jclass clazz = env->GetObjectClass(activity);
+                if(clazz)
+                {
+                    f64 total = Playback::GetTotalTime();
+                    int curM = (int)(Playback::Tplay / 60);
+                    int curS = std::abs((int)Playback::Tplay % 60);
+                    int curT = std::abs((int)((Playback::Tplay - floor(Playback::Tplay)) * 10));
+                    int totM = (int)(total / 60);
+                    int totS = (int)total % 60;
+                    int totT = (int)((total - floor(total)) * 10);
+
+                    char timeStr[48];
+                    if(Playback::preRollActive)
+                        snprintf(timeStr, sizeof(timeStr), "-%d:%02d.%d / %d:%02d.%d",
+                                 curM, curS, curT, totM, totS, totT);
+                    else
+                        snprintf(timeStr, sizeof(timeStr), "%d:%02d.%d / %d:%02d.%d",
+                                 curM, curS, curT, totM, totS, totT);
+
+                    jstring jTime = env->NewStringUTF(timeStr);
+                    jmethodID method = env->GetStaticMethodID(clazz, "updateTime",
+                                             "(Ljava/lang/String;)V");
+                    if(method)
+                        env->CallStaticVoidMethod(clazz, method, jTime);
+                    env->DeleteLocalRef(jTime);
+
+                    // Update FPS once per second
+                    {
+                        static u64 lastFpsUpdate = 0;
+                        u64 now = SDL_GetTicks();
+                        if(now - lastFpsUpdate >= 1000)
+                        {
+                            lastFpsUpdate = now;
+                            char fpsStr[16];
+                            snprintf(fpsStr, sizeof(fpsStr), "%.0f", ImGui::GetIO().Framerate);
+                            jstring jFps = env->NewStringUTF(fpsStr);
+                            jmethodID fpsMethod = env->GetStaticMethodID(clazz, "updateFps",
+                                                      "(Ljava/lang/String;)V");
+                            if(fpsMethod)
+                                env->CallStaticVoidMethod(clazz, fpsMethod, jFps);
+                            env->DeleteLocalRef(jFps);
+                        }
+                    }
+
+                    env->DeleteLocalRef(clazz);
+                }
+                env->DeleteLocalRef(activity);
+            }
+        }
+#endif
+
         // Outdated FPS adjustment
         // This also caused noticeable FPS drops on mouse movement across the screen in combination with imgui elements
         /*
@@ -244,7 +318,24 @@ VisualizerHandler::VisualizerHandler()
 
         // Only update Tplay if actively playing and not at the end
         if(!Playback::is_paused && !Playback::playback_ended)
-            Playback::Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
+        {
+            if(Playback::preRollActive && preRollStartTime > 0)
+            {
+                f64 elapsed = (SDL_GetTicks() - preRollStartTime) / 1000.0;
+                if(elapsed >= 3.0)
+                {
+                    Playback::preRollActive = false;
+                    preRollStartTime = 0;
+                    BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_VOL, 1.0f);
+                    BASS_ChannelPlay(Playback::main_stream, FALSE);
+                    Playback::Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
+                }
+                else
+                    Playback::Tplay = elapsed - 3.0;
+            }
+            else
+                Playback::Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
+        }
     }
 }
 

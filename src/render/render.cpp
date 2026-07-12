@@ -28,7 +28,6 @@
 
 int                _KeyWidth[128];
 const f32          SharpRatio = 0.65f;
-f32                fDeflate;
 
 // Define the vertex structure
 SDL_Vertex         vert[4];
@@ -132,7 +131,6 @@ Render::Render()
     TW = scale(684), TH = scale(610);
     BkeyW = scale(60), WkeyW = scale(94);
     BkeyH = scale(386), WkeyH = scale(608);
-    fDeflate = WkeyW * 0.15f / 2.0f;
 
     HandleResize(WinW, WinH);
 }
@@ -379,9 +377,10 @@ void Render::DrawKeyBoard()
             // Key body
             DrawRect(Ren, fCurX + fKeyGap1, fCurY + WinH - WinW * 82.0 / 1000, _KeyWidth[j] - fKeyGap, fTopCY + fNearCY, 0xFFCCCCCC, 0xFFCCCCCC, 0xFFFFFFFF, 0xFFFFFFFF);
 
-            // The bottom side of the key with a subtle gradient
-            DrawRect(Ren, fCurX + fKeyGap1, fCurY + fTopCY + WinH - WinW * 82.0 / 1000, _KeyWidth[j] - fKeyGap, 2.4f, 0xFF242424, 0xFF242424, 0xFFA3A3A3, 0xFFA3A3A3);
-            DrawRect(Ren, fCurX + fKeyGap1, fCurY + fTopCY + WinH - WinW * 80.5 / 1000, _KeyWidth[j] - fKeyGap, 6.0f, 0xFFBABABA, 0xFFBABABA, 0xFF9C9C9C, 0xFF9C9C9C);
+            // PFA-style near edge: dark → verydark gradient (bottom bevel)
+            DrawRect(Ren, fCurX + fKeyGap1, fCurY + fTopCY + WinH - WinW * 82.0 / 1000, _KeyWidth[j] - fKeyGap, fNearCY, 0xFFCCCCCC, 0xFFCCCCCC, 0xFF999999, 0xFF999999);
+            // PFA-style 2px transition line at the near-edge top
+            DrawRect(Ren, fCurX + fKeyGap1, fCurY + fTopCY + WinH - WinW * 82.0 / 1000, _KeyWidth[j] - fKeyGap, 2.0f, 0xFF3D3D3D, 0xFF3D3D3D, 0xFF999999, 0xFF999999);
 
             // Middle C square on C60
             if(j == 60)
@@ -527,46 +526,53 @@ bool Render::IsSharp(int note)
 
 void Render::CreateNote(int k, int yb, int ye, us_int c)
 {
+    int j = KeyMap[k];
+    int x = KeyX[j];
+    int w;
 
-    int x = KeyX[KeyMap[k]] - 1;
-    int w = (k >= 75) ? (int)(_KeyWidth[0] * SharpRatio) : WkeyW + 1;
-    if(k >= 75)
+    if(k >= 75) // Black keys
     {
-        int j = KeyMap[k];
         f32 fNudge = 0.2f;
         int n = j % 12;
         if(n == 1 || n == 6)      fNudge = 0.203f;
         else if(n == 3 || n == 10) fNudge = 0.297f;
         else if(n == 8)            fNudge = 0.278f;
         x -= (int)(_KeyWidth[0] * (SharpRatio / 2.0f - fNudge));
+        w  = (int)(_KeyWidth[0] * SharpRatio);
+    }
+    else // White keys
+    {
+        w = _KeyWidth[j];
     }
 
-    int      h       = yb - ye;
+    int h = yb - ye;
 
-    us_short r       = (c >> 16) & 0xFF;
-    us_short g       = (c >> 8) & 0xFF;
-    us_short b       = c & 0xFF;
+    us_short r = (c >> 16) & 0xFF;
+    us_short g = (c >> 8) & 0xFF;
+    us_short b = c & 0xFF;
 
-    us_short r1      = r * 0.6f;
-    us_short g1      = g * 0.6f;
-    us_short b1      = b * 0.6f;
+    us_short r1 = r * 0.6f;
+    us_short g1 = g * 0.6f;
+    us_short b1 = b * 0.6f;
 
-    us_short r2      = r * 0.2f;
-    us_short g2      = g * 0.2f;
-    us_short b2      = b * 0.2f;
+    us_short r2 = r * 0.2f;
+    us_short g2 = g * 0.2f;
+    us_short b2 = b * 0.2f;
 
-    // Convert original to BGR as well
-    us_int   c_bgr   = 0xFF000000 | (b << 16) | (g << 8) | r;
-    us_int   darker  = 0xFF000000 | (b2 << 16) | (g2 << 8) | r2;
-    us_int   lighter = 0xFF000000 | (b1 << 16) | (g1 << 8) | r1;
+    us_int c_bgr   = 0xFF000000 | (b << 16) | (g << 8) | r;
+    us_int darker  = 0xFF000000 | (b2 << 16) | (g2 << 8) | r2;
+    us_int lighter = 0xFF000000 | (b1 << 16) | (g1 << 8) | r1;
 
-    // Draw a darker rect which serves as the note outline
+    // PFA-style deflate: white key width * 0.15 / 2, floor, clamp [1, 3]
+    f32 fd = floor(_KeyWidth[0] * 0.15f / 2.0f + 0.5f);
+    fd = std::max(std::min(fd, 3.0f), 1.0f);
+
+    // Dark outline (border) — like PFA's iVeryDarkRGB
     DrawRect(Ren, x, ye, w, h, darker, darker, darker, darker);
 
-    // Draw a sligtly smaller rect with color blending gradient on top of the
-    // darker rect
-    if(h - 2.0f * fDeflate > 0)
-        DrawRect(Ren, x + fDeflate, ye + fDeflate, w - 2.0f * fDeflate, h - 2.0f * fDeflate, c_bgr, lighter, lighter, c_bgr);
+    // Inner note with PFA-style diagonal gradient (primary, dark, dark, primary)
+    if(h - 2.0f * fd > 0)
+        DrawRect(Ren, x + fd, ye + fd, w - 2.0f * fd, h - 2.0f * fd, c_bgr, lighter, lighter, c_bgr);
 }
 
 void Render::DrawNote(NVMidi::u16_t k, const NVnote &n, int pps)
