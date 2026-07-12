@@ -93,9 +93,7 @@ Render::Render()
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error!!!!!", "Failed to create window", nullptr);
     }
 
-#ifdef PLATFORM_ANDROID
-    Ren = SDL_CreateRenderer(Win, "opengles2");
-#else
+
     Ren = SDL_CreateRenderer(Win, "gpu");
     if(Ren == nullptr)
     {
@@ -105,7 +103,6 @@ Render::Render()
         
         Ren = SDL_CreateRenderer(Win, "opengles2"); // This works well on DRM from tty sessions
     }
-#endif
 
     // const char *backend = SDL_GetRendererName(Ren);
     // Log::info("", "SDL_GetRendererName(): %s", backend);

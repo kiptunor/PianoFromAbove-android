@@ -73,11 +73,11 @@ char                       file_size_buf[3100] = { 0 };
 char                       last_mod_buf[3100]  = { 0 };
 bool                       is_midi_info        = false;
 FileHelpers::MidiParseInfo cached_midi_info;
-bool                       show_midi_details = false;
+bool                       show_midi_details   = false;
 // single_midi_info_collector *smic_ptr            = nullptr;
 f32                        android_scale;
 ImVec4                     text_color;
-static float               font_scale;
+static float                font_scale;
 
 // UI/Widget variables
 bool                       UI::show_demo_window    = false;
@@ -96,7 +96,6 @@ bool                       UI::log_to_file;
 int                        UI::fps;
 bool                       UI::vertical_lines;
 bool                       UI::draw_measure_lines;
-bool                       UI::use_default_media_paths = true;
 bool                       UI::background_image;
 bool                       UI::show_full_path_lost_midis      = false;
 bool                       UI::show_full_path_lost_soundfonts = false;
@@ -110,8 +109,6 @@ ImVec4                     UI::clear_color;
 UI::RGBAint                UI::liveColor;
 ImVec4                     UI::ui_chcolors[16];
 int                        UI::current_audio_dev;
-std::vector<std::string>   UI::soundfont_paths;
-std::vector<std::string>   UI::prev_images;
 static int                 builtin_ui_theme_idx = 0;
 // clang-format off
 const char                 *builtin_ui_theme_names[] =
@@ -1277,7 +1274,6 @@ void UI::UpdateWidgetValues()
     UI::internal_logging        = live_conf.internal_log_buffer;
     UI::log_to_file             = live_conf.log_to_file;
     UI::fps                     = live_conf.fps;
-    //UI::soundfont_paths         = live_conf.extra_sf_paths;
     UI::last_sf_path            = live_fd_state.soundfont_path;
     UI::no_midi_duplicates      = live_conf.no_midi_duplicates;
     UI::vertical_lines          = live_conf.draw_vertical_lines;

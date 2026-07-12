@@ -1,10 +1,9 @@
 #include <sstream>
-#include <cmath>
 #include <backend_render/imgui_impl_sdl3.h>
 #include <imgui.h>
 #ifdef PLATFORM_ANDROID
-#include <SDL3/SDL_system.h>
-#include <jni.h>
+    #include <SDL3/SDL_system.h>
+    #include <jni.h>
 #endif
 
 
