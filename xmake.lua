@@ -40,6 +40,7 @@ target("nvi-pfa")
         "src/config/*.cpp",
         "src/nv_midi/*.cpp",
         "src/render/*.cpp",
+        "src/video/*.cpp",
         "src/*.cpp"
     )
 

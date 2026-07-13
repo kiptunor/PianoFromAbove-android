@@ -66,7 +66,7 @@ bool Render::isDesktopSession()
 
 
 
-   This is where the window creation takes place
+   This is where the window creaton takes place
 */
 
 Render::Render()
@@ -216,7 +216,7 @@ void Render::HandleResize(int newWidth, int newHeight)
 
 int Render::scale(int x)
 {
-    // Fixed a small note glitch LMfaoerGdfgg
+    // Fixed a smal note glitch LMfaoerGdfgg
     return (x * WinW + 4700) / 7330;
 }
 
@@ -437,7 +437,7 @@ void Render::DrawKeyBoard()
         f32 fNudgeX           = 0.2f;
         {
             int n = j % 12;
-            if(n == 1 || n == 6)      fNudgeX =  0.203f;  // C#, F# — match PFA center
+            if(n == 1 || n == 6)      fNudgeX =  0.203f;  // C#, F# -- match PFA center
             else if(n == 3 || n == 10) fNudgeX =  0.297f;  // D#, A#
             else if(n == 8)            fNudgeX =  0.278f;  // G#
         }
@@ -567,7 +567,7 @@ void Render::CreateNote(int k, int yb, int ye, us_int c)
     f32 fd = floor(_KeyWidth[0] * 0.15f / 2.0f + 0.5f);
     fd = std::max(std::min(fd, 3.0f), 1.0f);
 
-    // Dark outline (border) — like PFA's iVeryDarkRGB
+    // Dark outline (border) -- like PFA's iVeryDarkRGB
     DrawRect(Ren, x, ye, w, h, darker, darker, darker, darker);
 
     // Inner note with PFA-style diagonal gradient (primary, dark, dark, primary)

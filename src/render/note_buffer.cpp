@@ -27,7 +27,7 @@ std::map<std::pair<int, int>, unsigned int> NoteBuffer::trackChannelColorMap;
 unsigned int                                NoteBuffer::GenerateRandomColor()
 {
     static std::mt19937                                rng(std::random_device {}());
-    static std::uniform_int_distribution<unsigned int> dist(60, 255); // Ensure brightness by using a higher range
+    static std::uniform_int_distribution<unsigned int> dist(60, 255);     // Ensur brightnes by using a higher range
 
     // Generate bright red, green, and blue components
     unsigned int                                       r = dist(rng);
@@ -65,7 +65,7 @@ void NoteBuffer::DrawNotes(Config::configuration settings)
     {
         auto &bucket = keyBuckets[k];
 
-        // Note layering / sorting
+        // Note layering / sorting -- first-started note underneath, later notes on top
         std::stable_sort(bucket.begin(), bucket.end(),
             [](const Note *a, const Note *b)
             {
@@ -76,23 +76,23 @@ void NoteBuffer::DrawNotes(Config::configuration settings)
                 bool        sharpA = Render::IsSharp(a->k);
                 bool        sharpB = Render::IsSharp(b->k);
                 if(sharpA != sharpB)
-                    return !sharpA; // white first
+                    return !sharpA;
 
+                // Earlier start time drawn first (underneath)
+                if(A.Tstart != B.Tstart)
+                    return A.Tstart < B.Tstart;
+
+                // Longer notes drawn first (underneath) when same start time
                 auto durA = A.Tend - A.Tstart;
                 auto durB = B.Tend - B.Tstart;
-
                 if(durA != durB)
-                    return durA > durB; // Longer notes drawn first (underneath)
+                    return durA > durB;
 
+                // Lower track number first
                 if(A.track != B.track)
                     return A.track < B.track;
 
-                // if(A.chn != B.chn)
-                //     return A.chn < B.chn;
-                //
-
-                // Fallback: Earlier start time on top
-                return A.Tstart > B.Tstart;
+                return A.chn < B.chn;
             });
 
         // Note drawing
@@ -102,7 +102,7 @@ void NoteBuffer::DrawNotes(Config::configuration settings)
             NVMidi::u16_t       k               = qptr->k;
             int                 pps             = qptr->pps;
 
-            // Note color distribution
+            // Note color distributon
             std::pair<int, int> trackChannelKey = { n.track, n.chn };
 
             auto                it              = trackChannelColorMap.find(trackChannelKey);

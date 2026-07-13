@@ -7,6 +7,7 @@
 #include "../../assets/IconsFontAwesome6.h"
 #include "../../assets/Metrophobic_Regular.h"
 #include "../audio/playback.h"
+#include "../video/exporter.h"
 #include "../config/channel_colors.h"
 #include "../config/file_dialog_state.h"
 #include "../config/midi_list.h"
@@ -112,7 +113,7 @@ int                        UI::current_audio_dev;
 std::vector<std::string>   UI::soundfont_paths;
 std::vector<std::string>   UI::prev_images;
 static int                 builtin_ui_theme_idx = 0;
-// clang-format off
+// clang-formt off
 const char                 *builtin_ui_theme_names[] =
 {
     "Silvana (Default)",
@@ -217,7 +218,7 @@ void UI::SetMoonlightTheme()
     style.ScrollbarPadding                       = 2.0f;
     style.ScrollbarSize                          = 20.60000038146973f;
     style.GrabMinSize                            = 12.700000047683716f;
-    style.GrabRounding                           = 8.0f; // Modified
+    style.GrabRounding                           = 8.0f; // Modifed
     style.TabRounding                            = 8.89999961853027f;
     style.TabBorderSize                          = 0.0f;
     // style.TabMinWidthForCloseButton = 0.0f; // This seems to be deprecated in Imgui v1.91.9b
@@ -825,6 +826,10 @@ void RenderMidiList(const std::vector<std::string> &items, int &selectedIndex, s
 {
     static KineticState ks_midi_y;
     static KineticState ks_midi_x;
+    static std::string  export_midi_path;
+    static bool         export_video = true;
+    static std::string  export_ext   = ".mp4";
+    static int          ctx_item     = -1;
     ImGui::BeginChild("##midils", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
 
 #ifdef PLATFORM_ANDROID
@@ -852,8 +857,80 @@ void RenderMidiList(const std::vector<std::string> &items, int &selectedIndex, s
 
         if(isSelected)
             ImGui::SetItemDefaultFocus();
+
+        // Long-press detection
+        if(ImGui::IsItemHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::GetIO().MouseDownDuration[0] > 0.4f)
+        {
+            ctx_item = static_cast<int>(i);
+            ImGui::OpenPopup("##ExportCtx");
+        }
+    }
+
+    // Context menu INSIDE the child, AFTER the loop
+    if(!ImGui::IsPopupOpen("##ExportCtx"))
+        ctx_item = -1;
+    if(ctx_item >= 0)
+    {
+        if(ImGui::BeginPopup("##ExportCtx"))
+        {
+            if(ImGui::BeginMenu("Export Audio Only"))
+            {
+                static const char *fmts_a[] = { ".mp3", ".wav", ".flac", ".ogg" };
+                for(auto fmt : fmts_a)
+                {
+                    if(ImGui::MenuItem(fmt))
+                    {
+                        export_midi_path = items[ctx_item];
+                        export_video     = false;
+                        export_ext       = fmt;
+                    }
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndPopup();
+        }
+        else
+        {
+            ctx_item = -1;
+        }
     }
     ImGui::EndChild();
+
+    // Export file-save dialog using ImGuiFileDialog
+    if(!export_midi_path.empty())
+    {
+        const char *home = getenv("HOME");
+        if(!home) home = "/tmp";
+        char default_name[64];
+        snprintf(default_name, sizeof(default_name), "pfa_export%s", export_ext.c_str());
+
+        IGFD::FileDialogConfig config;
+        config.path = home;
+        config.fileName = default_name;
+        config.flags = ImGuiFileDialogFlags_DontShowHiddenFiles;
+        ImGuiFileDialog::Instance()->OpenDialog("ExportSaveFD", "Save Export File",
+            export_video ? ".mp4,.avi,.mkv,.mov" : ".mp3,.wav,.flac,.ogg",
+            config);
+
+        if(ImGuiFileDialog::Instance()->Display("ExportSaveFD", 0, ImVec2(700, 500), ImVec2(FLT_MAX, FLT_MAX)))
+        {
+            if(ImGuiFileDialog::Instance()->IsOk())
+            {
+                std::string save_path = ImGuiFileDialog::Instance()->GetFilePathName();
+                if(VideoExporter::start(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y, 30,
+                    save_path.c_str(), export_video))
+                {
+                    Playback::CloseMidi();
+                    MidiList::last_midi_file = export_midi_path;
+                    MidiList::save(live_midi_list, MidiList::last_midi_file);
+                    ImGui::OpenPopup("Loading MIDI...");
+                    Playback::loadMidiFile(export_midi_path);
+                }
+            }
+            ImGuiFileDialog::Instance()->Close();
+            export_midi_path.clear();
+        }
+    }
 }
 
 std::vector<std::string> GetCheckedSoundfonts(const std::vector<UI::SoundfontItem> &items)
@@ -2827,6 +2904,41 @@ void UI::Render(SDL_Renderer *r)
     }
 
     ImGui::End();
+
+#ifndef PLATFORM_ANDROID
+    // Desktop stats overlay (top-right) -- always visble
+    {
+        char timeStr[48];
+        if(Playback::is_playback_started)
+        {
+            f64 total = Playback::GetTotalTime();
+            int curM = (int)(Playback::Tplay / 60);
+            int curS = std::abs((int)Playback::Tplay % 60);
+            int curT = std::abs((int)((Playback::Tplay - floor(Playback::Tplay)) * 10));
+            int totM = (int)(total / 60);
+            int totS = (int)total % 60;
+            int totT = (int)((total - floor(total)) * 10);
+
+            if(Playback::preRollActive)
+                snprintf(timeStr, sizeof(timeStr), "-%d:%02d.%d / %d:%02d.%d", curM, curS, curT, totM, totS, totT);
+            else
+                snprintf(timeStr, sizeof(timeStr), "%d:%02d.%d / %d:%02d.%d", curM, curS, curT, totM, totS, totT);
+        }
+        else
+            snprintf(timeStr, sizeof(timeStr), "-:-- / -:--");
+
+        char fpsStr[16];
+        snprintf(fpsStr, sizeof(fpsStr), "%.0f FPS", ImGui::GetIO().Framerate);
+
+        ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - 15, 15), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
+        ImGui::SetNextWindowBgAlpha(0.5f);
+        ImGui::Begin("##StatsOverlay", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Text("Time:  %s", timeStr);
+        ImGui::Text("FPS:   %s", fpsStr);
+        ImGui::Text("Score: N/A");
+        ImGui::End();
+    }
+#endif
 
     // Rendering
     ImGui::Render();
