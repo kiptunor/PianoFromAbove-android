@@ -75,7 +75,6 @@ bool                       is_midi_info        = false;
 FileHelpers::MidiParseInfo cached_midi_info;
 bool                       show_midi_details = false;
 // single_midi_info_collector *smic_ptr            = nullptr;
-f32                        android_scale;
 ImVec4                     text_color;
 static float               font_scale;
 
@@ -906,6 +905,15 @@ void RenderMidiList(const std::vector<std::string> &items, int &selectedIndex, s
         char default_name[64];
         snprintf(default_name, sizeof(default_name), "pfa_export%s", export_ext.c_str());
 
+        // Add Home to Bookmarks (once)
+        static bool home_bookmark_added = false;
+        if(!home_bookmark_added && home && strlen(home) > 1)
+        {
+            auto *grp = ImGuiFileDialog::Instance()->GetPlacesGroupPtr("Bookmarks");
+            if(grp) grp->AddPlace("Home", home, false);
+            home_bookmark_added = true;
+        }
+
         IGFD::FileDialogConfig config;
         config.path = home;
         config.fileName = default_name;
@@ -1156,9 +1164,6 @@ void ConstrainWindowMove(const char *windowName)
 
 void AndroidUIRescale()
 {
-    const float base_font_size        = UI_FONT_SIZE;
-    float       scale                 = ImGui::GetFontSize() / base_font_size;
-
 
     ImGuiStyle &style                 = ImGui::GetStyle();
 
@@ -1194,14 +1199,14 @@ void AndroidUIRescale()
     style.ColorMarkerSize             = 8.0f;
 }
 
-void SetupIconFonts()
+void SetupIconFonts(float ui_font_size)
 {
     static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
     ImFontConfig         icons_config;
     icons_config.MergeMode            = true;
     icons_config.PixelSnapH           = true;
     icons_config.FontDataOwnedByAtlas = false;
-    f32 size                          = FONT_AWESOME_ICON_SIZE;
+    f32 size                          = ui_font_size * 0.82f;
 
     icons_config.GlyphMaxAdvanceX     = std::numeric_limits<f32>::max();
     icons_config.RasterizerMultiply   = 1.0f;
@@ -1356,18 +1361,27 @@ void UI::Setup(int graphics_backend)
 
 
 
-    // Metrophobic-Regular.ttf
-    // Font suggested by Nerdly
+    // Calculate font size from screen resolution instead of hardcoding
+    float ui_font_size = UI_FONT_SIZE;
+#ifdef PLATFORM_ANDROID
+    SDL_DisplayID disp = SDL_GetDisplayForWindow(RenderWin->Win);
+    const SDL_DisplayMode *dm = SDL_GetDesktopDisplayMode(disp);
+    if(dm)
+    {
+        float short_side = (float)std::min(dm->w, dm->h);
+        ui_font_size = short_side / 30.0f;
+        if(ui_font_size < 16.0f) ui_font_size = 16.0f;
+        if(ui_font_size > 80.0f) ui_font_size = 80.0f;
+    }
+#endif
 
     ImFontConfig ui_font_config;
     ui_font_config.FontDataOwnedByAtlas = false;
-    io.Fonts->AddFontFromMemoryTTF((void *)metrophobic_regular_ttf, metrophobic_regular_len, UI_FONT_SIZE, &ui_font_config);
-    // io.Fonts->AddFontFromMemoryTTF((void *)metrophobic_regular_ttf, metrophobic_regular_len, 55.0f, &ui_font_config);
+    io.Fonts->AddFontFromMemoryTTF((void *)metrophobic_regular_ttf, metrophobic_regular_len, ui_font_size, &ui_font_config);
 
-    // font_scale = ImGui::GetFontSize() / UI_FONT_SIZE;
-    font_scale = UI_FONT_SIZE / 62.0f;
+    font_scale = ui_font_size / 62.0f;
 
-    SetupIconFonts();
+    SetupIconFonts(ui_font_size);
 
 
     // Setup ImGui style
@@ -1656,6 +1670,7 @@ void UI::Render(SDL_Renderer *r)
                         midi_file               = ImGuiFileDialog::Instance()->GetFilePathName();
                         live_fd_state.midi_path = ImGuiFileDialog::Instance()->GetCurrentPath();
                         FileDialogState::save(live_fd_state);
+                        VideoExporter::abort();
                         Playback::CloseMidi(); // Close previous MIDI file
                         ImGui::OpenPopup("Loading MIDI...");
                         Playback::loadMidiFile(midi_file);
@@ -1688,6 +1703,7 @@ void UI::Render(SDL_Renderer *r)
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(51, 204, 51, 255));
                 if(ImGui::Button(ICON_FA_PLAY, buton_sizes))
                 {
+                    VideoExporter::abort();
                     Playback::CloseMidi();
                     MidiList::last_midi_file = live_midi_list[selected_midi_index];
                     MidiList::save(live_midi_list, MidiList::last_midi_file);
@@ -1727,7 +1743,10 @@ void UI::Render(SDL_Renderer *r)
 
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 92, 51, 255));
                 if(ImGui::Button(ICON_FA_SQUARE, buton_sizes))
+                {
+                    VideoExporter::abort();
                     Playback::CloseMidi();
+                }
                 ImGui::PopStyleColor();
 
                 if(ImGui::BeginItemTooltip())
@@ -2563,6 +2582,18 @@ void UI::Render(SDL_Renderer *r)
                                 ImGui::EndCombo();
                             }
                             ImGui::EndDisabled();
+                        }
+
+                        if(ImGui::CollapsingHeader("Playback"))
+                        {
+                            bool tick_mode = live_conf.tick_based_playback;
+                            ImGui::Checkbox("[BETA/Experimental] Tick-based playback", &tick_mode);
+                            if(ImGui::BeginItemTooltip())
+                            {
+                                ImGui::Text("Tempo changes stretch/shrink playback speed like a rubber band");
+                                ImGui::EndTooltip();
+                            }
+                            live_conf.tick_based_playback = tick_mode;
                         }
 
                         ImGui::EndTabItem();

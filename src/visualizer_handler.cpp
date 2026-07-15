@@ -26,7 +26,6 @@ int       vis_type_num = 0;
 SDL_Event Evt;
 u32       frameStart;
 u64       tick_last_time = 0;
-f64       smooth_tick_scale = 0;
 int       frameRate = 60;
 f64       preRollStartTime = 0;
 
@@ -141,13 +140,14 @@ VisualizerHandler::VisualizerHandler()
             {
                 f64 tempo = Midi_ctx.get_tempo_at_time(Playback::Tplay);
                 f64 ref   = Midi_ctx.get_tempo_at_time(0.0);
-                if(ref > 0.0) target = tempo / ref;
+                if(ref > 0.0) target = ref / tempo;
             }
             if(smooth_tick_scale <= 0.0)
                 smooth_tick_scale = target;
             else
                 smooth_tick_scale += (target - smooth_tick_scale) * 0.12;
-            Tscr *= smooth_tick_scale;
+            f64 eff_scale = (smooth_tick_scale > 0.001) ? smooth_tick_scale : 1.0;
+            vis_Tscr = Tscr / eff_scale;
         }
 
 
@@ -171,7 +171,7 @@ VisualizerHandler::VisualizerHandler()
                 }
             }
             Playback::is_playback_started = true;
-            Midi_ctx.update_to(Playback::Tplay + Tscr);
+            Midi_ctx.update_to(Playback::Tplay + vis_Tscr);
             Midi_ctx.remove_to(Playback::Tplay);
         }
         else

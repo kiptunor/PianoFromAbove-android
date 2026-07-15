@@ -100,7 +100,7 @@ void NoteBuffer::DrawNotes(Config::configuration settings)
         {
             const NVnote       &n               = qptr->n;
             NVMidi::u16_t       k               = qptr->k;
-            int                 pps             = qptr->pps;
+            int                 pps             = (int)((f64)_WinH / vis_Tscr + 0.5);
 
             // Note color distributon
             std::pair<int, int> trackChannelKey = { n.track, n.chn };
@@ -161,7 +161,7 @@ void NoteBuffer::DrawNotes(Config::configuration settings)
             int y_0 = std::clamp((int)floor(_WinH - (n.Tstart - Playback::Tplay) * pps + 0.5f), 0, _WinH);
 
             // Dark rect (Note outline)
-            int y_1 = (n.Tend < Playback::Tplay + Tscr) ? std::clamp((int)floor(_WinH - (n.Tend - Playback::Tplay) * pps + 0.5f), 0, _WinH) : 0;
+            int y_1 = (n.Tend < Playback::Tplay + vis_Tscr) ? std::clamp((int)floor(_WinH - (n.Tend - Playback::Tplay) * pps + 0.5f), 0, _WinH) : 0;
 
             if(n.Tstart <= Playback::Tplay && Playback::Tplay < n.Tend)
             {
