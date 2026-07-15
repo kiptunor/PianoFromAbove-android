@@ -66,7 +66,7 @@ bool               Render::isDesktopSession()
 
 
 
-   This is where the window creation takes place
+   This is where the window creaton takes place
 */
 
 Render::Render()
@@ -213,7 +213,7 @@ void Render::HandleResize(int newWidth, int newHeight)
 
 int Render::scale(int x)
 {
-    // Fixed a small note glitch LMfaoerGdfgg
+    // Fixed a smal note glitch LMfaoerGdfgg
     return (x * WinW + 4700) / 7330;
 }
 
@@ -435,6 +435,13 @@ void Render::DrawKeyBoard()
         {
             int n = j % 12;
             if(n == 1 || n == 6)
+                fNudgeX =  0.203f;  // C#, F# -- match PFA center
+            else if(n == 3 || n == 10)
+                fNudgeX =  0.297f;  // D#, A#
+            else if(n == 8)
+              fNudgeX =  0.278f;  // G#
+          
+            if(n == 1 || n == 6)
                 fNudgeX = 0.203f; // C#, F# — match PFA center
             else if(n == 3 || n == 10)
                 fNudgeX = 0.297f; // D#, A#
@@ -570,7 +577,7 @@ void Render::CreateNote(int k, int yb, int ye, us_int c)
     f32      fd      = floor(_KeyWidth[0] * 0.15f / 2.0f + 0.5f);
     fd               = std::max(std::min(fd, 3.0f), 1.0f);
 
-    // Dark outline (border) — like PFA's iVeryDarkRGB
+    // Dark outline (border) -- like PFA's iVeryDarkRGB
     DrawRect(Ren, x, ye, w, h, darker, darker, darker, darker);
 
     // Inner note with PFA-style diagonal gradient (primary, dark, dark, primary)
@@ -643,7 +650,7 @@ void Render::DrawNote(NVMidi::u16_t k, const NVnote &n, int pps)
     int key = KeyMap[k];
 
     int y_0 = std::clamp((int)floor(_WinH - (n.Tstart - Playback::Tplay) * pps + 0.5f), 0, _WinH);
-    int y_1 = (n.Tend < Playback::Tplay + Tscr) ? std::clamp((int)floor(_WinH - (n.Tend - Playback::Tplay) * pps + 0.5f), 0, _WinH) : 0;
+    int y_1 = (n.Tend < Playback::Tplay + vis_Tscr) ? std::clamp((int)floor(_WinH - (n.Tend - Playback::Tplay) * pps + 0.5f), 0, _WinH) : 0;
 
     if(n.Tstart <= Playback::Tplay && Playback::Tplay < n.Tend)
     {
@@ -741,6 +748,10 @@ void Render::DrawHorizontalLines()
     if(te.empty())
         return;
 
+    const int  beatsPerMeasure = 4;
+    f64        pps             = (f64)_WinH / vis_Tscr; // pixels per second
+    f64        t_cur           = Playback::Tplay;
+    f64        t_end           = t_cur + vis_Tscr;
     const int beatsPerMeasure = 4;
     f64       pps             = (f64)_WinH / Tscr; // pixels per second
     f64       t_cur           = Playback::Tplay;

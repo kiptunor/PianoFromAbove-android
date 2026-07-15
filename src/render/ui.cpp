@@ -8,6 +8,7 @@
 #include "../../assets/IconsFontAwesome6.h"
 #include "../../assets/Metrophobic_Regular.h"
 #include "../audio/playback.h"
+#include "../video/exporter.h"
 #include "../config/channel_colors.h"
 #include "../config/file_dialog_state.h"
 #include "../config/midi_list.h"
@@ -75,7 +76,6 @@ bool                       is_midi_info        = false;
 FileHelpers::MidiParseInfo cached_midi_info;
 bool                       show_midi_details = false;
 // single_midi_info_collector *smic_ptr            = nullptr;
-f32                        android_scale;
 ImVec4                     text_color;
 static float               font_scale;
 
@@ -110,7 +110,7 @@ UI::RGBAint                UI::liveColor;
 ImVec4                     UI::ui_chcolors[16];
 int                        UI::current_audio_dev;
 static int                 builtin_ui_theme_idx = 0;
-// clang-format off
+// clang-formt off
 const char                 *builtin_ui_theme_names[] =
 {
     "Silvana (Default)",
@@ -251,7 +251,7 @@ void UI::SetMoonlightTheme()
     style.ScrollbarPadding                       = 2.0f;
     style.ScrollbarSize                          = 20.60000038146973f;
     style.GrabMinSize                            = 12.700000047683716f;
-    style.GrabRounding                           = 8.0f; // Modified
+    style.GrabRounding                           = 8.0f; // Modifed
     style.TabRounding                            = 8.89999961853027f;
     style.TabBorderSize                          = 0.0f;
     // style.TabMinWidthForCloseButton = 0.0f; // This seems to be deprecated in Imgui v1.91.9b
@@ -854,6 +854,10 @@ void RenderMidiList(const std::vector<std::string> &items, int &selectedIndex, s
 {
     static KineticState ks_midi_y;
     static KineticState ks_midi_x;
+    static std::string  export_midi_path;
+    static bool         export_video = true;
+    static std::string  export_ext   = ".mp4";
+    static int          ctx_item     = -1;
     ImGui::BeginChild("##midils", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
 
 #ifdef PLATFORM_ANDROID
@@ -881,8 +885,91 @@ void RenderMidiList(const std::vector<std::string> &items, int &selectedIndex, s
 
         if(isSelected)
             ImGui::SetItemDefaultFocus();
+
+        // Long-press detection (works on both mouse and touch)
+        bool held = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)
+                 || ImGui::IsItemActive();
+        if(held && ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::GetIO().MouseDownDuration[0] > 0.4f)
+        {
+            ctx_item = static_cast<int>(i);
+            ImGui::OpenPopup("##ExportCtx");
+        }
+    }
+
+    // Context menu INSIDE the child, AFTER the loop
+    if(!ImGui::IsPopupOpen("##ExportCtx"))
+        ctx_item = -1;
+    if(ctx_item >= 0)
+    {
+        if(ImGui::BeginPopup("##ExportCtx"))
+        {
+            if(ImGui::BeginMenu("Export Audio Only"))
+            {
+                static const char *fmts_a[] = { ".mp3", ".wav", ".flac", ".ogg" };
+                for(auto fmt : fmts_a)
+                {
+                    if(ImGui::MenuItem(fmt))
+                    {
+                        export_midi_path = items[ctx_item];
+                        export_video     = false;
+                        export_ext       = fmt;
+                    }
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndPopup();
+        }
+        else
+        {
+            ctx_item = -1;
+        }
     }
     ImGui::EndChild();
+
+    // Export file-save dialog using ImGuiFileDialog
+    if(!export_midi_path.empty())
+    {
+        const char *home = getenv("HOME");
+        if(!home) home = "/tmp";
+        char default_name[64];
+        snprintf(default_name, sizeof(default_name), "pfa_export%s", export_ext.c_str());
+
+        // Add Home to Bookmarks (once)
+        static bool home_bookmark_added = false;
+        if(!home_bookmark_added && home && strlen(home) > 1)
+        {
+            auto *grp = ImGuiFileDialog::Instance()->GetPlacesGroupPtr("Bookmarks");
+            if(grp) grp->AddPlace("Home", home, false);
+            home_bookmark_added = true;
+        }
+
+        IGFD::FileDialogConfig config;
+        config.path = home;
+        config.fileName = default_name;
+        config.flags = ImGuiFileDialogFlags_DontShowHiddenFiles;
+        ImGuiFileDialog::Instance()->OpenDialog("ExportSaveFD", "Save Export File",
+            export_video ? ".mp4,.avi,.mkv,.mov" : ".mp3,.wav,.flac,.ogg",
+            config);
+
+        if(ImGuiFileDialog::Instance()->Display("ExportSaveFD", 0, ImVec2(700, 500), ImVec2(FLT_MAX, FLT_MAX)))
+        {
+            if(ImGuiFileDialog::Instance()->IsOk())
+            {
+                std::string save_path = ImGuiFileDialog::Instance()->GetFilePathName();
+                if(VideoExporter::start(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y, 30,
+                    save_path.c_str(), export_video))
+                {
+                    Playback::CloseMidi();
+                    MidiList::last_midi_file = export_midi_path;
+                    MidiList::save(live_midi_list, MidiList::last_midi_file);
+                    ImGui::OpenPopup("Loading MIDI...");
+                    Playback::loadMidiFile(export_midi_path);
+                }
+            }
+            ImGuiFileDialog::Instance()->Close();
+            export_midi_path.clear();
+        }
+    }
 }
 
 std::vector<std::string> GetCheckedSoundfonts(const std::vector<UI::SoundfontItem> &items)
@@ -1073,9 +1160,6 @@ void ConstrainWindowMove(const char *windowName)
 
 void AndroidUIRescale()
 {
-    const float base_font_size        = UI_FONT_SIZE;
-    float       scale                 = ImGui::GetFontSize() / base_font_size;
-
 
     ImGuiStyle &style                 = ImGui::GetStyle();
 
@@ -1111,14 +1195,14 @@ void AndroidUIRescale()
     style.ColorMarkerSize             = 8.0f;
 }
 
-void SetupIconFonts()
+void SetupIconFonts(float ui_font_size)
 {
     static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
     ImFontConfig         icons_config;
     icons_config.MergeMode            = true;
     icons_config.PixelSnapH           = true;
     icons_config.FontDataOwnedByAtlas = false;
-    f32 size                          = FONT_AWESOME_ICON_SIZE;
+    f32 size                          = ui_font_size * 0.82f;
 
     icons_config.GlyphMaxAdvanceX     = std::numeric_limits<f32>::max();
     icons_config.RasterizerMultiply   = 1.0f;
@@ -1272,17 +1356,31 @@ void UI::Setup(int graphics_backend)
 
 
 
-    // Metrophobic-Regular.ttf
-    // Font suggested by Nerdly
+    // Calculate font size from screen resolution instead of hardcoding
+    float ui_font_size = UI_FONT_SIZE;
+#ifdef PLATFORM_ANDROID
+    SDL_DisplayID disp = SDL_GetDisplayForWindow(RenderWin->Win);
+    const SDL_DisplayMode *dm = SDL_GetDesktopDisplayMode(disp);
+    if(dm)
+    {
+        float short_side = (float)std::min(dm->w, dm->h);
+        ui_font_size = short_side / 30.0f;
+        if(ui_font_size < 16.0f) ui_font_size = 16.0f;
+        if(ui_font_size > 80.0f) ui_font_size = 80.0f;
+    }
+#endif
 
     ImFontConfig ui_font_config;
     ui_font_config.FontDataOwnedByAtlas = false;
+    io.Fonts->AddFontFromMemoryTTF((void *)metrophobic_regular_ttf, metrophobic_regular_len, ui_font_size, &ui_font_config);
+
+    font_scale = ui_font_size / 62.0f;
     io.Fonts->AddFontFromMemoryTTF((void *)metrophobic_regular_ttf, metrophobic_regular_len, UI_FONT_SIZE, &ui_font_config);
 
 
     font_scale = UI_FONT_SIZE / 62.0f;
 
-    SetupIconFonts();
+    SetupIconFonts(ui_font_size);
 
 
     // Setup ImGui style
@@ -1567,6 +1665,7 @@ void UI::Render(SDL_Renderer *r)
                         midi_file               = ImGuiFileDialog::Instance()->GetFilePathName();
                         live_fd_state.midi_path = ImGuiFileDialog::Instance()->GetCurrentPath();
                         FileDialogState::save(live_fd_state);
+                        VideoExporter::abort();
                         Playback::CloseMidi(); // Close previous MIDI file
                         ImGui::OpenPopup("Loading MIDI...");
                         Playback::loadMidiFile(midi_file);
@@ -1599,6 +1698,7 @@ void UI::Render(SDL_Renderer *r)
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(51, 204, 51, 255));
                 if(ImGui::Button(ICON_FA_PLAY, buton_sizes))
                 {
+                    VideoExporter::abort();
                     Playback::CloseMidi();
                     MidiList::last_midi_file = live_midi_list[selected_midi_index];
                     MidiList::save(live_midi_list, MidiList::last_midi_file);
@@ -1638,7 +1738,10 @@ void UI::Render(SDL_Renderer *r)
 
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 92, 51, 255));
                 if(ImGui::Button(ICON_FA_SQUARE, buton_sizes))
+                {
+                    VideoExporter::abort();
                     Playback::CloseMidi();
+                }
                 ImGui::PopStyleColor();
 
                 if(ImGui::BeginItemTooltip())
@@ -2474,6 +2577,18 @@ void UI::Render(SDL_Renderer *r)
                             ImGui::EndDisabled();
                         }
 
+                        if(ImGui::CollapsingHeader("Playback"))
+                        {
+                            bool tick_mode = live_conf.tick_based_playback;
+                            ImGui::Checkbox("[BETA/Experimental] Tick-based playback", &tick_mode);
+                            if(ImGui::BeginItemTooltip())
+                            {
+                                ImGui::Text("Tempo changes stretch/shrink playback speed like a rubber band");
+                                ImGui::EndTooltip();
+                            }
+                            live_conf.tick_based_playback = tick_mode;
+                        }
+
                         ImGui::EndTabItem();
                     }
                     /*
@@ -2815,6 +2930,41 @@ void UI::Render(SDL_Renderer *r)
     }
 
     ImGui::End();
+
+#ifndef PLATFORM_ANDROID
+    // Desktop stats overlay (top-right) -- always visble
+    {
+        char timeStr[48];
+        if(Playback::is_playback_started)
+        {
+            f64 total = Playback::GetTotalTime();
+            int curM = (int)(Playback::Tplay / 60);
+            int curS = std::abs((int)Playback::Tplay % 60);
+            int curT = std::abs((int)((Playback::Tplay - floor(Playback::Tplay)) * 10));
+            int totM = (int)(total / 60);
+            int totS = (int)total % 60;
+            int totT = (int)((total - floor(total)) * 10);
+
+            if(Playback::preRollActive)
+                snprintf(timeStr, sizeof(timeStr), "-%d:%02d.%d / %d:%02d.%d", curM, curS, curT, totM, totS, totT);
+            else
+                snprintf(timeStr, sizeof(timeStr), "%d:%02d.%d / %d:%02d.%d", curM, curS, curT, totM, totS, totT);
+        }
+        else
+            snprintf(timeStr, sizeof(timeStr), "-:-- / -:--");
+
+        char fpsStr[16];
+        snprintf(fpsStr, sizeof(fpsStr), "%.0f FPS", ImGui::GetIO().Framerate);
+
+        ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - 15, 15), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
+        ImGui::SetNextWindowBgAlpha(0.5f);
+        ImGui::Begin("##StatsOverlay", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Text("Time:  %s", timeStr);
+        ImGui::Text("FPS:   %s", fpsStr);
+        ImGui::Text("Score: N/A");
+        ImGui::End();
+    }
+#endif
 
     // Rendering
     ImGui::Render();

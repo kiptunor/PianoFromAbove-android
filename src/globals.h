@@ -33,6 +33,8 @@ inline std::vector<Playback::AudioDevice> availableAudioDevices;
 inline Render                            *RenderWin;
 inline int                                _WinH;
 inline f64                                Tscr;
+inline f64                                vis_Tscr;
+inline f64                                smooth_tick_scale = 0.0;
 inline bool                               is_defaultconfig;
 inline bool                               Playback::is_paused;
 inline std::vector<UI::SoundfontItem>     loaded_soundfont_list;
@@ -87,6 +89,7 @@ inline Config::configuration              default_settings = {
     .custom_ui_theme         = false,
     .builtin_ui_theme        = true,
     .OR                      = true,
+    .tick_based_playback     = false,
 };
 
 
