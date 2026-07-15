@@ -858,8 +858,10 @@ void RenderMidiList(const std::vector<std::string> &items, int &selectedIndex, s
         if(isSelected)
             ImGui::SetItemDefaultFocus();
 
-        // Long-press detection
-        if(ImGui::IsItemHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::GetIO().MouseDownDuration[0] > 0.4f)
+        // Long-press detection (works on both mouse and touch)
+        bool held = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem)
+                 || ImGui::IsItemActive();
+        if(held && ImGui::IsMouseDown(ImGuiMouseButton_Left) && ImGui::GetIO().MouseDownDuration[0] > 0.4f)
         {
             ctx_item = static_cast<int>(i);
             ImGui::OpenPopup("##ExportCtx");

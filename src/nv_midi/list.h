@@ -35,8 +35,18 @@ struct NVnote /* ===== Note class rendering ===== */
 
 struct NVtempoEvent /* ===== Tempo change for grid rendering ===== */
 {
-    f64 T;          // Time in seconds
-    f64 usPerQuarter; // Microseconds per quarter note
+    uint64_t tick;      // Absolute tick when this tempo takes effect
+    f64      T;         // Time in seconds
+    f64      usPerQuarter; // Microseconds per quarter note
+};
+
+struct TempoSegment
+{
+    uint64_t startTick;
+    uint64_t endTick;      // exclusive
+    double   startTime;    // seconds
+    double   usPerQuarter;
+    double   secondsPerTick;
 };
 
 class NVnoteList /* ===== Note queue class ===== */
@@ -51,6 +61,16 @@ class NVnoteList /* ===== Note queue class ===== */
 
     /* Tempo map for horizontal grid lines */
     std::vector<NVtempoEvent> TempoEvents;
+
+    /* Get the tempo (µs/qn) at a given time in seconds */
+    f64               get_tempo_at_time(f64 t) const;
+
+    /* Tempo cache for O(log n) tick↔seconds conversion */
+    void              build_tempo_cache();
+    std::vector<TempoSegment> TempoCache;
+    double            tickToSeconds(uint64_t tick) const;
+    uint64_t          secondsToTick(double seconds) const;
+    f64               get_tempo_at_tick(uint64_t tick) const;
 
     /* Close component */
     void              destroy_all();

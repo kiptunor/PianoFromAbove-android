@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "../logger.h"
 
 #include "MIDI.h"
@@ -49,10 +51,71 @@ bool NVnoteList::start_parse(const char *name)
     abstick = 0;
     Tread   = 0.0;
     dT      = 0.5 / MIDI_File.ppnq;
-    TempoEvents.clear();
-    TempoEvents.push_back({ 0.0, 500000.0 });
     keys    = new rP<decltype(keys)>::t[MIDI_File.tracks];
+    TempoEvents.clear();
+    TempoEvents.push_back({ 0, 0.0, 500000.0 });
+    TempoCache.clear();
     return true;
+}
+
+f64 NVnoteList::get_tempo_at_time(f64 t) const
+{
+    if(TempoCache.empty()) return 500000.0;
+    auto it = std::upper_bound(TempoCache.begin(), TempoCache.end(), t,
+        [](double time, const TempoSegment &seg) { return time < seg.startTime; });
+    if(it != TempoCache.begin()) --it;
+    return it->usPerQuarter;
+}
+
+void NVnoteList::build_tempo_cache()
+{
+    TempoCache.clear();
+    if(TempoEvents.empty())
+    {
+        TempoCache.push_back({ 0, UINT64_MAX, 0.0, 500000.0, 0.5 / MIDI_File.ppnq });
+        return;
+    }
+    uint64_t ppnq = MIDI_File.ppnq;
+    TempoCache.reserve(TempoEvents.size());
+    for(size_t i = 0; i < TempoEvents.size(); i++)
+    {
+        uint64_t segStart  = TempoEvents[i].tick;
+        uint64_t segEnd    = (i + 1 < TempoEvents.size()) ? TempoEvents[i + 1].tick : UINT64_MAX;
+        double   usPerQn   = TempoEvents[i].usPerQuarter;
+        double   spb       = usPerQn * 1e-6 / ppnq;
+        double   segStartT = TempoEvents[i].T;
+        TempoCache.push_back({ segStart, segEnd, segStartT, usPerQn, spb });
+    }
+}
+
+double NVnoteList::tickToSeconds(uint64_t tick) const
+{
+    if(TempoCache.empty()) return (double)tick * (0.5 / MIDI_File.ppnq);
+    auto it = std::upper_bound(TempoCache.begin(), TempoCache.end(), tick,
+        [](uint64_t t, const TempoSegment &seg) { return t < seg.endTick; });
+    if(it == TempoCache.begin()) it++;
+    it--;
+    return it->startTime + (double)(tick - it->startTick) * it->secondsPerTick;
+}
+
+uint64_t NVnoteList::secondsToTick(double seconds) const
+{
+    if(TempoCache.empty()) return (uint64_t)(seconds / (0.5 / MIDI_File.ppnq));
+    auto it = std::upper_bound(TempoCache.begin(), TempoCache.end(), seconds,
+        [](double t, const TempoSegment &seg) { return t < seg.startTime; });
+    if(it != TempoCache.begin()) --it;
+    if(it->secondsPerTick <= 0) return it->startTick;
+    return it->startTick + (uint64_t)((seconds - it->startTime) / it->secondsPerTick);
+}
+
+f64 NVnoteList::get_tempo_at_tick(uint64_t tick) const
+{
+    if(TempoCache.empty()) return 500000.0;
+    auto it = std::upper_bound(TempoCache.begin(), TempoCache.end(), tick,
+        [](uint64_t t, const TempoSegment &seg) { return t < seg.endTick; });
+    if(it == TempoCache.begin()) it++;
+    it--;
+    return it->usPerQuarter;
 }
 
 void NVnoteList::destroy_all()
@@ -61,6 +124,10 @@ void NVnoteList::destroy_all()
     keys = nullptr;
     MIDI_File.mid_close();
     Evt_sequencer.seq_destroy();
+    TempoEvents.clear();
+    TempoEvents.shrink_to_fit();
+    TempoCache.clear();
+    TempoCache.shrink_to_fit();
 }
 
 void NVnoteList::list_seek(f64 T)
@@ -73,7 +140,8 @@ void NVnoteList::list_seek(f64 T)
         MIDI_File.rewind_all();
         Evt_sequencer.seq_reset(MIDI_File);
         TempoEvents.clear();
-        TempoEvents.push_back({ 0.0, 500000.0 });
+        TempoEvents.push_back({ 0, 0.0, 500000.0 });
+        TempoCache.clear();
     }
 
     for(int i = 0; i < 128; i++)
@@ -106,11 +174,14 @@ void NVnoteList::list_seek(f64 T)
             speed               = speed << 8 | Evt.data[1];
             speed               = speed << 8 | Evt.data[2];
             dT                  = 0.000001 * speed / MIDI_File.ppnq;
-            TempoEvents.push_back({ Tread, (f64)speed });
+            TempoEvents.push_back({ Evt.abstick, Tread, (f64)speed });
         }
 
         Evt_sequencer.seq_next(MIDI_File);
     }
+
+    if(TempoEvents.size() > TempoCache.size())
+        build_tempo_cache();
 }
 
 void NVnoteList::update_to(f64 T)
@@ -135,7 +206,7 @@ void NVnoteList::update_to(f64 T)
                 speed               = speed << 8 | Evt.data[1];
                 speed               = speed << 8 | Evt.data[2];
                 dT                  = 0.000001 * speed / MIDI_File.ppnq;
-                TempoEvents.push_back({ Tread, (f64)speed });
+                TempoEvents.push_back({ Evt.abstick, Tread, (f64)speed });
             }
             break;
 
@@ -161,6 +232,9 @@ void NVnoteList::update_to(f64 T)
 
         Evt_sequencer.seq_next(MIDI_File);
     }
+
+    if(TempoEvents.size() > TempoCache.size())
+        build_tempo_cache();
 }
 
 void NVnoteList::OR() // A presumably useful overlap remover

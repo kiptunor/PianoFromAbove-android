@@ -12,6 +12,7 @@
 
 
 #include "visualizer_handler.h"
+#include "video/exporter.h"
 #include "render/note_buffer.h"
 #include "render/render.h"
 #include "render/ui.h"
@@ -24,6 +25,8 @@ int       vis_type_num = 0;
 
 SDL_Event Evt;
 u32       frameStart;
+u64       tick_last_time = 0;
+f64       smooth_tick_scale = 0;
 int       frameRate = 60;
 f64       preRollStartTime = 0;
 
@@ -112,11 +115,14 @@ VisualizerHandler::VisualizerHandler()
     while(1)
     {
         // Check if playback just ended (and we need to handle that)
-        if(!Playback::playback_ended && BASS_ChannelIsActive(Playback::main_stream) == BASS_ACTIVE_STOPPED)
+        if(!Playback::playback_ended && Playback::main_stream && BASS_ChannelIsActive(Playback::main_stream) == BASS_ACTIVE_STOPPED)
         {
             Playback::playback_ended = true;
             Playback::Tplay          = 1.0;  // Add a bit more to fully finish the note visualization
             Playback::is_paused      = true; // Just mark as paused when it ends
+
+            // Finalize any active audio export
+            VideoExporter::stop();
 
             // Save the position at the end
             Playback::saved_position = BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE);
@@ -129,11 +135,29 @@ VisualizerHandler::VisualizerHandler()
         _WinH     = RenderWin->WinH - RenderWin->WinW * 80 / 1000;
         Tscr      = (double)_WinH / UI::live_note_speed;
 
+        {
+            f64 target = 1.0;
+            if(live_conf.tick_based_playback && Midi_ctx.TempoCache.size() > 1)
+            {
+                f64 tempo = Midi_ctx.get_tempo_at_time(Playback::Tplay);
+                f64 ref   = Midi_ctx.get_tempo_at_time(0.0);
+                if(ref > 0.0) target = tempo / ref;
+            }
+            if(smooth_tick_scale <= 0.0)
+                smooth_tick_scale = target;
+            else
+                smooth_tick_scale += (target - smooth_tick_scale) * 0.12;
+            Tscr *= smooth_tick_scale;
+        }
+
 
         // Repeatedly call this function to start midi playback until the midi loader thread is finished
         Playback::PlayerStateUpdate();
 
 
+
+        // Capture audio data during export
+        VideoExporter::capture_audio();
 
         // Start visualizing only if bass thread is ready
         if(BASS_ChannelIsActive(Playback::main_stream))
@@ -151,7 +175,11 @@ VisualizerHandler::VisualizerHandler()
             Midi_ctx.remove_to(Playback::Tplay);
         }
         else
+        {
             Playback::is_playback_started = false;
+            tick_last_time = 0;
+            smooth_tick_scale = 0;
+        }
 
 
         RenderWin->clear();
@@ -159,48 +187,45 @@ VisualizerHandler::VisualizerHandler()
         while(SDL_PollEvent(&Evt))
         {
             frameStart = SDL_GetTicks(); // Get the current time in milliseconds
+
+#ifndef PLATFORM_ANDROID
+            // Handle player control keys BEFORE ImGui to prevent ImGui's keyboard
+            // navigation (NavEnableKeyboard) from stealing them and causing
+            // double-activation (e.g. pause called twice = no-op).
+            if(!UI::main_gui_window && Evt.type == SDL_EVENT_KEY_DOWN)
+            {
+                SDL_Keymod mods = SDL_GetModState();
+                switch(Evt.key.key)
+                {
+                case SDLK_SPACE:
+                    Playback::pause();
+                    continue;
+                case SDLK_LEFT:
+                    Playback::seek_playback(-Playback::seek_amount);
+                    continue;
+                case SDLK_RIGHT:
+                    Playback::seek_playback(Playback::seek_amount);
+                    continue;
+                case SDLK_D:
+                    UI::show_demo_window = true;
+                    continue;
+                case SDLK_RETURN:
+                    if(mods & SDL_KMOD_RALT)
+                        ToggleFullscreen(RenderWin->Win);
+                    continue;
+                case SDLK_Q:
+                    shutdown();
+                    continue;
+                }
+            }
+#endif
+
             ImGui_ImplSDL3_ProcessEvent(&Evt);
             if(Evt.type == SDL_EVENT_QUIT)
                 shutdown();
 
             if(Evt.type == SDL_EVENT_WINDOW_RESIZED)
                 RenderWin->HandleResize(Evt.window.data1, Evt.window.data2);
-
-#ifndef PLATFORM_ANDROID
-            // Allow keyboard input only if the main window is not on display
-            // This avoids playback control interferance when typing into the search boxes
-            if(!UI::main_gui_window)
-            {
-                if(Evt.type == SDL_EVENT_KEY_DOWN)
-                {
-                    SDL_Keymod mods = SDL_GetModState();
-                    switch(Evt.key.key)
-                    {
-                    case SDLK_SPACE:
-                        Playback::pause();
-                        break;
-                    case SDLK_LEFT:
-                        Playback::seek_playback(-Playback::seek_amount);
-                        break;
-                    case SDLK_RIGHT:
-                        Playback::seek_playback(Playback::seek_amount);
-                        break;
-                    case SDLK_D: // Only for development purposes
-                        UI::show_demo_window = true;
-                        break;
-                    case SDLK_RETURN:
-                        if(mods & SDL_KMOD_RALT)
-                        {
-                            ToggleFullscreen(RenderWin->Win);
-                        }
-                        break;
-                    case SDLK_Q:
-                        shutdown();
-                        break;
-                    }
-                }
-            }
-#endif
         }
 
         // Set the background color again but with live color changes
@@ -328,13 +353,43 @@ VisualizerHandler::VisualizerHandler()
                     preRollStartTime = 0;
                     BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_VOL, 1.0f);
                     BASS_ChannelPlay(Playback::main_stream, FALSE);
-                    Playback::Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
+                    f64 bass_pos = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
+                    Playback::clock_base_Tplay = bass_pos;
+                    Playback::clock_start      = std::chrono::steady_clock::now();
+                    Playback::clock_running    = true;
+                    Playback::tick_position    = Midi_ctx.secondsToTick(bass_pos);
+                    Playback::tick_accumulator = 0.0;
+                    Playback::tick_last_frame  = std::chrono::steady_clock::now();
+                    Playback::Tplay            = bass_pos;
                 }
                 else
                     Playback::Tplay = elapsed - 3.0;
             }
             else
-                Playback::Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
+            {
+                if(!Playback::clock_running)
+                {
+                    f64 bass_pos = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
+                    Playback::clock_base_Tplay = bass_pos;
+                    Playback::clock_start      = std::chrono::steady_clock::now();
+                    Playback::clock_running    = true;
+                    Playback::tick_position    = Midi_ctx.secondsToTick(bass_pos);
+                    Playback::tick_accumulator = 0.0;
+                    Playback::tick_last_frame  = std::chrono::steady_clock::now();
+                }
+                auto now   = std::chrono::steady_clock::now();
+                f64  dt    = std::chrono::duration<double>(now - Playback::clock_start).count();
+                Playback::Tplay = Playback::clock_base_Tplay + dt;
+
+                f64 bass_pos = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
+                if(fabs(Playback::Tplay - bass_pos) > 0.05)
+                {
+                    Playback::clock_base_Tplay = bass_pos;
+                    Playback::clock_start      = std::chrono::steady_clock::now();
+                }
+            }
+
+            Playback::updateTickClock();
         }
     }
 }
