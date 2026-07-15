@@ -17,8 +17,6 @@
 
 
 
-
-
 enum class NV_METYPE /* === MIDI Event types === */
 {
     NOTE_OFF        = (NVMidi::nv_byte)0x80, // Noteoff

@@ -1,7 +1,7 @@
 #ifndef UI_H
 #define UI_H
 
-#include <cmath>
+
 #include <string>
 #include <vector>
 
@@ -10,43 +10,7 @@
 
 #include "../mb_types.h"
 
-struct KineticState
-{
-    f64  velocity    = 0.0;
-    bool inDecel     = false;
-    bool wasDragging = false;
 
-    f64  Update(f64 scrollY, f64 mouseDeltaY, f64 dt, bool isHovered, bool isDragging)
-    {
-        if(isDragging && isHovered)
-        {
-            f64 vel     = -mouseDeltaY / std::max(dt, 0.0001);
-            velocity    = velocity * 0.85 + vel * 0.15;
-            inDecel     = false;
-            wasDragging = true;
-            return scrollY - mouseDeltaY;
-        }
-        if(wasDragging)
-        {
-            wasDragging = false;
-            inDecel     = true;
-            return scrollY;
-        }
-        if(inDecel)
-        {
-            velocity  *= std::pow(0.93, dt * 60.0);
-            f64 delta  = velocity * dt;
-            if(std::fabs(velocity) < 1.0)
-            {
-                inDecel  = false;
-                velocity = 0.0;
-                return scrollY;
-            }
-            return scrollY + delta;
-        }
-        return scrollY;
-    }
-};
 
 
 
@@ -111,54 +75,51 @@ class UI
         int a;
     } RGBAint;
 
-    static bool                     main_gui_window;
-    static int                      live_note_speed;
-    static int                      fps;
-    static int                      selected_midi_index;
-    static int                      min_velocity;
-    static int                      max_velocity;
-    static int                      current_audio_dev;
-    static bool                     velocity_filter;
-    static bool                     loop_colors;
-    static bool                     overlap_remover;
-    static bool                     use_bg_image;
-    static bool                     show_full_path_lost_midis;
-    static bool                     show_full_path_lost_soundfonts;
-    static bool                     no_midi_duplicates;
-    static bool                     vertical_lines;
-    static bool                     draw_measure_lines;
-    static bool                     no_soundfont_duplicates;
-    static bool                     background_image;
-    static bool                     internal_logging;
-    static bool                     log_to_file;
-    static bool                     vsync;
-    static bool                     use_default_media_paths;
-    static bool                     ui_theming;
-    static ImVec4                   ui_chcolors[16];
-    static ImVec4                   clear_color;
-    static RGBAint                  liveColor;
-    static std::string              last_midi_path;
-    static std::string              last_sf_path;
-    static std::string              last_midi_file;
-    static std::vector<std::string> soundfont_paths;
-    static std::vector<std::string> prev_images;
+    static bool        main_gui_window;
+    static int         live_note_speed;
+    static int         fps;
+    static int         selected_midi_index;
+    static int         min_velocity;
+    static int         max_velocity;
+    static int         current_audio_dev;
+    static bool        velocity_filter;
+    static bool        loop_colors;
+    static bool        overlap_remover;
+    static bool        use_bg_image;
+    static bool        show_full_path_lost_midis;
+    static bool        show_full_path_lost_soundfonts;
+    static bool        no_midi_duplicates;
+    static bool        vertical_lines;
+    static bool        draw_measure_lines;
+    static bool        no_soundfont_duplicates;
+    static bool        background_image;
+    static bool        internal_logging;
+    static bool        log_to_file;
+    static bool        vsync;
+    static bool        ui_theming;
+    static ImVec4      ui_chcolors[16];
+    static ImVec4      clear_color;
+    static RGBAint     liveColor;
+    static std::string last_midi_path;
+    static std::string last_sf_path;
+    static std::string last_midi_file;
+    static bool        show_demo_window;
 
-    static bool                     show_demo_window;
 
-    static void                     Setup(int graphics_backend);
-    static void                     SetMoonlightTheme();
-    static void                     SetSilvanaTheme();
+    static void        Setup(int graphics_backend);
+    static void        SetMoonlightTheme();
+    static void        SetSilvanaTheme();
     // Sloth Player's themes
-    static void                     SetNeonAbyssTheme();
-    static void                     SetCrimsonAzureTheme();
-    static void                     SetArcticHorizonTheme();
-    static void                     SetCyberpunkTheme();
-    static void                     SetBuiltinTheme(int idx);
+    static void        SetNeonAbyssTheme();
+    static void        SetCrimsonAzureTheme();
+    static void        SetArcticHorizonTheme();
+    static void        SetCyberpunkTheme();
+    static void        SetBuiltinTheme(int idx);
 
-    static void                     Render(SDL_Renderer *r);
-    static void                     UpdateWidgetValues();
-    static ImVec4                   Irgba2ImVec4(int r, int g, int b, int a);
-    static ImVec4                   UIntToImVec4(u_int rgb);
+    static void        Render(SDL_Renderer *r);
+    static void        UpdateWidgetValues();
+    static ImVec4      Irgba2ImVec4(int r, int g, int b, int a);
+    static ImVec4      UIntToImVec4(u_int rgb);
 };
 
 inline std::vector<UI::SoundfontItem> live_soundfont_list;

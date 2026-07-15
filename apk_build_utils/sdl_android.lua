@@ -24,6 +24,8 @@ function main(opts)
     os.mkdir(tmp)
     os.mkdir(path.join(tmp, "lib", arch))
 
+    cprint("=============================[${bright cyan}APK Build${clear}]=============================")
+
     -- 1. Copy built native library
     os.cp(target:targetfile(), path.join(tmp, "lib", arch, "libmain.so"))
 
@@ -39,6 +41,7 @@ function main(opts)
         local aar_dir  = path.join(aar_cache, aar_name)
         if not os.isdir(aar_dir) then
             os.mkdir(aar_dir)
+            cprint("${green}[AAR]:${clear} unpacking: %s", aar_name)
             os.execv("unzip", { "-q", "-o", aar, "-d", aar_dir })
         end
         local lib_out = path.join(tmp, "lib", arch)
@@ -70,6 +73,7 @@ function main(opts)
             table.insert(kotlin_sources, path.join(project, src))
         end
         import("kotlinc")({
+            target    = target,
             sources   = kotlin_sources,
             classpath = classpath,
             output    = all_classes,
@@ -94,6 +98,8 @@ function main(opts)
     end
 
     -- 5. Convert merged classes to DEX
+    -- [Kotlin]: <
+    cprint("${green}[D8]:${clear}            ${bright magenta}<%s>${clear} Generating Classes", target:name())
     local dex_out = path.join(tmp, "dex")
     os.mkdir(dex_out)
     local merged_jar = path.join(tmp, "all_classes.jar")
@@ -143,6 +149,7 @@ function main(opts)
     end
 
     -- 7. Package resources with aapt
+    cprint("${green}[APK Packing]:${clear}   ${bright magenta}<%s>${clear} Packaging resources", target:name())
     local res_apk = path.join(tmp, "res_only.apk")
     import("aapt")({
         sdk_tools   = sdk_tools,
@@ -157,8 +164,10 @@ function main(opts)
     -- 8. Add .so files and classes.dex to APK
     local add_files = {}
     for _, so in ipairs(os.files(path.join(tmp, "lib", arch, "*.so"))) do
+        cprint("${green}[APK Packing]:${clear}   ${bright magenta}<%s>${clear} Adding Native JNI Libs: %s", target:name(), path.relative(so, tmp))
         table.insert(add_files, path.relative(so, tmp))
     end
+    cprint("${green}[APK Packing]:${clear}   ${bright magenta}<%s>${clear} Adding Classes", target:name())
     if os.isfile(path.join(tmp, "classes.dex")) then
         table.insert(add_files, "classes.dex")
     end
@@ -180,6 +189,7 @@ function main(opts)
     })
 
     -- 10. Sign APK
+    cprint("${green}[APK Finishing]:${clear} ${bright magenta}<%s>${clear} Signing APK", target:name())
     import("apksigner")({
         sdk_tools     = sdk_tools,
         keystore      = keystore,

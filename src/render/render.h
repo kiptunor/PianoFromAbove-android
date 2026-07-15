@@ -1,6 +1,9 @@
 #ifndef RENDER_H
 #define RENDER_H
 
+#include <string>
+
+
 #include "../mb_types.h"
 #include "../nv_midi/list.h"
 #include <SDL3/SDL.h>

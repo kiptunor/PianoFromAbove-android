@@ -35,16 +35,16 @@ class FileHelpers
 
     struct MidiParseInfo
     {
-        int    ppqn        = 0;
-        double bpm         = 0.0;
-        int    timeSigNum  = 0;
-        int    timeSigDen  = 0;
-        bool   success     = false;
+        int    ppqn       = 0;
+        double bpm        = 0.0;
+        int    timeSigNum = 0;
+        int    timeSigDen = 0;
+        bool   success    = false;
     };
     static MidiParseInfo ParseMidiFile(const std::string &path);
 
 #ifndef PLATFORM_ANDROID
-    static void        createConfigDirs();
+    static void createConfigDirs();
 #endif
     static std::string config_dir;
     static std::string lists_dir;

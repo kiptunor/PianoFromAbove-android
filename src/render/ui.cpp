@@ -1,3 +1,4 @@
+#include <cmath>
 #include <filesystem>
 #include <string>
 
@@ -95,7 +96,6 @@ bool                       UI::log_to_file;
 int                        UI::fps;
 bool                       UI::vertical_lines;
 bool                       UI::draw_measure_lines;
-bool                       UI::use_default_media_paths = true;
 bool                       UI::background_image;
 bool                       UI::show_full_path_lost_midis      = false;
 bool                       UI::show_full_path_lost_soundfonts = false;
@@ -109,8 +109,6 @@ ImVec4                     UI::clear_color;
 UI::RGBAint                UI::liveColor;
 ImVec4                     UI::ui_chcolors[16];
 int                        UI::current_audio_dev;
-std::vector<std::string>   UI::soundfont_paths;
-std::vector<std::string>   UI::prev_images;
 static int                 builtin_ui_theme_idx = 0;
 // clang-formt off
 const char                 *builtin_ui_theme_names[] =
@@ -131,10 +129,46 @@ const char                 *builtin_ui_theme_names[] =
 
 
 
+struct KineticState
+{
+    f64  velocity    = 0.0;
+    bool inDecel     = false;
+    bool wasDragging = false;
+
+    f64  Update(f64 scrollY, f64 mouseDeltaY, f64 dt, bool isHovered, bool isDragging)
+    {
+        if(isDragging && isHovered)
+        {
+            f64 vel     = -mouseDeltaY / std::max(dt, 0.0001);
+            velocity    = velocity * 0.85 + vel * 0.15;
+            inDecel     = false;
+            wasDragging = true;
+            return scrollY - mouseDeltaY;
+        }
+        if(wasDragging)
+        {
+            wasDragging = false;
+            inDecel     = true;
+            return scrollY;
+        }
+        if(inDecel)
+        {
+            velocity  *= std::pow(0.93, dt * 60.0);
+            f64 delta  = velocity * dt;
+            if(std::fabs(velocity) < 1.0)
+            {
+                inDecel  = false;
+                velocity = 0.0;
+                return scrollY;
+            }
+            return scrollY + delta;
+        }
+        return scrollY;
+    }
+};
 
 
-
-void                       ApplyScaleToStyle(ImGuiStyle &style, float scale)
+void ApplyScaleToStyle(ImGuiStyle &style, float scale)
 {
     style.WindowPadding            *= scale;
     style.FramePadding             *= scale;
@@ -280,7 +314,6 @@ void UI::SetMoonlightTheme()
     style.Colors[ImGuiCol_ModalWindowDimBg]      = ImVec4(0.196078434586525f, 0.1764705926179886f, 0.5450980663299561f, 0.501960813999176f);
 
 #ifdef PLATFORM_ANDROID
-    // font_scale = ImGui::GetFontSize() / UI_FONT_SIZE; // e.g., 55/22 = 2.5
     ApplyScaleToStyle(style, font_scale);
 #endif
 }
@@ -383,7 +416,6 @@ void UI::SetSilvanaTheme()
     colors[ImGuiCol_ModalWindowDimBg]          = ImVec4(0.41f, 0.21f, 0.07f, 0.50f);
 
 #ifdef PLATFORM_ANDROID
-    // font_scale = ImGui::GetFontSize() / UI_FONT_SIZE; // e.g., 55/22 = 2.5
     ApplyScaleToStyle(style, font_scale);
 #endif
 }
@@ -479,7 +511,6 @@ void UI::SetArcticHorizonTheme()
     colors[ImGuiCol_ModalWindowDimBg]          = ImVec4(0.02f, 0.05f, 0.12f, 0.70f);
 
 #ifdef PLATFORM_ANDROID
-    // font_scale = ImGui::GetFontSize() / UI_FONT_SIZE; // e.g., 55/22 = 2.5
     ApplyScaleToStyle(style, font_scale);
 #endif
 }
@@ -584,7 +615,6 @@ void UI::SetCrimsonAzureTheme()
     colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0.200f, 0.549f, 1.000f, 0.387f);
 
 #ifdef PLATFORM_ANDROID
-    // font_scale = ImGui::GetFontSize() / UI_FONT_SIZE; // e.g., 55/22 = 2.5
     ApplyScaleToStyle(style, font_scale);
 #endif
 }
@@ -607,6 +637,7 @@ void UI::SetCyberpunkTheme()
     style.TabRounding                     = 6.0f;
     style.PopupBorderSize                 = 1.0f;
     style.FrameBorderSize                 = 0.0f;
+    style.TabBorderSize                   = 0.0f;
 
     style.WindowPadding                   = ImVec2(12, 10);
     style.FramePadding                    = ImVec2(10, 6);
@@ -669,7 +700,6 @@ void UI::SetCyberpunkTheme()
     colors[ImGuiCol_ModalWindowDimBg]     = ImVec4(0, 0, 0, 0.6f);
 
 #ifdef PLATFORM_ANDROID
-    // font_scale = ImGui::GetFontSize() / UI_FONT_SIZE; // e.g., 55/22 = 2.5
     ApplyScaleToStyle(style, font_scale);
 #endif
 }
@@ -760,7 +790,6 @@ void UI::SetNeonAbyssTheme()
     style.Colors[ImGuiCol_ModalWindowDimBg]          = ImVec4(0.00f, 0.29f, 0.24f, 0.27f);
 
 #ifdef PLATFORM_ANDROID
-    // font_scale = ImGui::GetFontSize() / UI_FONT_SIZE; // e.g., 55/22 = 2.5
     ApplyScaleToStyle(style, font_scale);
 #endif
 }
@@ -1025,39 +1054,6 @@ void RenderSoundfontList(std::vector<UI::SoundfontItem> &items, std::string find
         Playback::ReloadSoundfonts();
     }
 }
-
-/*
-void RenderSoundfontsPathsList(const std::vector<std::string> &items, int &selectedIndex)
-{
-    ImGui::BeginChild("##soundfontspathls", ImVec2(0, 230), true, ImGuiWindowFlags_HorizontalScrollbar);
-
-#ifdef PLATFORM_ANDROID
-    ImGuiIO &io = ImGui::GetIO();
-    {
-        static KineticState ks_path_y;
-        static KineticState ks_path_x;
-        bool                hovered  = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
-        bool                dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
-        ImGui::SetScrollY((f32)ks_path_y.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
-        ImGui::SetScrollX((f32)ks_path_x.Update(ImGui::GetScrollX(), io.MouseDelta.x, io.DeltaTime, hovered, dragging));
-    }
-#endif
-
-    static size_t sel_idx = static_cast<size_t>(selectedIndex);
-    for(size_t i = 0; i < items.size(); ++i)
-    {
-        bool isSelected = (i == sel_idx);
-
-        if(ImGui::Selectable((items[i] + "##" + std::to_string(i)).c_str(), isSelected))
-            sel_idx = i;
-
-        if(isSelected)
-            ImGui::SetItemDefaultFocus();
-    }
-
-    ImGui::EndChild();
-}
-*/
 
 void ShowAudioDeviceList(const std::vector<Playback::AudioDevice> &audioDevices)
 {
@@ -1324,7 +1320,6 @@ void UI::UpdateWidgetValues()
     UI::internal_logging        = live_conf.internal_log_buffer;
     UI::log_to_file             = live_conf.log_to_file;
     UI::fps                     = live_conf.fps;
-    //UI::soundfont_paths         = live_conf.extra_sf_paths;
     UI::last_sf_path            = live_fd_state.soundfont_path;
     UI::no_midi_duplicates      = live_conf.no_midi_duplicates;
     UI::vertical_lines          = live_conf.draw_vertical_lines;
@@ -1380,6 +1375,10 @@ void UI::Setup(int graphics_backend)
     io.Fonts->AddFontFromMemoryTTF((void *)metrophobic_regular_ttf, metrophobic_regular_len, ui_font_size, &ui_font_config);
 
     font_scale = ui_font_size / 62.0f;
+    io.Fonts->AddFontFromMemoryTTF((void *)metrophobic_regular_ttf, metrophobic_regular_len, UI_FONT_SIZE, &ui_font_config);
+
+
+    font_scale = UI_FONT_SIZE / 62.0f;
 
     SetupIconFonts(ui_font_size);
 
@@ -1390,8 +1389,6 @@ void UI::Setup(int graphics_backend)
     builtin_ui_theme_idx = live_conf.builtin_ui_theme_idx;
 
     if(live_conf.custom_ui_theme)
-        // SetDefaultTheme(); // Setting a nice looking GUI :3
-        // SetSilvanaTheme();
         ImGui::LoadStyleFrom(live_conf.ui_theme_file_path.c_str());
 
     if(live_conf.builtin_ui_theme)
@@ -1613,8 +1610,6 @@ void UI::Render(SDL_Renderer *r)
                     IGFD::FileDialogConfig config;
                     config.path  = live_fd_state.midi_path;
                     config.flags = ImGuiFileDialogFlags_HideColumnType;
-
-                    // const char* group_name = "Places";
 
                     ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".mid", internal_style.Colors[ImGuiCol_Text], ICON_FA_MUSIC);
                     ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".midi", internal_style.Colors[ImGuiCol_Text], ICON_FA_MUSIC);
@@ -1890,7 +1885,7 @@ void UI::Render(SDL_Renderer *r)
                     ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".sfz", internal_style.Colors[ImGuiCol_Text], ICON_FA_FILE_CODE);
                     ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".SF2", internal_style.Colors[ImGuiCol_Text], ICON_FA_FILE_AUDIO);
                     ImGuiFileDialog::Instance()->SetFileStyle(IGFD_FileStyleByExtention, ".SFZ", internal_style.Colors[ImGuiCol_Text], ICON_FA_FILE_CODE);
-                    
+
                     ImGuiFileDialog::Instance()->OpenDialog("SoundfontFD", "Choose Soundfont File", ".sf2,.sfz,.SF2,.SFZ", config);
 
                     ImGuiFileDialog::Instance()->AddPlacesGroup("Places", 0, false, true);
@@ -1913,8 +1908,8 @@ void UI::Render(SDL_Renderer *r)
                         f_style_downloads.color = internal_style.Colors[ImGuiCol_Text];
                         f_style_downloads.icon  = ICON_FA_DOWNLOAD;
 
-                        places_ptr->AddPlace("Home", "/home/andre/Desktop", false, f_style_home);
-                        places_ptr->AddPlace("Downloads", "/home/andre/Downloads", false, f_style_downloads);
+                        // places_ptr->AddPlace("Home", "/home/andre/Desktop", false, f_style_home);
+                        // places_ptr->AddPlace("Downloads", "/home/andre/Downloads", false, f_style_downloads);
 #endif
                     }
                 }
@@ -2170,9 +2165,9 @@ void UI::Render(SDL_Renderer *r)
                                 {
                                     static KineticState ks_lost_y;
                                     static KineticState ks_lost_x;
-                                    ImGuiIO &io = ImGui::GetIO();
-                                    bool hovered  = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
-                                    bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+                                    ImGuiIO            &io       = ImGui::GetIO();
+                                    bool                hovered  = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+                                    bool                dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
                                     ImGui::SetScrollY((f32)ks_lost_y.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
                                     ImGui::SetScrollX((f32)ks_lost_x.Update(ImGui::GetScrollX(), io.MouseDelta.x, io.DeltaTime, hovered, dragging));
                                 }
@@ -2211,9 +2206,9 @@ void UI::Render(SDL_Renderer *r)
                                 {
                                     static KineticState ks_lostsf_y;
                                     static KineticState ks_lostsf_x;
-                                    ImGuiIO &io = ImGui::GetIO();
-                                    bool hovered  = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
-                                    bool dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+                                    ImGuiIO            &io       = ImGui::GetIO();
+                                    bool                hovered  = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+                                    bool                dragging = ImGui::IsMouseDragging(ImGuiMouseButton_Left);
                                     ImGui::SetScrollY((f32)ks_lostsf_y.Update(ImGui::GetScrollY(), io.MouseDelta.y, io.DeltaTime, hovered, dragging));
                                     ImGui::SetScrollX((f32)ks_lostsf_x.Update(ImGui::GetScrollX(), io.MouseDelta.x, io.DeltaTime, hovered, dragging));
                                 }
@@ -2457,24 +2452,24 @@ void UI::Render(SDL_Renderer *r)
                                 auto places_ptr = ImGuiFileDialog::Instance()->GetPlacesGroupPtr("Places");
                                 if(places_ptr)
                                 {
-            #ifdef PLATFORM_ANDROID
+#ifdef PLATFORM_ANDROID
                                     IGFD::FileStyle f_style_home;
                                     f_style_home.color = internal_style.Colors[ImGuiCol_Text];
                                     f_style_home.icon  = ICON_FA_HOUSE;
-            
+
                                     places_ptr->AddPlace("Home", "/storage/emulated/0", false, f_style_home);
-            #else
+#else
                                     IGFD::FileStyle f_style_home;
                                     f_style_home.color = internal_style.Colors[ImGuiCol_Text];
                                     f_style_home.icon  = ICON_FA_HOUSE;
-            
+
                                     IGFD::FileStyle f_style_downloads;
                                     f_style_downloads.color = internal_style.Colors[ImGuiCol_Text];
                                     f_style_downloads.icon  = ICON_FA_DOWNLOAD;
-            
-                                    places_ptr->AddPlace("Home", "/home/andre/Desktop", false, f_style_home);
-                                    places_ptr->AddPlace("Downloads", "/home/andre/Downloads", false, f_style_downloads);
-            #endif
+
+                                    // places_ptr->AddPlace("Home", "/home/andre/Desktop", false, f_style_home);
+                                    // places_ptr->AddPlace("Downloads", "/home/andre/Downloads", false, f_style_downloads);
+#endif
                                 }
                             }
                             if(ImGui::BeginItemTooltip())
@@ -2509,7 +2504,6 @@ void UI::Render(SDL_Renderer *r)
                             {
                                 live_conf.custom_ui_theme = ui_theming;
                                 if(!ui_theming)
-                                    // SetMoonlightTheme();
                                     SetBuiltinTheme(builtin_ui_theme_idx);
                                 else if(std::filesystem::exists(live_conf.ui_theme_file_path))
                                 {
@@ -2518,7 +2512,6 @@ void UI::Render(SDL_Renderer *r)
                                 }
                                 // Warn the user if the theme file is missing
                                 else
-                                    // SetMoonlightTheme();
                                     SetBuiltinTheme(builtin_ui_theme_idx);
                             }
 

@@ -34,8 +34,8 @@ extern f64 smooth_tick_scale;
 
 
 f64               Playback::Tplay                   = 0.0;
-
-bool              Playback::preRollActive            = false;
+bool              Playback::preRollActive           = false;
+bool              Playback::preRollActive           = false;
 bool              Playback::is_midi_loaded          = false;
 bool              Playback::is_playback_started     = false;
 bool              Playback::playback_ended          = false;
@@ -424,8 +424,9 @@ void Playback::updateTickClock()
 
 f64 Playback::GetTotalTime()
 {
-    if(!main_stream || !is_midi_loaded) return 0.0;
-    QWORD len = BASS_ChannelGetLength(main_stream, BASS_POS_BYTE);
+    if(!main_stream || !is_midi_loaded)
+        return 0.0;
+    u64 len = BASS_ChannelGetLength(main_stream, BASS_POS_BYTE);
     return BASS_ChannelBytes2Seconds(main_stream, len);
 }
 

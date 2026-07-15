@@ -8,16 +8,15 @@ class VisualizerHandler
     enum Type
     {
         Legacy = 1, // SDL3 Renderer
-        GPU,    // SDL_gpu Renderer
+        GPU,        // SDL_gpu Renderer
         Custom
     };
     VisualizerHandler();
     ~VisualizerHandler();
 
-    void setType(Type type);
+    void        setType(Type type);
     static void shutdown();
-    Type getType() const;
-    
+    Type        getType() const;
 };
 
 #endif

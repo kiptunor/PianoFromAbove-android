@@ -49,10 +49,10 @@ us_int             Render::note_color;
 
 static const short GenKeyX[] = { 0, 12, 18, 33, 36, 54, 66, 72, 85, 90, 105, 108 };
 
-const char *video_driver;
+const char        *video_driver;
 
 
-bool Render::isDesktopSession()
+bool               Render::isDesktopSession()
 {
     return strcmp(video_driver, "wayland") == 0 || strcmp(video_driver, "x11") == 0;
 }
@@ -93,19 +93,16 @@ Render::Render()
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error!!!!!", "Failed to create window", nullptr);
     }
 
-#ifdef PLATFORM_ANDROID
-    Ren = SDL_CreateRenderer(Win, "opengles2");
-#else
+
     Ren = SDL_CreateRenderer(Win, "gpu");
     if(Ren == nullptr)
     {
-        Log::trace("", "Your GPU isn't cooperating with us today. Let's get revenge on it!!! | SDL_GetError(): %s", SDL_GetError());
+        Log::trace("", "GPU Ain't cooerating with us so lets go the good old way XD | SDL_GetError(): %s", SDL_GetError());
         if(isDesktopSession())
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error!!!!!", "Failed to create render context", nullptr);
-        
+
         Ren = SDL_CreateRenderer(Win, "opengles2"); // This works well on DRM from tty sessions
     }
-#endif
 
     // const char *backend = SDL_GetRendererName(Ren);
     // Log::info("", "SDL_GetRendererName(): %s", backend);
@@ -433,13 +430,23 @@ void Render::DrawKeyBoard()
 
     for(int i = 75; i != 128; i++)
     {
-        int j                 = KeyMap[i];
-        f32 fNudgeX           = 0.2f;
+        int j       = KeyMap[i];
+        f32 fNudgeX = 0.2f;
         {
             int n = j % 12;
-            if(n == 1 || n == 6)      fNudgeX =  0.203f;  // C#, F# -- match PFA center
-            else if(n == 3 || n == 10) fNudgeX =  0.297f;  // D#, A#
-            else if(n == 8)            fNudgeX =  0.278f;  // G#
+            if(n == 1 || n == 6)
+                fNudgeX =  0.203f;  // C#, F# -- match PFA center
+            else if(n == 3 || n == 10)
+                fNudgeX =  0.297f;  // D#, A#
+            else if(n == 8)
+              fNudgeX =  0.278f;  // G#
+          
+            if(n == 1 || n == 6)
+                fNudgeX = 0.203f; // C#, F# — match PFA center
+            else if(n == 3 || n == 10)
+                fNudgeX = 0.297f; // D#, A#
+            else if(n == 8)
+                fNudgeX = 0.278f; // G#
         }
         fCurX                 = KeyX[j];
         const f32 cx          = _KeyWidth[0] * SharpRatio;
@@ -533,10 +540,13 @@ void Render::CreateNote(int k, int yb, int ye, us_int c)
     if(k >= 75) // Black keys
     {
         f32 fNudge = 0.2f;
-        int n = j % 12;
-        if(n == 1 || n == 6)      fNudge = 0.203f;
-        else if(n == 3 || n == 10) fNudge = 0.297f;
-        else if(n == 8)            fNudge = 0.278f;
+        int n      = j % 12;
+        if(n == 1 || n == 6)
+            fNudge = 0.203f;
+        else if(n == 3 || n == 10)
+            fNudge = 0.297f;
+        else if(n == 8)
+            fNudge = 0.278f;
         x -= (int)(_KeyWidth[0] * (SharpRatio / 2.0f - fNudge));
         w  = (int)(_KeyWidth[0] * SharpRatio);
     }
@@ -545,27 +555,27 @@ void Render::CreateNote(int k, int yb, int ye, us_int c)
         w = _KeyWidth[j];
     }
 
-    int h = yb - ye;
+    int      h       = yb - ye;
 
-    us_short r = (c >> 16) & 0xFF;
-    us_short g = (c >> 8) & 0xFF;
-    us_short b = c & 0xFF;
+    us_short r       = (c >> 16) & 0xFF;
+    us_short g       = (c >> 8) & 0xFF;
+    us_short b       = c & 0xFF;
 
-    us_short r1 = r * 0.6f;
-    us_short g1 = g * 0.6f;
-    us_short b1 = b * 0.6f;
+    us_short r1      = r * 0.6f;
+    us_short g1      = g * 0.6f;
+    us_short b1      = b * 0.6f;
 
-    us_short r2 = r * 0.2f;
-    us_short g2 = g * 0.2f;
-    us_short b2 = b * 0.2f;
+    us_short r2      = r * 0.2f;
+    us_short g2      = g * 0.2f;
+    us_short b2      = b * 0.2f;
 
-    us_int c_bgr   = 0xFF000000 | (b << 16) | (g << 8) | r;
-    us_int darker  = 0xFF000000 | (b2 << 16) | (g2 << 8) | r2;
-    us_int lighter = 0xFF000000 | (b1 << 16) | (g1 << 8) | r1;
+    us_int   c_bgr   = 0xFF000000 | (b << 16) | (g << 8) | r;
+    us_int   darker  = 0xFF000000 | (b2 << 16) | (g2 << 8) | r2;
+    us_int   lighter = 0xFF000000 | (b1 << 16) | (g1 << 8) | r1;
 
     // PFA-style deflate: white key width * 0.15 / 2, floor, clamp [1, 3]
-    f32 fd = floor(_KeyWidth[0] * 0.15f / 2.0f + 0.5f);
-    fd = std::max(std::min(fd, 3.0f), 1.0f);
+    f32      fd      = floor(_KeyWidth[0] * 0.15f / 2.0f + 0.5f);
+    fd               = std::max(std::min(fd, 3.0f), 1.0f);
 
     // Dark outline (border) -- like PFA's iVeryDarkRGB
     DrawRect(Ren, x, ye, w, h, darker, darker, darker, darker);
@@ -698,14 +708,13 @@ void Render::LoadBackgroundImage(std::string file)
 
 */
 
-static void DeriveGridColors(int bgR, int bgG, int bgB,
-                             us_int &outDark, us_int &outVeryDark)
+static void DeriveGridColors(int bgR, int bgG, int bgB, us_int &outDark, us_int &outVeryDark)
 {
     // PianoFromAbove style: dark = 0.7x brightness, verydark = 1.3x (brighter, capped)
-    int dR  = (int)(bgR * 0.7f), dG = (int)(bgG * 0.7f), dB = (int)(bgB * 0.7f);
-    int vdR = std::min(255, (int)(bgR * 1.3f));
-    int vdG = std::min(255, (int)(bgG * 1.3f));
-    int vdB = std::min(255, (int)(bgB * 1.3f));
+    int dR = (int)(bgR * 0.7f), dG = (int)(bgG * 0.7f), dB = (int)(bgB * 0.7f);
+    int vdR     = std::min(255, (int)(bgR * 1.3f));
+    int vdG     = std::min(255, (int)(bgG * 1.3f));
+    int vdB     = std::min(255, (int)(bgB * 1.3f));
     outDark     = 0xFF000000 | (dB << 16) | (dG << 8) | dR;
     outVeryDark = 0xFF000000 | (vdB << 16) | (vdG << 8) | vdR;
 }
@@ -722,29 +731,34 @@ void Render::DrawBackgroundGrid()
             f32 x = KeyX[i - 1] + _KeyWidth[i - 1];
             x     = floorf(x + 0.5f);
             // 3px vertical line with left/right gradient (PianoFromAbove)
-            DrawRect(Ren, x - 1.0f, 0.0f, 3.0f, (f32)_WinH,
-                iDark, iVeryDark, iVeryDark, iDark);
+            DrawRect(Ren, x - 1.0f, 0.0f, 3.0f, (f32)_WinH, iDark, iVeryDark, iVeryDark, iDark);
         }
     }
 }
 
 void Render::DrawHorizontalLines()
 {
-    if(!Playback::is_playback_started) return;
+    if(!Playback::is_playback_started)
+        return;
 
     us_int iDark = 0, iVeryDark = 0;
     DeriveGridColors(live_conf.bg_R, live_conf.bg_G, live_conf.bg_B, iDark, iVeryDark);
 
     auto &te = Midi_ctx.TempoEvents;
-    if(te.empty()) return;
+    if(te.empty())
+        return;
 
     const int  beatsPerMeasure = 4;
     f64        pps             = (f64)_WinH / vis_Tscr; // pixels per second
     f64        t_cur           = Playback::Tplay;
     f64        t_end           = t_cur + vis_Tscr;
+    const int beatsPerMeasure = 4;
+    f64       pps             = (f64)_WinH / Tscr; // pixels per second
+    f64       t_cur           = Playback::Tplay;
+    f64       t_end           = t_cur + Tscr;
 
     // Walk tempo segments, drawing a measure line every beatsPerMeasure beats
-    f64 beatAccum = 0.0;
+    f64       beatAccum       = 0.0;
     for(size_t s = 0; s < te.size(); s++)
     {
         f64 segStart = te[s].T;
@@ -757,7 +771,8 @@ void Render::DrawHorizontalLines()
 
         f64 segStartClamped = std::max(segStart, t_cur);
         f64 spb             = te[s].usPerQuarter * 1e-6;
-        if(spb <= 0) spb = 0.5;
+        if(spb <= 0)
+            spb = 0.5;
 
         f64 relBeat         = beatAccum + (segStartClamped - segStart) / spb;
         f64 nextMeasureBeat = std::ceil(relBeat / beatsPerMeasure) * beatsPerMeasure;
@@ -766,13 +781,12 @@ void Render::DrawHorizontalLines()
         while(t <= segEnd && t <= t_end)
         {
             f32 y = (f32)_WinH - (f32)((t - t_cur) * pps);
-            y = floorf(y + 0.5f);
+            y     = floorf(y + 0.5f);
             if(y >= 0.0f && y <= (f32)_WinH)
                 // 3px horizontal line with top/bottom gradient (PianoFromAbove)
-                DrawRect(Ren, 0.0f, y - 1.0f, (f32)WinW, 3.0f,
-                    iDark, iDark, iVeryDark, iVeryDark);
+                DrawRect(Ren, 0.0f, y - 1.0f, (f32)WinW, 3.0f, iDark, iDark, iVeryDark, iVeryDark);
             nextMeasureBeat += beatsPerMeasure;
-            t = segStart + (nextMeasureBeat - beatAccum) * spb;
+            t                = segStart + (nextMeasureBeat - beatAccum) * spb;
         }
         beatAccum += (segEnd - segStart) / spb;
     }

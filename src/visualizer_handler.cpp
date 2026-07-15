@@ -1,10 +1,9 @@
-#include <sstream>
-#include <cmath>
 #include <backend_render/imgui_impl_sdl3.h>
 #include <imgui.h>
+#include <sstream>
 #ifdef PLATFORM_ANDROID
-#include <SDL3/SDL_system.h>
-#include <jni.h>
+    #include <SDL3/SDL_system.h>
+    #include <jni.h>
 #endif
 
 
@@ -13,11 +12,12 @@
 
 #include "visualizer_handler.h"
 #include "video/exporter.h"
+#include "globals.h"
+#include "logger.h"
 #include "render/note_buffer.h"
 #include "render/render.h"
 #include "render/ui.h"
-#include "globals.h"
-#include "logger.h"
+#include "visualizer_handler.h"
 
 
 
@@ -25,8 +25,9 @@ int       vis_type_num = 0;
 
 SDL_Event Evt;
 u32       frameStart;
-u64       tick_last_time = 0;
-int       frameRate = 60;
+u64       tick_last_time   = 0;
+int       frameRate        = 60;
+int       frameRate        = 60;
 f64       preRollStartTime = 0;
 
 
@@ -75,7 +76,7 @@ void VisualizerHandler::shutdown()
 
 
 
-void      VisualizerHandler::setType(Type type)
+void VisualizerHandler::setType(Type type)
 {
     vis_type_num = type;
 }
@@ -167,7 +168,7 @@ VisualizerHandler::VisualizerHandler()
                 if(Playback::preRollActive)
                 {
                     preRollStartTime = SDL_GetTicks();
-                    Playback::Tplay = -3.0;
+                    Playback::Tplay  = -3.0;
                 }
             }
             Playback::is_playback_started = true;
@@ -238,7 +239,7 @@ VisualizerHandler::VisualizerHandler()
         // and on top of the background image draw the vertical lines
         if(live_conf.draw_vertical_lines)
             RenderWin->DrawBackgroundGrid();
-          
+
 
         if(live_conf.draw_measure_lines)
             RenderWin->DrawHorizontalLines();
@@ -255,7 +256,7 @@ VisualizerHandler::VisualizerHandler()
                 for(const NVnote &n : Midi_ctx.Note_list[Render::KeyMap[i]])
                     // RenderWin->DrawNote(i, n, UI::live_note_speed); // Direct drawing
                     note_buf.emplace_back(NoteBuffer::Note { NVMidi::u16_t(i), n, UI::live_note_speed }); // Layered drawing
-                NoteBuffer::DrawNotes(live_conf);  // Available only if no direct note drawing is set
+                NoteBuffer::DrawNotes(live_conf);                                                         // Available only if no direct note drawing is set
             }
 
 
@@ -267,32 +268,29 @@ VisualizerHandler::VisualizerHandler()
         // Update Android native stats overlay via JNI (only when playback is active)
         if(Playback::is_playback_started)
         {
-            JNIEnv *env = (JNIEnv*)SDL_GetAndroidJNIEnv();
+            JNIEnv *env      = (JNIEnv *)SDL_GetAndroidJNIEnv();
             jobject activity = (jobject)SDL_GetAndroidActivity();
             if(env && activity)
             {
                 jclass clazz = env->GetObjectClass(activity);
                 if(clazz)
                 {
-                    f64 total = Playback::GetTotalTime();
-                    int curM = (int)(Playback::Tplay / 60);
-                    int curS = std::abs((int)Playback::Tplay % 60);
-                    int curT = std::abs((int)((Playback::Tplay - floor(Playback::Tplay)) * 10));
-                    int totM = (int)(total / 60);
-                    int totS = (int)total % 60;
-                    int totT = (int)((total - floor(total)) * 10);
+                    f64  total = Playback::GetTotalTime();
+                    int  curM  = (int)(Playback::Tplay / 60);
+                    int  curS  = std::abs((int)Playback::Tplay % 60);
+                    int  curT  = std::abs((int)((Playback::Tplay - floor(Playback::Tplay)) * 10));
+                    int  totM  = (int)(total / 60);
+                    int  totS  = (int)total % 60;
+                    int  totT  = (int)((total - floor(total)) * 10);
 
                     char timeStr[48];
                     if(Playback::preRollActive)
-                        snprintf(timeStr, sizeof(timeStr), "-%d:%02d.%d / %d:%02d.%d",
-                                 curM, curS, curT, totM, totS, totT);
+                        snprintf(timeStr, sizeof(timeStr), "-%d:%02d.%d / %d:%02d.%d", curM, curS, curT, totM, totS, totT);
                     else
-                        snprintf(timeStr, sizeof(timeStr), "%d:%02d.%d / %d:%02d.%d",
-                                 curM, curS, curT, totM, totS, totT);
+                        snprintf(timeStr, sizeof(timeStr), "%d:%02d.%d / %d:%02d.%d", curM, curS, curT, totM, totS, totT);
 
-                    jstring jTime = env->NewStringUTF(timeStr);
-                    jmethodID method = env->GetStaticMethodID(clazz, "updateTime",
-                                             "(Ljava/lang/String;)V");
+                    jstring   jTime  = env->NewStringUTF(timeStr);
+                    jmethodID method = env->GetStaticMethodID(clazz, "updateTime", "(Ljava/lang/String;)V");
                     if(method)
                         env->CallStaticVoidMethod(clazz, method, jTime);
                     env->DeleteLocalRef(jTime);
@@ -300,15 +298,14 @@ VisualizerHandler::VisualizerHandler()
                     // Update FPS once per second
                     {
                         static u64 lastFpsUpdate = 0;
-                        u64 now = SDL_GetTicks();
+                        u64        now           = SDL_GetTicks();
                         if(now - lastFpsUpdate >= 1000)
                         {
                             lastFpsUpdate = now;
                             char fpsStr[16];
                             snprintf(fpsStr, sizeof(fpsStr), "%.0f", ImGui::GetIO().Framerate);
-                            jstring jFps = env->NewStringUTF(fpsStr);
-                            jmethodID fpsMethod = env->GetStaticMethodID(clazz, "updateFps",
-                                                      "(Ljava/lang/String;)V");
+                            jstring   jFps      = env->NewStringUTF(fpsStr);
+                            jmethodID fpsMethod = env->GetStaticMethodID(clazz, "updateFps", "(Ljava/lang/String;)V");
                             if(fpsMethod)
                                 env->CallStaticVoidMethod(clazz, fpsMethod, jFps);
                             env->DeleteLocalRef(jFps);
@@ -350,7 +347,7 @@ VisualizerHandler::VisualizerHandler()
                 if(elapsed >= 3.0)
                 {
                     Playback::preRollActive = false;
-                    preRollStartTime = 0;
+                    preRollStartTime        = 0;
                     BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_VOL, 1.0f);
                     BASS_ChannelPlay(Playback::main_stream, FALSE);
                     f64 bass_pos = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
