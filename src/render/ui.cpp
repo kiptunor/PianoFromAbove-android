@@ -1197,12 +1197,17 @@ void AndroidUIRescale()
 
 void SetupIconFonts(float ui_font_size)
 {
+    Log::debug("Icon font setup");
     static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
     ImFontConfig         icons_config;
     icons_config.MergeMode            = true;
     icons_config.PixelSnapH           = true;
     icons_config.FontDataOwnedByAtlas = false;
-    f32 size                          = ui_font_size * 0.82f;
+#ifdef ANDROID
+    static f32 size                          = ui_font_size * 0.82f;
+#else
+    static f32 size                          = FONT_AWESOME_ICON_SIZE;
+#endif
 
     icons_config.GlyphMaxAdvanceX     = std::numeric_limits<f32>::max();
     icons_config.RasterizerMultiply   = 1.0f;
@@ -1375,7 +1380,7 @@ void UI::Setup(int graphics_backend)
     io.Fonts->AddFontFromMemoryTTF((void *)metrophobic_regular_ttf, metrophobic_regular_len, ui_font_size, &ui_font_config);
 
     font_scale = ui_font_size / 62.0f;
-    io.Fonts->AddFontFromMemoryTTF((void *)metrophobic_regular_ttf, metrophobic_regular_len, UI_FONT_SIZE, &ui_font_config);
+    //io.Fonts->AddFontFromMemoryTTF((void *)metrophobic_regular_ttf, metrophobic_regular_len, UI_FONT_SIZE, &ui_font_config);
 
 
     font_scale = UI_FONT_SIZE / 62.0f;

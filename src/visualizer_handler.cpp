@@ -1,6 +1,8 @@
 #include <backend_render/imgui_impl_sdl3.h>
 #include <imgui.h>
 #include <sstream>
+#include <cmath>
+
 #ifdef PLATFORM_ANDROID
     #include <SDL3/SDL_system.h>
     #include <jni.h>
@@ -26,7 +28,6 @@ int       vis_type_num = 0;
 SDL_Event Evt;
 u32       frameStart;
 u64       tick_last_time   = 0;
-int       frameRate        = 60;
 int       frameRate        = 60;
 f64       preRollStartTime = 0;
 

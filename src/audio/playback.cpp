@@ -35,7 +35,6 @@ extern f64 smooth_tick_scale;
 
 f64               Playback::Tplay                   = 0.0;
 bool              Playback::preRollActive           = false;
-bool              Playback::preRollActive           = false;
 bool              Playback::is_midi_loaded          = false;
 bool              Playback::is_playback_started     = false;
 bool              Playback::playback_ended          = false;

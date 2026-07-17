@@ -67,6 +67,7 @@ class Config
         std::vector<std::string> current_soundfonts;
         std::vector<std::string> extra_midi_paths;
         std::vector<std::string> extra_img_paths;
+        bool                     tick_based_playback;
     } configuration;
 
     static configuration Load();
