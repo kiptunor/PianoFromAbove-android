@@ -88,6 +88,8 @@ Config::configuration Config::Load()
     in_conf.loop_colors                 = visual_obj.value("loopNoteColors",    default_settings.loop_colors);
     in_conf.draw_vertical_lines         = visual_obj.value("drawVerticalLines", default_settings.draw_vertical_lines);
     in_conf.draw_measure_lines          = visual_obj.value("drawMeasureLines",  default_settings.draw_measure_lines);
+    in_conf.tick_based_playback         = visual_obj.value("tickBasedPlayback", default_settings.tick_based_playback);
+    
 
     in_conf.last_ccol_file_path         = visual_obj.value("channelColors",     "");
     nlohmann::json ui_theme_obj         = visual_obj.value("customUiTheme",     nlohmann::json::object());
@@ -141,6 +143,7 @@ void Config::Save(configuration config)
         { "channelColors",     config.last_ccol_file_path },
         { "drawVerticalLines", config.draw_vertical_lines },
         { "drawMeasureLines",  config.draw_measure_lines  },
+        { "tickBasedPlayback", config.tick_based_playback },        
         { "backgroundImage", {
                 { "enabled", config.background_image      },
                 { "path",    config.background_image_path }

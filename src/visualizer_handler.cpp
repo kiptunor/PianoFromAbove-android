@@ -25,7 +25,8 @@ int       vis_type_num = 0;
 
 SDL_Event Evt;
 u32       frameStart;
-int       frameRate = 60;
+u64       tick_last_time   = 0;
+int       frameRate        = 60;
 f64       preRollStartTime = 0;
 
 

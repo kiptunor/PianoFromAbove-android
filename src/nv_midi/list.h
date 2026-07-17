@@ -36,20 +36,19 @@ struct NVnote /* ===== Note class rendering ===== */
 
 struct NVtempoEvent /* ===== Tempo change for grid rendering ===== */
 {
-    uint64_t tick;      // Absolute tick when this tempo takes effect
-    f64      T;         // Time in seconds
-    f64      usPerQuarter; // Microseconds per quarter note
+    u64 tick;         // Absolute tick when this tempo takes effect
+    f64 T;            // Time in seconds
+    f64 usPerQuarter; // Microseconds per quarter note
 };
 
 struct TempoSegment
 {
-    uint64_t startTick;
-    uint64_t endTick;      // exclusive
-    double   startTime;    // seconds
-    double   usPerQuarter;
-    double   secondsPerTick;
-    f64 T;            // Time in seconds
-    f64 usPerQuarter; // Microseconds per quarter note
+    u64 startTick;
+    u64 endTick;        // exclusive
+    f64 startTime;      // seconds
+    f64 secondsPerTick;
+    f64 T;              // Time in seconds
+    f64 usPerQuarter;   // Microseconds per quarter note
 };
 
 class NVnoteList /* ===== Note queue class ===== */
