@@ -7,7 +7,7 @@ function main(opts)
     local sdk_root      = ndk:config("android_sdk")
     local bt_ver        = ndk:config("build_toolver") or "35.0.0"
     local sdk_tools     = path.join(sdk_root, "build-tools", bt_ver)
-    local android_api   = opts.android_sdk_version or "35"
+    local android_api   = opts.android_sdk_version or "36"
     local android_jar   = path.join(sdk_root, "platforms", "android-" .. android_api, "android.jar")
     local arch          = target:arch()
     local project       = os.projectdir()

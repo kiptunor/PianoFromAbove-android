@@ -33,6 +33,9 @@ class Config
         int                      bass_voice_count;
         int                      audio_device_index;
         int                      note_speed;
+        // Deprecated
+        // int window_w;
+        // int window_h;
         int                      bg_R;
         int                      bg_G;
         int                      bg_B;
@@ -61,6 +64,8 @@ class Config
         bool                     custom_ui_theme;
         bool                     builtin_ui_theme;
         bool                     OR; // Overlap remover
+        bool                     tick_based_playback;
+        //std::string              last_midi_file; // Moved midi_list.h
         std::string              last_ccol_file_path;
         std::string              background_image_path;
         std::string              ui_theme_file_path;

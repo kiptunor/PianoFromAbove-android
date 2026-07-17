@@ -149,8 +149,17 @@ bool VideoExporter::start(int width, int height, int fps, const char *output_pat
     if(s_recording)
         return false;
 
-    // Create a temporry directory for raw data
-    char tmp_template[] = "/tmp/pfa_audio_XXXXXX";
+    // Create a temporary directory for raw data
+    char tmp_template[512];
+#ifdef PLATFORM_ANDROID
+    const char *cache = SDL_GetAndroidCachePath();
+    if(cache)
+        snprintf(tmp_template, sizeof(tmp_template), "%s/pfa_audio_XXXXXX", cache);
+    else
+        snprintf(tmp_template, sizeof(tmp_template), "/data/local/tmp/pfa_audio_XXXXXX");
+#else
+    snprintf(tmp_template, sizeof(tmp_template), "/tmp/pfa_audio_XXXXXX");
+#endif
     char *tmp_dir = mkdtemp(tmp_template);
     if(!tmp_dir)
         return false;

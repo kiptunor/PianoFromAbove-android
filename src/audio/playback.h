@@ -65,8 +65,6 @@ class Playback
     static bool                                 clock_running;
 
     static uint64_t                             tick_position;
-    static double                               tick_accumulator;
-    static std::chrono::steady_clock::time_point tick_last_frame;
     static void                                 updateTickClock();
 
     static std::vector<AudioDevice> GetAudioOutputs();

@@ -257,7 +257,9 @@ FileHelpers::MidiParseInfo FileHelpers::ParseMidiFile(const std::string &path)
                 }
             }
         }
-        break;
+
+        if(info.timeSigNum > 0 && info.bpm > 0.0)
+            break;
     }
 
     std::fclose(fp);

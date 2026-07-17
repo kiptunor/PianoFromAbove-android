@@ -14,6 +14,9 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.view.Gravity
+import android.view.WindowInsets
+import android.view.WindowInsetsController
+import android.view.WindowManager
 import android.widget.TextView
 import android.widget.LinearLayout
 import android.widget.FrameLayout
@@ -65,11 +68,8 @@ class NvpfaActivity : SDLActivity()
         extractAssets()
         requestStorageAccess()
 
-        Handler(Looper.getMainLooper()).postDelayed({
-            hideSystemBars()
-        }, 3000L)
-
         val density = resources.displayMetrics.density
+        val screenWidthDp = resources.displayMetrics.widthPixels / density
         val shadowColor = Color.argb(255, 0x40, 0x40, 0x40)
         val tahoma = Typeface.createFromAsset(assets, "tahoma.ttf")
         var rowCount = 0
@@ -77,7 +77,7 @@ class NvpfaActivity : SDLActivity()
         overlayLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.argb(128, 0, 0, 0))
-            setPadding(4, 3, 6, 3)
+            setPadding(2, 3, 6, 3)
         }
 
         fun makeRow(label: String, valueInit: String): TextView
@@ -85,7 +85,7 @@ class NvpfaActivity : SDLActivity()
             val labelTv = TextView(this).apply {
                 text = label
                 setTextColor(Color.WHITE)
-                setShadowLayer(0f, 1f, 1f, shadowColor)
+                setShadowLayer(0f, 2f, 1f, shadowColor)
                 textSize = 11f
                 typeface = tahoma
             }
@@ -97,13 +97,13 @@ class NvpfaActivity : SDLActivity()
             val valueTv = TextView(this).apply {
                 text = valueInit
                 setTextColor(Color.WHITE)
-                setShadowLayer(0f, 1f, 1f, shadowColor)
+                setShadowLayer(0f, 2f, 1f, shadowColor)
                 textSize = 11f
                 typeface = tahoma
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { rightMargin = (4 * density).toInt() }
+                )
             }
 
             val row = LinearLayout(this).apply {
@@ -128,30 +128,90 @@ class NvpfaActivity : SDLActivity()
         fpsValueView = makeRow("FPS:", "0")
         makeRow("Score:", "N/A")
 
-        val overlayWidth = (135 * density).toInt()
+        // Scale overlay width to phone resolution (capped at 180dp)
+        val overlayWidthDp = minOf(180f, screenWidthDp * 0.40f)
+        val overlayWidth = (overlayWidthDp * density).toInt()
         val params = FrameLayout.LayoutParams(
             overlayWidth,
             FrameLayout.LayoutParams.WRAP_CONTENT,
             Gravity.TOP or Gravity.END
-        ).apply {
-            //rightMargin = (15 * density).toInt()
-            rightMargin = 0 // Terrible for phones that have rounded corners but it also triggers my OCD
-            topMargin = 0
-        }
+        )
         addContentView(overlayLayout, params)
+
+        // Force nav bar opaque; keep status bar transparent (default)
+        if (Build.VERSION.SDK_INT >= 21)
+        {
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+            window.statusBarColor = Color.TRANSPARENT
+            window.navigationBarColor = Color.BLACK
+        }
+        if (Build.VERSION.SDK_INT >= 28)
+            window.isNavigationBarContrastEnforced = false
+        if (Build.VERSION.SDK_INT >= 30)
+        {
+            @Suppress("DEPRECATION")
+            window.insetsController?.setSystemBarsAppearance(8, 8) // APPEARANCE_OPAQUE_NAVIGATION_BARS
+        }
+
+        // Listen for window insets to track nav bar / status bar
+        window.decorView.setOnApplyWindowInsetsListener { _, insets ->
+            val statusBarH: Int
+            val navBottom: Int
+            val navRight: Int
+            if (Build.VERSION.SDK_INT >= 30)
+            {
+                val systemBars = insets.getInsets(WindowInsets.Type.systemBars())
+                statusBarH = systemBars.top
+                navBottom  = systemBars.bottom
+                navRight   = systemBars.right
+            }
+            else
+            {
+                @Suppress("DEPRECATION")
+                statusBarH = insets.systemWindowInsetTop
+                @Suppress("DEPRECATION")
+                navBottom  = insets.systemWindowInsetBottom
+                @Suppress("DEPRECATION")
+                navRight   = insets.systemWindowInsetRight
+            }
+
+            // Reposition overlay to clear status bar and side nav bar
+            val lp = overlayLayout?.layoutParams as? FrameLayout.LayoutParams
+            if (lp != null)
+            {
+                lp.topMargin    = statusBarH + (1 * density).toInt()
+                lp.rightMargin  = navRight + (2 * density).toInt()
+                overlayLayout?.layoutParams = lp
+            }
+
+            insets
+        }
+
+        // Hide system bars after a short delay
+        Handler(Looper.getMainLooper()).postDelayed({
+            hideSystemBars()
+        }, 3000L)
     }
 
     private fun hideSystemBars()
     {
-        @Suppress("DEPRECATION")
-        window.decorView.systemUiVisibility = (
-            View.SYSTEM_UI_FLAG_FULLSCREEN or
-            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
-            View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-            View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
-            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-        )
+        if (Build.VERSION.SDK_INT >= 30)
+        {
+            window.insetsController?.let { ctrl ->
+                ctrl.hide(WindowInsets.Type.statusBars())
+                ctrl.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        }
+        else
+        {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            )
+        }
     }
 
     private fun extractAssets()

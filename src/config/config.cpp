@@ -108,6 +108,7 @@ Config::configuration Config::Load()
     in_conf.bg_B                        = background_color_obj.value("B",     default_settings.bg_B);
     in_conf.bg_A                        = background_color_obj.value("A",     default_settings.bg_A);
     in_conf.OR                          = visual_obj.value("overlapRemover",  default_settings.OR);
+    in_conf.tick_based_playback         = visual_obj.value("tickBasedPlayback", default_settings.tick_based_playback);
 
     nlohmann::json audio_obj            = json_in.value("audio",              nlohmann::json::object());
     in_conf.bass_voice_count            = audio_obj.value("voiceCount",       default_settings.bass_voice_count);
@@ -152,7 +153,8 @@ void Config::Save(configuration config)
                 { "A", config.bg_A }
             }
         },
-        { "overlapRemover", config.OR },
+        { "overlapRemover",    config.OR                  },
+        { "tickBasedPlayback", config.tick_based_playback },
         { "customUiTheme", {
                 { "enabled", config.custom_ui_theme },
                 { "path", config.ui_theme_file_path }

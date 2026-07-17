@@ -34,6 +34,7 @@ inline Render                            *RenderWin;
 inline int                                _WinH;
 inline f64                                Tscr;
 inline f64                                vis_Tscr;
+inline f64                                vis_Tplay = 0.0;
 inline f64                                smooth_tick_scale = 0.0;
 inline bool                               is_defaultconfig;
 inline bool                               Playback::is_paused;
@@ -46,9 +47,9 @@ inline Config::configuration              default_settings = {
     .bass_voice_count        = 500,
     .audio_device_index      = 1,
     .note_speed              = 4271,
-    .bg_R                    = 47,
-    .bg_G                    = 47,
-    .bg_B                    = 47,
+    .bg_R                    = 100,
+    .bg_G                    = 100,
+    .bg_B                    = 100,
     .bg_A                    = 255,
     // clang-format off
     .channel_colors          = {

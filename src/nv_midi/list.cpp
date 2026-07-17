@@ -29,7 +29,7 @@ template <typename T> struct rP<T *>
     using t = T;
 };
 
-NVnote::NVnote(f64 T, const NVseq_event &E) : track(E.track), Tstart(T), Tend(114514191981.0), chn(E.chan), key(E.num), vel(E.value)
+NVnote::NVnote(f64 T, uint64_t absTick, const NVseq_event &E) : track(E.track), Tstart(T), Tend(114514191981.0), tickStart(absTick), tickEnd(UINT64_MAX), chn(E.chan), key(E.num), vel(E.value)
 {
 }
 
@@ -213,7 +213,7 @@ void NVnoteList::update_to(f64 T)
         case(NV_METYPE::NOTE_ON):
             if(Evt.value > 0)
             {
-                Note_list[Evt.num].emplace_back(Tread, Evt);
+                Note_list[Evt.num].emplace_back(Tread, abstick, Evt);
                 auto nt = Note_list[Evt.num].end();
                 keys[Evt.track][Evt.num].push(--nt);
                 break;
@@ -222,7 +222,8 @@ void NVnoteList::update_to(f64 T)
         case(NV_METYPE::NOTE_OFF):
             if(!keys[Evt.track][Evt.num].empty())
             {
-                keys[Evt.track][Evt.num].top()->Tend = Tread;
+                keys[Evt.track][Evt.num].top()->Tend    = Tread;
+                keys[Evt.track][Evt.num].top()->tickEnd = abstick;
                 keys[Evt.track][Evt.num].pop();
             }
             break;

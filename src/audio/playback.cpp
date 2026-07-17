@@ -17,9 +17,6 @@
 #include "audio_effects.h"
 #include "playback.h"
 
-// tick_last_time and smooth_tick_scale are defined in visualizer_handler.cpp; reset on seek
-extern u64 tick_last_time;
-extern f64 smooth_tick_scale;
 
 
 
@@ -48,8 +45,6 @@ std::chrono::steady_clock::time_point Playback::clock_start;
 double                               Playback::clock_base_Tplay = 0.0;
 bool                                 Playback::clock_running    = false;
 uint64_t                             Playback::tick_position   = 0;
-double                               Playback::tick_accumulator = 0.0;
-std::chrono::steady_clock::time_point Playback::tick_last_frame;
 std::atomic<bool> is_midi_loaded_fn          = false;
 std::atomic<bool> is_midi_loading_fn         = false;
 std::atomic<bool> is_midi_stream_creating_fn = false;
@@ -261,10 +256,6 @@ void Playback::PlayerStateUpdate()
         clock_base_Tplay   = 0.0;
         Tplay              = 0.0;
         tick_position      = 0;
-        tick_accumulator   = 0.0;
-        tick_last_frame    = std::chrono::steady_clock::now();
-        tick_last_time     = 0;
-        smooth_tick_scale  = 0;
         is_paused          = false;
         playback_ended           = false; // Allow the playback to start with the audio playback
 
@@ -298,9 +289,6 @@ void Playback::seek_playback(f64 seconds)
     if(!is_paused)
         clock_start = std::chrono::steady_clock::now();
     tick_position    = Midi_ctx.secondsToTick(Tplay);
-    tick_accumulator = 0.0;
-    tick_last_frame  = std::chrono::steady_clock::now();
-    tick_last_time   = 0;
     smooth_tick_scale = 0;
 
     Log::debug("seek: Tplay=%.3f, clock_running=%d, is_paused=%d", Tplay, (int)clock_running, (int)is_paused);
@@ -340,9 +328,6 @@ void Playback::seek_playback(f64 seconds)
         clock_start      = std::chrono::steady_clock::now();
         clock_running    = true;
         tick_position    = Midi_ctx.secondsToTick(new_time);
-        tick_accumulator = 0.0;
-        tick_last_frame  = std::chrono::steady_clock::now();
-        tick_last_time   = 0;
         smooth_tick_scale = 0;
         Midi_ctx.list_seek(Tplay);
         playback_ended = false;
@@ -364,7 +349,6 @@ void Playback::pause()
         clock_base_Tplay  = Tplay;
         clock_start       = std::chrono::steady_clock::now();
         clock_running     = true;
-        tick_last_frame   = std::chrono::steady_clock::now();
         Log::debug("resume: Tplay=%.3f, clock_base=%.3f", Tplay, clock_base_Tplay);
     }
     else
@@ -390,8 +374,6 @@ void Playback::pause()
         clock_running      = false;
         clock_base_Tplay   = 0.0;
         tick_position      = 0;
-        tick_accumulator   = 0.0;
-        tick_last_frame    = std::chrono::steady_clock::now();
         playback_ended     = false;
         is_paused          = false;
 
@@ -408,18 +390,9 @@ void Playback::updateTickClock()
     if(is_paused || playback_ended || !is_playback_started || preRollActive)
         return;
 
-    auto now = std::chrono::steady_clock::now();
-    double dt = std::chrono::duration<double>(now - tick_last_frame).count();
-    tick_last_frame = now;
-    if(dt <= 0.0 || dt > 0.1) return;
-
-    f64 usPerQn = Midi_ctx.get_tempo_at_time(Tplay);
-    double ticks_per_sec = 1000000.0 / (usPerQn / (double)Midi_ctx.MIDI_File.ppnq);
-
-    tick_accumulator += dt * ticks_per_sec;
-    uint64_t advance = (uint64_t)tick_accumulator;
-    tick_accumulator -= (double)advance;
-    tick_position += advance;
+    // Derive tick position directly from Tplay via the tempo cache,
+    // matching PianoFromAbove's GetCurrentTick() approach
+    tick_position = Midi_ctx.secondsToTick(Tplay);
 }
 
 f64 Playback::GetTotalTime()

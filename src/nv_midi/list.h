@@ -28,9 +28,10 @@ struct NVnote /* ===== Note class rendering ===== */
 {
     NVMidi::u16_t   track;
     f64             Tstart, Tend;
+    uint64_t        tickStart, tickEnd;
     NVMidi::nv_byte chn, key, vel;
 
-    NVnote(f64 T, const NVseq_event &E);
+    NVnote(f64 T, uint64_t absTick, const NVseq_event &E);
 };
 
 struct NVtempoEvent /* ===== Tempo change for grid rendering ===== */

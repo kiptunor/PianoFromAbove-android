@@ -69,7 +69,7 @@ target("nvi-pfa")
         after_build(function(target)
             import("apk_build_utils.sdl_android")({
                 target = target,
-                android_sdk_version = "35",
+                android_sdk_version = "36",
                 manifest = "src/android/AndroidManifest.xml",
                 assets = "assets",
                 res = "src/android/res",

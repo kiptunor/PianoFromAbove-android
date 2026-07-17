@@ -26,7 +26,6 @@ class NoteBuffer
     {
         NVMidi::u16_t k;
         NVnote        n;
-        int           pps;
     };
 
     static std::map<std::pair<int, int>, unsigned int> trackChannelColorMap;

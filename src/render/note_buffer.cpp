@@ -46,9 +46,22 @@ void NoteBuffer::ClearTrackChannelColors()
 
 void NoteBuffer::DrawNotes(Config::configuration settings)
 {
-    std::map<NVMidi::u16_t, std::vector<const Note *>>           keyBuckets;
+    bool                                                tickMode = settings.tick_based_playback;
+    std::map<NVMidi::u16_t, std::vector<const Note *>>  keyBuckets;
     static std::unordered_map<int, decltype(Render::note_color)> _randomColorCache;
 
+    f64 pps;
+    f64 tickWindow;
+    if(tickMode)
+    {
+        uint64_t ppnq = Midi_ctx.MIDI_File.ppnq;
+        if(ppnq == 0) ppnq = 480;
+        tickWindow = Tscr * (f64)ppnq / 0.5;
+        if(tickWindow <= 0.0) tickWindow = 240.0;
+        pps = (f64)_WinH / tickWindow;
+    }
+    else
+        pps = (f64)_WinH / vis_Tscr;
 
     for(const auto &q : note_buf)
         keyBuckets[q.k].push_back(&q);
@@ -100,7 +113,6 @@ void NoteBuffer::DrawNotes(Config::configuration settings)
         {
             const NVnote       &n               = qptr->n;
             NVMidi::u16_t       k               = qptr->k;
-            int                 pps             = (int)((f64)_WinH / vis_Tscr + 0.5);
 
             // Note color distributon
             std::pair<int, int> trackChannelKey = { n.track, n.chn };
@@ -156,17 +168,45 @@ void NoteBuffer::DrawNotes(Config::configuration settings)
             }
 
             int key = Render::KeyMap[k];
+            int y_0, y_1;
 
-            // Gradient rect (Note fill)
-            int y_0 = std::clamp((int)floor(_WinH - (n.Tstart - Playback::Tplay) * pps + 0.5f), 0, _WinH);
-
-            // Dark rect (Note outline)
-            int y_1 = (n.Tend < Playback::Tplay + vis_Tscr) ? std::clamp((int)floor(_WinH - (n.Tend - Playback::Tplay) * pps + 0.5f), 0, _WinH) : 0;
-
-            if(n.Tstart <= Playback::Tplay && Playback::Tplay < n.Tend)
+            if(tickMode)
             {
-                RenderWin->KeyPress[key] = true;
-                RenderWin->KeyColor[key] = Render::note_color;
+                int64_t startDelta = (int64_t)n.tickStart - (int64_t)Playback::tick_position;
+                int64_t endDelta   = (int64_t)n.tickEnd - (int64_t)Playback::tick_position;
+
+                y_0 = std::clamp((int)floor(_WinH - (f64)startDelta * pps + 0.5f), 0, _WinH);
+                y_1 = (endDelta >= 0 && (f64)endDelta * pps < _WinH)
+                    ? std::clamp((int)floor(_WinH - (f64)endDelta * pps + 0.5f), 0, _WinH)
+                    : 2;
+            }
+            else
+            {
+                f64 tEnd = n.Tend;
+                y_0 = std::clamp((int)floor(_WinH - (n.Tstart - vis_Tplay) * pps + 0.5f), 0, _WinH);
+                if(tEnd >= 1e12)
+                    y_1 = 2;
+                else if(tEnd < vis_Tplay + vis_Tscr)
+                    y_1 = std::clamp((int)floor(_WinH - (tEnd - vis_Tplay) * pps + 0.5f), 0, _WinH);
+                else
+                    y_1 = 2;
+            }
+
+            if(tickMode)
+            {
+                if(n.tickStart <= Playback::tick_position && Playback::tick_position < n.tickEnd)
+                {
+                    RenderWin->KeyPress[key] = true;
+                    RenderWin->KeyColor[key] = Render::note_color;
+                }
+            }
+            else
+            {
+                if(n.Tstart <= Playback::Tplay && Playback::Tplay < n.Tend)
+                {
+                    RenderWin->KeyPress[key] = true;
+                    RenderWin->KeyColor[key] = Render::note_color;
+                }
             }
 
             RenderWin->CreateNote(k, y_0, y_1, Render::note_color);

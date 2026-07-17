@@ -2932,9 +2932,16 @@ void UI::Render(SDL_Renderer *r)
     ImGui::End();
 
 #ifndef PLATFORM_ANDROID
-    // Desktop stats overlay (top-right) -- always visble
+    // Desktop stats overlay (top-right) -- matches PianoFromAbove GameState.cpp style
     {
-        char timeStr[48];
+        int iLines = 3; // Time, FPS, Score
+        float boxW      = 156.0f;
+        float padX      = 6.0f;
+        float padY      = 3.0f;
+        float lineH     = 16.0f;
+        float boxH      = 6.0f + lineH * iLines;
+
+        char timeStr[48], fpsStr[16];
         if(Playback::is_playback_started)
         {
             f64 total = Playback::GetTotalTime();
@@ -2953,15 +2960,46 @@ void UI::Render(SDL_Renderer *r)
         else
             snprintf(timeStr, sizeof(timeStr), "-:-- / -:--");
 
-        char fpsStr[16];
-        snprintf(fpsStr, sizeof(fpsStr), "%.0f FPS", ImGui::GetIO().Framerate);
+        snprintf(fpsStr, sizeof(fpsStr), "%.0f", ImGui::GetIO().Framerate);
 
-        ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - 15, 15), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
-        ImGui::SetNextWindowBgAlpha(0.5f);
-        ImGui::Begin("##StatsOverlay", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
-        ImGui::Text("Time:  %s", timeStr);
-        ImGui::Text("FPS:   %s", fpsStr);
-        ImGui::Text("Score: N/A");
+        ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - boxW, 0), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(boxW, boxH));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        ImGui::Begin("##StatusOverlay", nullptr,
+            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+            ImGuiWindowFlags_NoBackground);
+
+        ImDrawList* dl  = ImGui::GetWindowDrawList();
+        ImVec2      wp  = ImGui::GetWindowPos();
+        u32         bg  = IM_COL32(0, 0, 0, 128);
+        u32         sh  = IM_COL32(0x40, 0x40, 0x40, 0xFF);
+        u32         fg  = IM_COL32_WHITE;
+
+        // Background rect
+        dl->AddRectFilled(wp, ImVec2(wp.x + boxW, wp.y + boxH), bg);
+
+        // Text content origin (after InflateRect(-6, -3) from original)
+        ImVec2 origin(wp.x + padX, wp.y + padY);
+
+        auto drawLine = [&](int line, const char* label, const char* value) {
+            ImVec2 base(origin.x, origin.y + line * lineH);
+            ImVec2 vs  = ImGui::CalcTextSize(value);
+            ImVec2 vp  = ImVec2(wp.x + boxW - padX - vs.x, base.y);
+            // Shadow
+            dl->AddText(ImVec2(base.x + 2, base.y + 1), sh, label);
+            dl->AddText(ImVec2(vp.x + 2, vp.y + 1), sh, value);
+            // Main
+            dl->AddText(base, fg, label);
+            dl->AddText(vp, fg, value);
+        };
+
+        drawLine(0, "Time:", timeStr);
+        drawLine(1, "FPS:",   fpsStr);
+        drawLine(2, "Score:", "N/A");
+
+        ImGui::PopStyleVar(2);
         ImGui::End();
     }
 #endif
