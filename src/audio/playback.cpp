@@ -17,9 +17,6 @@
 #include "audio_effects.h"
 #include "playback.h"
 
-// tick_last_time and smooth_tick_scale are defined in visualizer_handler.cpp; reset on seek
-extern u64 tick_last_time;
-extern f64 smooth_tick_scale;
 
 
 
@@ -34,7 +31,6 @@ extern f64 smooth_tick_scale;
 
 
 f64               Playback::Tplay                   = 0.0;
-bool              Playback::preRollActive           = false;
 bool              Playback::is_midi_loaded          = false;
 bool              Playback::is_playback_started     = false;
 bool              Playback::playback_ended          = false;
@@ -43,12 +39,6 @@ bool              Playback::is_midi_stream_creating = false;
 u64               Playback::saved_position          = 0;
 const f64         Playback::seek_amount             = 3.0;
 f64               Playback::Tscr;
-std::chrono::steady_clock::time_point Playback::clock_start;
-double                               Playback::clock_base_Tplay = 0.0;
-bool                                 Playback::clock_running    = false;
-uint64_t                             Playback::tick_position   = 0;
-double                               Playback::tick_accumulator = 0.0;
-std::chrono::steady_clock::time_point Playback::tick_last_frame;
 std::atomic<bool> is_midi_loaded_fn          = false;
 std::atomic<bool> is_midi_loading_fn         = false;
 std::atomic<bool> is_midi_stream_creating_fn = false;
@@ -198,7 +188,6 @@ void Playback::updateBassVoiceCount(int voiceCount)
 
 void Playback::loadMidiFile(const std::string &midi_path)
 {
-    preRollActive = true;
     std::thread midi_loading_thread(LoadMidi, midi_path);
 
 
@@ -222,7 +211,6 @@ void Playback::CloseMidi()
     {
         BASS_ChannelStop(Playback::main_stream);
         BASS_StreamFree(Playback::main_stream);
-        Playback::main_stream = 0;
     }
 
     // Reset note lists
@@ -246,25 +234,14 @@ void Playback::PlayerStateUpdate()
 
         Playback::is_midi_loaded = true;
 
-        // Start playback (mute before play to prevent audio blip)
-        if(preRollActive)
-            BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_VOL, 0.0f);
+        // Start playback
         BASS_ChannelPlay(Playback::main_stream, 1);
-        if(preRollActive)
-            BASS_ChannelPause(Playback::main_stream);
 
         Log::debug("Player started.");
 
         // Reset playback variables
-        clock_running      = false;
-        clock_base_Tplay   = 0.0;
-        Tplay              = 0.0;
-        tick_position      = 0;
-        tick_accumulator   = 0.0;
-        tick_last_frame    = std::chrono::steady_clock::now();
-        tick_last_time     = 0;
-        smooth_tick_scale  = 0;
-        is_paused          = false;
+        Tplay                    = 0.0;
+        is_paused                = false;
         playback_ended           = false; // Allow the playback to start with the audio playback
 
         // Update current midi path
@@ -292,17 +269,6 @@ void Playback::seek_playback(f64 seconds)
 
     // Update our playback time
     Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, new_pos);
-    clock_base_Tplay = Tplay;
-    clock_running    = !is_paused;  // Don't start the clock if we're paused
-    if(!is_paused)
-        clock_start = std::chrono::steady_clock::now();
-    tick_position    = Midi_ctx.secondsToTick(Tplay);
-    tick_accumulator = 0.0;
-    tick_last_frame  = std::chrono::steady_clock::now();
-    tick_last_time   = 0;
-    smooth_tick_scale = 0;
-
-    Log::debug("seek: Tplay=%.3f, clock_running=%d, is_paused=%d", Tplay, (int)clock_running, (int)is_paused);
 
     // When seeking backwards, reload the note data
     if(seconds < 0)
@@ -335,19 +301,9 @@ void Playback::seek_playback(f64 seconds)
 
         // Update time and reset flags
         Tplay = new_time;
-        clock_base_Tplay = new_time;
-        clock_start      = std::chrono::steady_clock::now();
-        clock_running    = true;
-        tick_position    = Midi_ctx.secondsToTick(new_time);
-        tick_accumulator = 0.0;
-        tick_last_frame  = std::chrono::steady_clock::now();
-        tick_last_time   = 0;
-        smooth_tick_scale = 0;
         Midi_ctx.list_seek(Tplay);
         playback_ended = false;
         is_paused      = false;
-
-        Log::debug("seek(restart): Tplay=%.3f, clock_running=%d", Tplay, (int)clock_running);
     }
 }
 
@@ -358,21 +314,16 @@ void Playback::pause()
 
     if(is_paused)
     {
-        BASS_ChannelPlay(main_stream, false);
-        is_paused         = false;
-        clock_base_Tplay  = Tplay;
-        clock_start       = std::chrono::steady_clock::now();
-        clock_running     = true;
-        tick_last_frame   = std::chrono::steady_clock::now();
-        Log::debug("resume: Tplay=%.3f, clock_base=%.3f", Tplay, clock_base_Tplay);
+        // Resume playback
+        BASS_ChannelPlay(main_stream, false); // false means don't restart from beginning
+        is_paused = false;
     }
     else
     {
+        // Pause playback
         saved_position = BASS_ChannelGetPosition(main_stream, BASS_POS_BYTE);
         BASS_ChannelPause(main_stream);
-        clock_running      = false;
-        is_paused          = true;
-        Log::debug("pause: Tplay=%.3f, saved_pos=%llu", Tplay, (unsigned long long)saved_position);
+        is_paused = true;
     }
 
     if(playback_ended)
@@ -385,14 +336,9 @@ void Playback::pause()
         BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_MIDI_CHANS, 16);
 
         BASS_ChannelPlay(main_stream, FALSE);
-        Tplay              = 0.0;
-        clock_running      = false;
-        clock_base_Tplay   = 0.0;
-        tick_position      = 0;
-        tick_accumulator   = 0.0;
-        tick_last_frame    = std::chrono::steady_clock::now();
-        playback_ended     = false;
-        is_paused          = false;
+        Tplay          = 0.0;
+        playback_ended = false;
+        is_paused      = false;
 
         // Reset visualization state
         for(int i = 0; i < 128; ++i)
@@ -400,33 +346,6 @@ void Playback::pause()
 
         Midi_ctx.list_seek(0);
     }
-}
-
-void Playback::updateTickClock()
-{
-    if(is_paused || playback_ended || !is_playback_started || preRollActive)
-        return;
-
-    auto now = std::chrono::steady_clock::now();
-    double dt = std::chrono::duration<double>(now - tick_last_frame).count();
-    tick_last_frame = now;
-    if(dt <= 0.0 || dt > 0.1) return;
-
-    f64 usPerQn = Midi_ctx.get_tempo_at_time(Tplay);
-    double ticks_per_sec = 1000000.0 / (usPerQn / (double)Midi_ctx.MIDI_File.ppnq);
-
-    tick_accumulator += dt * ticks_per_sec;
-    uint64_t advance = (uint64_t)tick_accumulator;
-    tick_accumulator -= (double)advance;
-    tick_position += advance;
-}
-
-f64 Playback::GetTotalTime()
-{
-    if(!main_stream || !is_midi_loaded)
-        return 0.0;
-    u64 len = BASS_ChannelGetLength(main_stream, BASS_POS_BYTE);
-    return BASS_ChannelBytes2Seconds(main_stream, len);
 }
 
 std::vector<Playback::AudioDevice> Playback::GetAudioOutputs()

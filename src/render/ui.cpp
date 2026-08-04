@@ -2582,18 +2582,6 @@ void UI::Render(SDL_Renderer *r)
                             ImGui::EndDisabled();
                         }
 
-                        if(ImGui::CollapsingHeader("Playback"))
-                        {
-                            bool tick_mode = live_conf.tick_based_playback;
-                            ImGui::Checkbox("[BETA/Experimental] Tick-based playback", &tick_mode);
-                            if(ImGui::BeginItemTooltip())
-                            {
-                                ImGui::Text("Tempo changes stretch/shrink playback speed like a rubber band");
-                                ImGui::EndTooltip();
-                            }
-                            live_conf.tick_based_playback = tick_mode;
-                        }
-
                         ImGui::EndTabItem();
                     }
                     /*
@@ -2942,7 +2930,7 @@ void UI::Render(SDL_Renderer *r)
         char timeStr[48];
         if(Playback::is_playback_started)
         {
-            f64 total = Playback::GetTotalTime();
+            f64 total = 0.0f;
             int curM = (int)(Playback::Tplay / 60);
             int curS = std::abs((int)Playback::Tplay % 60);
             int curT = std::abs((int)((Playback::Tplay - floor(Playback::Tplay)) * 10));
@@ -2950,10 +2938,10 @@ void UI::Render(SDL_Renderer *r)
             int totS = (int)total % 60;
             int totT = (int)((total - floor(total)) * 10);
 
-            if(Playback::preRollActive)
-                snprintf(timeStr, sizeof(timeStr), "-%d:%02d.%d / %d:%02d.%d", curM, curS, curT, totM, totS, totT);
-            else
-                snprintf(timeStr, sizeof(timeStr), "%d:%02d.%d / %d:%02d.%d", curM, curS, curT, totM, totS, totT);
+            //if(Playback::preRollActive)
+            //    snprintf(timeStr, sizeof(timeStr), "-%d:%02d.%d / %d:%02d.%d", curM, curS, curT, totM, totS, totT);
+            //else
+            //    snprintf(timeStr, sizeof(timeStr), "%d:%02d.%d / %d:%02d.%d", curM, curS, curT, totM, totS, totT);
         }
         else
             snprintf(timeStr, sizeof(timeStr), "-:-- / -:--");
@@ -2963,11 +2951,11 @@ void UI::Render(SDL_Renderer *r)
 
         ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - 15, 15), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
         ImGui::SetNextWindowBgAlpha(0.5f);
-        ImGui::Begin("##StatsOverlay", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
-        ImGui::Text("Time:  %s", timeStr);
-        ImGui::Text("FPS:   %s", fpsStr);
-        ImGui::Text("Score: N/A");
-        ImGui::End();
+        //ImGui::Begin("##StatsOverlay", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_AlwaysAutoResize);
+        //ImGui::Text("Time:  %s", timeStr);
+        //ImGui::Text("FPS:   %s", fpsStr);
+        //ImGui::Text("Score: N/A");
+        //ImGui::End();
     }
 #endif
 

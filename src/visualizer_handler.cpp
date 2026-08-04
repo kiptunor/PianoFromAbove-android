@@ -166,11 +166,11 @@ VisualizerHandler::VisualizerHandler()
         {
             if(!Playback::is_playback_started)
             {
-                if(Playback::preRollActive)
-                {
-                    preRollStartTime = SDL_GetTicks();
-                    Playback::Tplay  = -3.0;
-                }
+                //if(Playback::preRollActive)
+                //{
+                //    preRollStartTime = SDL_GetTicks();
+                //    Playback::Tplay  = -3.0;
+                //}
             }
             Playback::is_playback_started = true;
             Midi_ctx.update_to(Playback::Tplay + vis_Tscr);
@@ -340,54 +340,10 @@ VisualizerHandler::VisualizerHandler()
         SDL_RenderPresent(RenderWin->Ren);
 
         // Only update Tplay if actively playing and not at the end
+
         if(!Playback::is_paused && !Playback::playback_ended)
         {
-            if(Playback::preRollActive && preRollStartTime > 0)
-            {
-                f64 elapsed = (SDL_GetTicks() - preRollStartTime) / 1000.0;
-                if(elapsed >= 3.0)
-                {
-                    Playback::preRollActive = false;
-                    preRollStartTime        = 0;
-                    BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_VOL, 1.0f);
-                    BASS_ChannelPlay(Playback::main_stream, FALSE);
-                    f64 bass_pos = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
-                    Playback::clock_base_Tplay = bass_pos;
-                    Playback::clock_start      = std::chrono::steady_clock::now();
-                    Playback::clock_running    = true;
-                    Playback::tick_position    = Midi_ctx.secondsToTick(bass_pos);
-                    Playback::tick_accumulator = 0.0;
-                    Playback::tick_last_frame  = std::chrono::steady_clock::now();
-                    Playback::Tplay            = bass_pos;
-                }
-                else
-                    Playback::Tplay = elapsed - 3.0;
-            }
-            else
-            {
-                if(!Playback::clock_running)
-                {
-                    f64 bass_pos = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
-                    Playback::clock_base_Tplay = bass_pos;
-                    Playback::clock_start      = std::chrono::steady_clock::now();
-                    Playback::clock_running    = true;
-                    Playback::tick_position    = Midi_ctx.secondsToTick(bass_pos);
-                    Playback::tick_accumulator = 0.0;
-                    Playback::tick_last_frame  = std::chrono::steady_clock::now();
-                }
-                auto now   = std::chrono::steady_clock::now();
-                f64  dt    = std::chrono::duration<double>(now - Playback::clock_start).count();
-                Playback::Tplay = Playback::clock_base_Tplay + dt;
-
-                f64 bass_pos = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
-                if(fabs(Playback::Tplay - bass_pos) > 0.05)
-                {
-                    Playback::clock_base_Tplay = bass_pos;
-                    Playback::clock_start      = std::chrono::steady_clock::now();
-                }
-            }
-
-            Playback::updateTickClock();
+            Playback::Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
         }
     }
 }

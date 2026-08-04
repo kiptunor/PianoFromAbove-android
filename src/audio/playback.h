@@ -1,7 +1,6 @@
 #ifndef PLAYBACK_H
 #define PLAYBACK_H
 
-#include <chrono>
 #include <string>
 #include <vector>
 
@@ -57,17 +56,7 @@ class Playback
     static u64                      saved_position;
     static const f64                seek_amount;
     static bool                     is_paused;
-    static bool                     preRollActive;
     static f64                      Tplay, Tscr;
-
-    static std::chrono::steady_clock::time_point clock_start;
-    static double                               clock_base_Tplay;
-    static bool                                 clock_running;
-
-    static uint64_t                             tick_position;
-    static double                               tick_accumulator;
-    static std::chrono::steady_clock::time_point tick_last_frame;
-    static void                                 updateTickClock();
 
     static std::vector<AudioDevice> GetAudioOutputs();
     static void                     loadMidiFile(const std::string &midi_path);
@@ -79,7 +68,6 @@ class Playback
     static void                     seek_playback(f64 seconds);
     static void                     bassErrorHandler();
     static void                     pause();
-    static f64                      GetTotalTime();
     static void                     PlayerStateUpdate();
 };
 #endif
