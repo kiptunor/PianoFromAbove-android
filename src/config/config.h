@@ -30,7 +30,7 @@ class Config
   public:
     typedef struct
     {
-        int                      bass_voice_count;
+        int                      voice_count;
         int                      audio_device_index;
         int                      note_speed;
         // Deprecated

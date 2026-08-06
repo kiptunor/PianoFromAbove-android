@@ -3,15 +3,10 @@
 
 #include <SDL3/SDL.h>
 #include <backend_render/imgui_impl_sdl3.h>
-// #include <bass.h>
-// #include <bassmidi.h>
 
 
-#if defined(_WIN32) || defined(_WIN64)
-    #define BASSMIDI_LIB "bassmidi.dll"
-#else
-    #define BASSMIDI_LIB "libbassmidi.so"
-#endif
+
+
 
 
 
@@ -56,15 +51,7 @@ VisualizerHandler *vis;
 
 
 
-/*
-void               AudioSetup()
-{
-    BASS_PluginLoad(BASSMIDI_LIB, 0);
-    BASS_SetConfig(BASS_CONFIG_BUFFER, 5000);
-    BASS_SetConfig(BASS_CONFIG_UPDATEPERIOD, 1); // The higher the value the longer the stutters / audio underruns
-    BASS_SetConfig(BASS_CONFIG_MIDI_AUTOFONT, 0);
-}
-*/
+
 
 
 
@@ -155,33 +142,6 @@ extern "C" int APP_ENTRY(int argc, char *argv[])
     // Get available audio devices
     // Required for when the user wants to change the audio device
     //availableAudioDevices = Playback::GetAudioOutputs();
-
-    //AudioSetup();
-
-    /*
-    if(availableAudioDevices.size() == 0)
-    {
-        Log::warn("No audio devices found!!!");
-        Log::info("Using default audio device (-1)");
-        BASS_Init(live_conf.audio_device_index, 44100, 0, 0, nullptr); // There's seems to be a problem here
-    }
-    else
-    {
-        bool bass_init_stat = BASS_Init(live_conf.audio_device_index, 44100, 0, 0, nullptr);
-        if(!bass_init_stat)
-            Playback::bassErrorHandler();
-        else
-        {
-            int currentDeviceIndex       = BASS_GetDevice();
-            live_conf.audio_device_index = currentDeviceIndex;
-            BASS_DEVICEINFO deviceInfo;
-            if(BASS_GetDeviceInfo(currentDeviceIndex, &deviceInfo))
-                Log::info("", "BASS Successfully Initialized with audio device:\nName: %s\nDriver: %s\nDefault: %s\nEnabled: %s\nIndex: %d\n", deviceInfo.name, deviceInfo.driver, (deviceInfo.flags & BASS_DEVICE_DEFAULT) ? "Yes" : "No", (deviceInfo.flags & BASS_DEVICE_ENABLED) ? "Yes" : "No", currentDeviceIndex);
-            else
-                Log::warn("Failed to retrieve audio device information");
-        }
-    }
-    */
 
     Playback::Init();
 

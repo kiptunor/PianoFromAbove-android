@@ -15,7 +15,7 @@
 #include "../logger.h"
 #include "../nv_midi/list.h"
 #include "../render/note_buffer.h"
-#include "audio_effects.h"
+//#include "audio_effects.h"
 #include "playback.h"
 
 
@@ -60,10 +60,10 @@ void Playback::Init()
     
     // Skip notes with velocities in between the low and high specified threasholds
     // And also enable the filter
-    ksr_set_note_velocity_skipping(midi_synth_ctx, 0, 20, true);
+    ksr_set_note_velocity_skipping(midi_synth_ctx, loaded_config.vel_min, loaded_config.vel_max, loaded_config.vel_filter);
 
     
-    ksr_set_max_voices(midi_synth_ctx, 5000); // How many voices the synth can use
+    ksr_set_max_voices(midi_synth_ctx, live_conf.voice_count); // How many voices the synth can use
 
     ksr_init_audio(midi_synth_ctx, INTERNAL_MIDI_PLAYER);
 }
@@ -90,11 +90,6 @@ void              LoadMidi(const std::string &midi_path)
 
     is_midi_stream_creating_fn.store(true, std::memory_order_release); // Midi stream is creating
     Log::debug("Creating MIDI Stream...");
-    // Honestly idfk which one is better
-    /*
-    if(live_conf.vel_filter == true)
-        BASS_MIDI_StreamSetFilter(Playback::main_stream, 0, reinterpret_cast<BOOL (*)(HSTREAM, int, BASS_MIDI_EVENT *, BOOL, void *)>(filter), nullptr);
-        */
         
     ksr_load_midi_file(midi_synth_ctx, midi_path.c_str());
     is_midi_stream_creating_fn.store(false, std::memory_order_release); // Midi stream was created
@@ -111,8 +106,8 @@ void Playback::LoadDefaultSoundfonts()
 
 #ifndef NON_ANDROID
  
-    ksr_load_soundfont_file(midi_synth_ctx, DEFAULT_GM_SOUND_FONT_PATH, true);
-    ksr_load_soundfont_file(midi_synth_ctx, DEFAULT_SOUND_FONT_PATH, true);
+    // ksr_load_soundfont_file(midi_synth_ctx, DEFAULT_GM_SOUND_FONT_PATH, true);
+    // ksr_load_soundfont_file(midi_synth_ctx, DEFAULT_SOUND_FONT_PATH, true);
 #else
 // Todo
 #endif
@@ -156,17 +151,12 @@ void Playback::ReloadSoundfonts()
         is_paused = true;
 }
 
-void Playback::updateBassVoiceCount(int voiceCount)
+void Playback::updateVoiceCount(int voiceCount)
 {
-    //if(Playback::main_stream && BASS_ChannelIsActive(Playback::main_stream))
-    //{
-        ksr_set_max_voices(midi_synth_ctx, voiceCount);
+    ksr_set_max_voices(midi_synth_ctx, voiceCount);
 
-        // Update the configuration
-        live_conf.bass_voice_count = voiceCount;
-
-        // Log::info("Voice count updated to: %d");
-    //}
+    // Update the configuration
+    live_conf.voice_count = voiceCount;
 }
 
 void Playback::loadMidiFile(const std::string &midi_path)
@@ -216,8 +206,10 @@ void Playback::PlayerStateUpdate()
 
         Playback::is_midi_loaded = true;
 
+        ksr_set_note_velocity_skipping(midi_synth_ctx, live_conf.vel_min, live_conf.vel_max, live_conf.vel_filter);
+
         // Start playback
-        ksr_play_midi(midi_synth_ctx, 0);
+        ksr_play_midi(midi_synth_ctx, false); // and don't wait for this to finish the entire midi
 
         Log::debug("Player started.");
 
@@ -233,7 +225,7 @@ void Playback::PlayerStateUpdate()
 
 void Playback::seek_playback(f64 seconds)
 {
-    if(!is_midi_loaded || playback_ended) // Without cheking if playback_ended bass can start playing without midi visualization
+    if(!is_midi_loaded || playback_ended)
         return;
 
 
@@ -241,7 +233,6 @@ void Playback::seek_playback(f64 seconds)
     long target_ms = ksr_get_current_time(midi_synth_ctx) + (long)(seconds * 1000);
     ksr_seek_midi(midi_synth_ctx, target_ms);
     
-    // Update our playback time
     Tplay = ksr_get_midi_player_pos(midi_synth_ctx);
 
     // When seeking backwards, reload the note data
@@ -293,7 +284,6 @@ void Playback::pause()
 
         ksr_seek_midi(midi_synth_ctx, 0);
 
-       // BASS_ChannelPlay(main_stream, FALSE);
         ksr_play_midi(midi_synth_ctx, 0);
         Tplay          = 0.0;
         playback_ended = false;

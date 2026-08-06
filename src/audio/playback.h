@@ -64,7 +64,7 @@ class Playback
     static void                     LoadDefaultSoundfonts();
     static bool                     LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soundfonts);
     static void                     ReloadSoundfonts();
-    static void                     updateBassVoiceCount(int voiceCount);
+    static void                     updateVoiceCount(int voiceCount);
     static void                     seek_playback(f64 seconds);
     static void                     UpdateEndPosition();
     static void                     UpdateMidiPlayerPos();

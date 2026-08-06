@@ -109,7 +109,7 @@ Config::configuration Config::Load()
     in_conf.OR                          = visual_obj.value("overlapRemover",  default_settings.OR);
 
     nlohmann::json audio_obj            = json_in.value("audio",              nlohmann::json::object());
-    in_conf.bass_voice_count            = audio_obj.value("voiceCount",       default_settings.bass_voice_count);
+    in_conf.voice_count            = audio_obj.value("voiceCount",            default_settings.voice_count);
     in_conf.audio_device_index          = audio_obj.value("audioDeviceIndex", default_settings.audio_device_index);
 
     nlohmann::json effects_obj          = audio_obj.value("effects",          nlohmann::json::object());
@@ -185,7 +185,7 @@ void Config::Save(configuration config)
         },
         { "visual",  visual },
         { "audio", {
-            { "voiceCount",       config.bass_voice_count   },
+            { "voiceCount",       config.voice_count        },
             { "audioDeviceIndex", config.audio_device_index },
                 { "effects", {
                         { "velocityFilter", {

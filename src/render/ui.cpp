@@ -2380,23 +2380,23 @@ void UI::Render(SDL_Renderer *r)
                         ImGui::Text("\n");
                         ImGui::Text("Voice Count");
                         // Store the previous value to detect changes
-                        static int prev_voice_count = live_conf.bass_voice_count;
+                        static int prev_voice_count = live_conf.voice_count;
 
                         // Input widget for voice count
-                        if(ImGui::InputInt("##LOL", &live_conf.bass_voice_count))
+                        if(ImGui::InputInt("##LOL", &live_conf.voice_count))
                         {
                             // Ensure value is within reasonable limits
-                            if(live_conf.bass_voice_count < 1)
-                                live_conf.bass_voice_count = 1;
+                            if(live_conf.voice_count < 1)
+                                live_conf.voice_count = 1;
 
-                            if(live_conf.bass_voice_count > 5000)
-                                live_conf.bass_voice_count = 5000;
+                            if(live_conf.voice_count > 5000)
+                                live_conf.voice_count = 5000;
 
                             // Apply the change in real-time if the value has changed
-                            if(prev_voice_count != live_conf.bass_voice_count)
+                            if(prev_voice_count != live_conf.voice_count)
                             {
-                                Playback::updateBassVoiceCount(live_conf.bass_voice_count);
-                                prev_voice_count = live_conf.bass_voice_count;
+                                Playback::updateVoiceCount(live_conf.voice_count);
+                                prev_voice_count = live_conf.voice_count;
                             }
                         }
 
@@ -2480,7 +2480,7 @@ void UI::Render(SDL_Renderer *r)
                 ImGui::Text("Kiptunor");
                 ImGui::Text("Hexagon-Midis\n\n");
                 ImGui::Text("Icon Made by Zeal");
-                ImGui::Text("Powered by: SDL3, Imgui, bass and bass plugins");
+                ImGui::Text("Powered by: SDL3, Imgui, Kasaria");
                 ImGui::EndChild();
                 ImGui::EndTabItem();
             }

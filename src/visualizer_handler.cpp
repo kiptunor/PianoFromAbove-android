@@ -111,7 +111,6 @@ VisualizerHandler::VisualizerHandler()
             Playback::is_paused      = true; // Just mark as paused when it ends
 
             // Save the position at the end
-            //Playback::saved_position = BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE);
             Playback::UpdateEndPosition();
         }
 
@@ -128,7 +127,7 @@ VisualizerHandler::VisualizerHandler()
 
 
 
-        // Start visualizing only if bass thread is ready
+        // Start visualizing only if the synth's midi player is ready
         if(Playback::IsMidiPlayerActive())
         {
             //Log::debug("updating midi vis");
