@@ -344,6 +344,7 @@ VisualizerHandler::VisualizerHandler()
         if(!Playback::is_paused && !Playback::playback_ended)
         {
             Playback::Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
+            Log::debug("Tplay: %f", Playback::Tplay);
         }
     }
 }
