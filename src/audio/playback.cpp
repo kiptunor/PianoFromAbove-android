@@ -5,8 +5,10 @@
 #include <vector>
 
 
-#include <bass.h>
-#include <bassmidi.h>
+// #include <bass.h>
+// #include <bassmidi.h>
+
+#include <kasaria.h>
 
 
 #include "../config/midi_list.h"
@@ -24,7 +26,7 @@
 
 
 
-
+Kasaria *midi_synth_ctx;
 
 
 
@@ -48,7 +50,23 @@ std::string       last_midi_path;
 
 
 
+void Playback::Init()
+{
+    midi_synth_ctx = ksr_init();
 
+    ksr_set_fast_decay(midi_synth_ctx, true);
+    ksr_set_antialiasing(midi_synth_ctx, true);
+    ksr_set_sample_rate(midi_synth_ctx, 48000); // Optional
+    
+    // Skip notes with velocities in between the low and high specified threasholds
+    // And also enable the filter
+    ksr_set_note_velocity_skipping(midi_synth_ctx, 0, 20, true);
+
+    
+    ksr_set_max_voices(midi_synth_ctx, 5000); // How many voices the synth can use
+
+    ksr_init_audio(midi_synth_ctx, INTERNAL_MIDI_PLAYER);
+}
 
 void              LoadMidi(const std::string &midi_path)
 {
@@ -73,6 +91,7 @@ void              LoadMidi(const std::string &midi_path)
     is_midi_stream_creating_fn.store(true, std::memory_order_release); // Midi stream is creating
     Log::debug("Creating MIDI Stream...");
     // Honestly idfk which one is better
+    /*
     // Playback::main_stream = BASS_StreamCreateFile(0, midi_path.c_str(), 0, 0, BASS_SAMPLE_FLOAT | BASS_STREAM_PRESCAN | BASS_STREAM_DECODE); // On heavy load it caues longer sutters
     Playback::main_stream = BASS_MIDI_StreamCreateFile(FALSE, midi_path.c_str(), 0, 0, BASS_SAMPLE_FLOAT, 1); // While this 1 causes many short stutters. Absolute garbage
     BASS_ChannelSetDSP(Playback::main_stream, &dsp_limiter, 0, 0);
@@ -85,7 +104,8 @@ void              LoadMidi(const std::string &midi_path)
     BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_MIDI_CHANS, 16);
     if(live_conf.vel_filter == true)
         BASS_MIDI_StreamSetFilter(Playback::main_stream, 0, reinterpret_cast<BOOL (*)(HSTREAM, int, BASS_MIDI_EVENT *, BOOL, void *)>(filter), nullptr);
-
+        */
+    ksr_load_midi_file(midi_synth_ctx, midi_path.c_str());
     is_midi_stream_creating_fn.store(false, std::memory_order_release); // Midi stream was created
 
     Log::debug("MIDI Stream created.");
@@ -98,29 +118,32 @@ void              LoadMidi(const std::string &midi_path)
 void Playback::LoadDefaultSoundfonts()
 {
 
-    std::vector<BASS_MIDI_FONT> fontSet;
-    u32                         Sf1;
-    u32                         Sf2;
+    //std::vector<BASS_MIDI_FONT> fontSet;
+    //u32                         Sf1;
+    //u32                         Sf2;
 #ifndef NON_ANDROID
     // std::string default_sf_path    = FileHelpers::GetFilePathA("piano_maganda.sf2", "rb"); // Todo
     // std::string default_gm_sf_path = FileHelpers::GetFilePathA("gm_generic.sf2", "rb");
-    Sf1 = BASS_MIDI_FontInit(DEFAULT_GM_SOUND_FONT_PATH, 0);
-    Sf2 = BASS_MIDI_FontInit(DEFAULT_SOUND_FONT_PATH, 0);
+    // Sf1 = BASS_MIDI_FontInit(DEFAULT_GM_SOUND_FONT_PATH, 0);
+    // Sf2 = BASS_MIDI_FontInit(DEFAULT_SOUND_FONT_PATH, 0);
+
+    ksr_load_soundfont_file(midi_synth_ctx, DEFAULT_GM_SOUND_FONT_PATH, true);
+    ksr_load_soundfont_file(midi_synth_ctx, DEFAULT_SOUND_FONT_PATH, true);
 #else
-    Sf1 = BASS_MIDI_FontInit(DEFAULT_GM_SOUNDFONT, 0);
-    Sf2 = BASS_MIDI_FontInit(DEFAULT_SOUNDFONT, 0);
+    //Sf1 = BASS_MIDI_FontInit(DEFAULT_GM_SOUNDFONT, 0);
+    //Sf2 = BASS_MIDI_FontInit(DEFAULT_SOUNDFONT, 0);
 #endif
 
-    fontSet.push_back({ Sf2, -1, 0 }); // override preset 40 (Violin) in bank 0
-    fontSet.push_back({ Sf1, -1, 0 });
-
-    if(!fontSet.empty())
-        BASS_MIDI_StreamSetFonts(Playback::main_stream, fontSet.data(), fontSet.size());
+    //fontSet.push_back({ Sf2, -1, 0 }); // override preset 40 (Violin) in bank 0
+    //fontSet.push_back({ Sf1, -1, 0 });
+    //
+    //if(!fontSet.empty())
+        //    BASS_MIDI_StreamSetFonts(Playback::main_stream, fontSet.data(), fontSet.size());
 }
 
 bool Playback::LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soundfonts)
 {
-    std::vector<BASS_MIDI_FONT> fontSet;
+   // std::vector<BASS_MIDI_FONT> fontSet;
 
     bool                        is_enabled_sf_available = false;
 
@@ -128,29 +151,33 @@ bool Playback::LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soun
     {
         if(soundfont.checked)
         {
-            HSOUNDFONT Sf = BASS_MIDI_FontInit(soundfont.label.c_str(), 0);
-            if(Sf)
-            {
-                // BASS_MIDI_FontSetVolume(Sf, 0.15);
-                BASS_MIDI_FONT font = { Sf, -1, 0 }; // Set the soundfont context, preset and bank
-                fontSet.push_back(font);
-            }
+            Log::debug("Loading soundfont: %s", soundfont.label.c_str());
+            // HSOUNDFONT Sf = BASS_MIDI_FontInit(soundfont.label.c_str(), 0);
+            // if(Sf)
+            // {
+            //     // BASS_MIDI_FontSetVolume(Sf, 0.15);
+            //     BASS_MIDI_FONT font = { Sf, -1, 0 }; // Set the soundfont context, preset and bank
+            //     fontSet.push_back(font);
+            // }
+            
+            ksr_load_soundfont_file(midi_synth_ctx, soundfont.label.c_str(), true);
             is_enabled_sf_available = true;
         }
     }
 
-    if(!fontSet.empty())
-        BASS_MIDI_StreamSetFonts(Playback::main_stream, fontSet.data(), fontSet.size()); // Load soundfonts
+    //if(!fontSet.empty())
+    //    BASS_MIDI_StreamSetFonts(Playback::main_stream, fontSet.data(), fontSet.size()); // Load soundfonts
 
     return is_enabled_sf_available;
 }
 
 void Playback::ReloadSoundfonts()
 {
-    if(!Playback::main_stream || !BASS_ChannelIsActive(Playback::main_stream))
+    if(!Playback::main_stream || !ksr_is_midi_player_active(midi_synth_ctx))
         return;
 
-    u64  position    = BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE);
+    //u64  position    = BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE);
+    f64  position    = ksr_get_midi_player_pos(midi_synth_ctx);
     bool was_playing = !is_paused;
 
     // I spent nearly 2 hours trying to fix playback reset when switching soundfonts in puased state.
@@ -158,14 +185,18 @@ void Playback::ReloadSoundfonts()
     // BASS_ChannelStop(Playback::main_stream); // Don't stop the playback here. It resets the entire midi playback.
 
 
-    if(!LoadEnabledSoundfonts(live_soundfont_list))
-        LoadDefaultSoundfonts();
+    //if(!LoadEnabledSoundfonts(live_soundfont_list))
+    //    LoadDefaultSoundfonts();
 
-    BASS_ChannelSetPosition(Playback::main_stream, position, BASS_POS_BYTE);
+    //BASS_ChannelSetPosition(Playback::main_stream, position, BASS_POS_BYTE);
+    //ksr_set_midi_player_pos(midi_synth_ctx, position);
+    long ms = (long)(position * 1000);
+    ksr_seek_midi(midi_synth_ctx, ms);
 
     if(was_playing)
     {
-        BASS_ChannelPlay(Playback::main_stream, FALSE);
+        //BASS_ChannelPlay(Playback::main_stream, FALSE);
+        ksr_pause_midi(midi_synth_ctx);
         is_paused = false;
     }
     else
@@ -174,16 +205,17 @@ void Playback::ReloadSoundfonts()
 
 void Playback::updateBassVoiceCount(int voiceCount)
 {
-    if(Playback::main_stream && BASS_ChannelIsActive(Playback::main_stream))
-    {
+    //if(Playback::main_stream && BASS_ChannelIsActive(Playback::main_stream))
+    //{
         // Update the voice count for the current stream
-        BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_MIDI_VOICES, voiceCount);
+        //BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_MIDI_VOICES, voiceCount);
+        ksr_set_max_voices(midi_synth_ctx, voiceCount);
 
         // Update the configuration
         live_conf.bass_voice_count = voiceCount;
 
         // Log::info("Voice count updated to: %d");
-    }
+        //}
 }
 
 void Playback::loadMidiFile(const std::string &midi_path)
@@ -207,11 +239,13 @@ void Playback::loadMidiFile(const std::string &midi_path)
 void Playback::CloseMidi()
 {
     // Stop current playback and free resources
-    if(Playback::main_stream)
-    {
-        BASS_ChannelStop(Playback::main_stream);
-        BASS_StreamFree(Playback::main_stream);
-    }
+    //if(Playback::main_stream)
+    //{
+    //    BASS_ChannelStop(Playback::main_stream);
+    //    BASS_StreamFree(Playback::main_stream);
+    //}
+
+    ksr_unload_midi(midi_synth_ctx);
 
     // Reset note lists
     for(int i = 0; i < 128; ++i)
@@ -235,7 +269,8 @@ void Playback::PlayerStateUpdate()
         Playback::is_midi_loaded = true;
 
         // Start playback
-        BASS_ChannelPlay(Playback::main_stream, 1);
+        //BASS_ChannelPlay(Playback::main_stream, 1);
+        ksr_play_midi(midi_synth_ctx, 0);
 
         Log::debug("Player started.");
 
@@ -254,7 +289,7 @@ void Playback::seek_playback(f64 seconds)
     if(!is_midi_loaded || playback_ended) // Without cheking if playback_ended bass can start playing without midi visualization
         return;
 
-
+/*
     u64 current_byte_pos = BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE);
     f64 current_time     = BASS_ChannelBytes2Seconds(Playback::main_stream, current_byte_pos);
     f64 new_time         = current_time + seconds;
@@ -266,9 +301,13 @@ void Playback::seek_playback(f64 seconds)
     // Convert back to bytes and set position
     u64 new_pos = BASS_ChannelSeconds2Bytes(Playback::main_stream, new_time);
     BASS_ChannelSetPosition(Playback::main_stream, new_pos, BASS_POS_BYTE);
+*/
 
+    long ms = (long)(seconds * 1000);
+    ksr_seek_midi(midi_synth_ctx, ms);
+    
     // Update our playback time
-    Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, new_pos);
+    Tplay = ksr_get_midi_player_pos(midi_synth_ctx);
 
     // When seeking backwards, reload the note data
     if(seconds < 0)
@@ -290,9 +329,10 @@ void Playback::seek_playback(f64 seconds)
         if(new_time < 0)
             new_time = 0;
 
-        u64 new_pos = BASS_ChannelSeconds2Bytes(Playback::main_stream, new_time);
-        BASS_ChannelSetPosition(Playback::main_stream, new_pos, BASS_POS_BYTE);
-        BASS_ChannelPlay(Playback::main_stream, FALSE);
+        // u64 new_pos = BASS_ChannelSeconds2Bytes(Playback::main_stream, new_time);
+        // BASS_ChannelSetPosition(Playback::main_stream, new_pos, BASS_POS_BYTE);
+        // BASS_ChannelPlay(Playback::main_stream, FALSE);
+        ksr_seek_midi(midi_synth_ctx, 0);
 
         // Reset visualization properly
         for(int i = 0; i < 128; ++i)
@@ -312,6 +352,7 @@ void Playback::pause()
     if(!is_midi_loaded)
         return;
 
+    /*
     if(is_paused)
     {
         // Resume playback
@@ -325,17 +366,22 @@ void Playback::pause()
         BASS_ChannelPause(main_stream);
         is_paused = true;
     }
+    */
 
+    ksr_pause_midi(midi_synth_ctx);
     if(playback_ended)
     {
         // If at the end and we press space, restart from beginning
         ReloadSoundfonts(); // Useful for when chaning soundfonts after playback ended
-        BASS_ChannelSetPosition(main_stream, 0, BASS_POS_BYTE);
-        BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_MIDI_VOICES, live_conf.bass_voice_count);
-        BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_SRC, 30);
-        BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_MIDI_CHANS, 16);
+        // BASS_ChannelSetPosition(main_stream, 0, BASS_POS_BYTE);
+        // BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_MIDI_VOICES, live_conf.bass_voice_count);
+        // BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_SRC, 30);
+        // BASS_ChannelSetAttribute(Playback::main_stream, BASS_ATTRIB_MIDI_CHANS, 16);
 
-        BASS_ChannelPlay(main_stream, FALSE);
+        ksr_seek_midi(midi_synth_ctx, 0);
+
+       // BASS_ChannelPlay(main_stream, FALSE);
+       ksr_play_midi(midi_synth_ctx, 0);
         Tplay          = 0.0;
         playback_ended = false;
         is_paused      = false;
@@ -348,6 +394,28 @@ void Playback::pause()
     }
 }
 
+void Playback::UpdateEndPosition()
+{
+    saved_position = ksr_get_midi_player_pos(midi_synth_ctx);
+}
+
+void Playback::UpdateMidiPlayerPos()
+{
+    Tplay = ksr_get_midi_player_pos(midi_synth_ctx);
+    Log::debug("Tplay: %f", Tplay);
+}
+
+bool Playback::IsMidiPlayerActive()
+{
+    return ksr_is_midi_player_active(midi_synth_ctx);
+}
+
+bool Playback::IsMIDIEnded()
+{
+    return ksr_is_midi_ended(midi_synth_ctx);
+}
+
+/*
 std::vector<Playback::AudioDevice> Playback::GetAudioOutputs()
 {
     std::vector<Playback::AudioDevice> res;
@@ -399,4 +467,10 @@ void Playback::bassErrorHandler()
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Bass Init Error", msg_str.str().c_str(), NULL);
     else
         Log::critical("Failed to initialize BASS: %s", msg_str.str().c_str());
+}
+*/
+
+void Playback::Close()
+{
+    ksr_shutdown(midi_synth_ctx);
 }

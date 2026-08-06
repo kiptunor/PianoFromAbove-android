@@ -43,8 +43,7 @@ void ToggleFullscreen(SDL_Window *window)
 void VisualizerHandler::shutdown()
 {
     int exit_code = 0;
-    BASS_Free();
-    BASS_PluginFree(0);
+    Playback::Close();
     Midi_ctx.destroy_all();
 
     const char *sdl_err = SDL_GetError();
@@ -105,14 +104,15 @@ VisualizerHandler::VisualizerHandler()
     while(1)
     {
         // Check if playback just ended (and we need to handle that)
-        if(!Playback::playback_ended && BASS_ChannelIsActive(Playback::main_stream) == BASS_ACTIVE_STOPPED)
+        if(!Playback::playback_ended && Playback::IsMIDIEnded())
         {
             Playback::playback_ended = true;
             Playback::Tplay          = 1.0;  // Add a bit more to fully finish the note visualization
             Playback::is_paused      = true; // Just mark as paused when it ends
 
             // Save the position at the end
-            Playback::saved_position = BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE);
+            //Playback::saved_position = BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE);
+            Playback::UpdateEndPosition();
         }
 
 
@@ -129,8 +129,10 @@ VisualizerHandler::VisualizerHandler()
 
 
         // Start visualizing only if bass thread is ready
-        if(BASS_ChannelIsActive(Playback::main_stream))
+        if(Playback::IsMidiPlayerActive())
         {
+            //Log::debug("updating midi vis");
+            
             Playback::is_playback_started = true;
             Midi_ctx.update_to(Playback::Tplay + Tscr);
             Midi_ctx.remove_to(Playback::Tplay);
@@ -240,7 +242,8 @@ VisualizerHandler::VisualizerHandler()
 
         // Only update Tplay if actively playing and not at the end
         if(!Playback::is_paused && !Playback::playback_ended)
-            Playback::Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
+            //Playback::Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
+            Playback::UpdateMidiPlayerPos();
     }
 }
 

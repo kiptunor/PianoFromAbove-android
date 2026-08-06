@@ -3,8 +3,8 @@
 
 #include <SDL3/SDL.h>
 #include <backend_render/imgui_impl_sdl3.h>
-#include <bass.h>
-#include <bassmidi.h>
+// #include <bass.h>
+// #include <bassmidi.h>
 
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -56,7 +56,7 @@ VisualizerHandler *vis;
 
 
 
-
+/*
 void               AudioSetup()
 {
     BASS_PluginLoad(BASSMIDI_LIB, 0);
@@ -64,6 +64,7 @@ void               AudioSetup()
     BASS_SetConfig(BASS_CONFIG_UPDATEPERIOD, 1); // The higher the value the longer the stutters / audio underruns
     BASS_SetConfig(BASS_CONFIG_MIDI_AUTOFONT, 0);
 }
+*/
 
 
 
@@ -153,10 +154,11 @@ extern "C" int APP_ENTRY(int argc, char *argv[])
 
     // Get available audio devices
     // Required for when the user wants to change the audio device
-    availableAudioDevices = Playback::GetAudioOutputs();
+    //availableAudioDevices = Playback::GetAudioOutputs();
 
-    AudioSetup();
+    //AudioSetup();
 
+    /*
     if(availableAudioDevices.size() == 0)
     {
         Log::warn("No audio devices found!!!");
@@ -179,6 +181,11 @@ extern "C" int APP_ENTRY(int argc, char *argv[])
                 Log::warn("Failed to retrieve audio device information");
         }
     }
+    */
+
+    Playback::Init();
+
+    Playback::LoadEnabledSoundfonts(loaded_soundfont_list);
 
     // Let the user know if midi or soundfont files are missing
     if(!loaded_config.dont_show_missing_files)
