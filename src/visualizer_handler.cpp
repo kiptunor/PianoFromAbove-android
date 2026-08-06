@@ -241,8 +241,7 @@ VisualizerHandler::VisualizerHandler()
         SDL_RenderPresent(RenderWin->Ren);
 
         // Only update Tplay if actively playing and not at the end
-        if(!Playback::is_paused && !Playback::playback_ended)
-            //Playback::Tplay = BASS_ChannelBytes2Seconds(Playback::main_stream, BASS_ChannelGetPosition(Playback::main_stream, BASS_POS_BYTE));
+        if(!Playback::is_paused && !Playback::playback_ended && Playback::IsMidiPlayerActive())
             Playback::UpdateMidiPlayerPos();
     }
 }

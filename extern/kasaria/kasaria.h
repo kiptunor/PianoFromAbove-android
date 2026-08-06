@@ -203,7 +203,7 @@ KSR_API int  ksr_play_midi(Kasaria *ksr, bool wait_midi_ending);                
 KSR_API int  ksr_seek_midi(Kasaria *ksr, long time);                                    // Absolute seeking
 KSR_API int  ksr_fast_forward_midi(Kasaria *ksr, long time);                            // Relative seeking
 KSR_API bool ksr_is_midi_player_active(Kasaria *ksr);
-KSR_API int  ksr_pause_midi(Kasaria *ksr);
+KSR_API bool ksr_pause_midi(Kasaria *ksr);
 KSR_API int  ksr_rewind_midi(Kasaria *ksr, long time);
 KSR_API int  ksr_restart_midi(Kasaria *ksr); // Unused
 KSR_API bool ksr_is_midi_ended(Kasaria *ksr);

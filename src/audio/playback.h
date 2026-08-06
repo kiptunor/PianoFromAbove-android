@@ -4,8 +4,7 @@
 #include <string>
 #include <vector>
 
-// #include <bass.h>
-// #include <bassmidi.h>
+
 
 #include "../mb_types.h"
 #include "../nv_midi/list.h"
@@ -57,8 +56,8 @@ class Playback
     static const f64                seek_amount;
     static bool                     is_paused;
     static f64                      Tplay, Tscr;
+    static u64 playback_start_ns;
 
-    // static std::vector<AudioDevice> GetAudioOutputs();
     static void                     Init();
     static void                     loadMidiFile(const std::string &midi_path);
     static void                     CloseMidi();
@@ -67,7 +66,6 @@ class Playback
     static void                     ReloadSoundfonts();
     static void                     updateBassVoiceCount(int voiceCount);
     static void                     seek_playback(f64 seconds);
-    //static void                     bassErrorHandler();
     static void                     UpdateEndPosition();
     static void                     UpdateMidiPlayerPos();
     static bool                     IsMidiPlayerActive();
