@@ -79,6 +79,7 @@ typedef struct
     bool antialiasing;
     bool pre_resample;
     bool velocity_skipping;
+    bool skip_initial_silence;
     bool audio_compressor;
 }KasariaConfig;
 
@@ -196,6 +197,10 @@ KSR_API void ksr_load_soundfont_from_mem(Kasaria *ksr, void *mem, long size, boo
 // --------------------------- MIDI Player API ---------------------------
 KSR_API int  ksr_load_midi_file(Kasaria *ksr, const char *filename); // MIDI file player, only supports standard MIDI files
 KSR_API int  ksr_load_midi_from_mem(Kasaria *ksr, void *mem, long size); // Todo
+KSR_API short ksr_get_midi_file_format(Kasaria *ksr);
+KSR_API int  ksr_get_loaded_midi_track(Kasaria *ksr);
+KSR_API int  ksr_get_midi_track_count(Kasaria *ksr);
+KSR_API void ksr_skip_initial_silence(Kasaria *ksr, bool is);
 KSR_API void ksr_unload_midi(Kasaria *ksr);
 KSR_API int  ksr_reload_midi(Kasaria *ksr);
 KSR_API int  ksr_play_midi_raw(Kasaria *ksr, long type, unsigned char *buffer, long count); // count is in samples

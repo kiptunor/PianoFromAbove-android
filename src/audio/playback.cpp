@@ -15,7 +15,6 @@
 #include "../logger.h"
 #include "../nv_midi/list.h"
 #include "../render/note_buffer.h"
-//#include "audio_effects.h"
 #include "playback.h"
 
 
@@ -25,7 +24,7 @@
 
 
 
-Kasaria *midi_synth_ctx;
+Kasaria          *midi_synth_ctx;
 
 
 
@@ -44,31 +43,31 @@ std::atomic<bool> is_midi_loaded_fn          = false;
 std::atomic<bool> is_midi_loading_fn         = false;
 std::atomic<bool> is_midi_stream_creating_fn = false;
 std::string       last_midi_path;
-u64 Playback::playback_start_ns;
+u64               Playback::playback_start_ns;
 
 
 
 
 
-void Playback::Init()
+void              Playback::Init()
 {
     midi_synth_ctx = ksr_init();
 
     ksr_set_fast_decay(midi_synth_ctx, true);
     ksr_set_antialiasing(midi_synth_ctx, true);
     ksr_set_sample_rate(midi_synth_ctx, 48000); // Optional
-    
+
     // Skip notes with velocities in between the low and high specified threasholds
     // And also enable the filter
     ksr_set_note_velocity_skipping(midi_synth_ctx, loaded_config.vel_min, loaded_config.vel_max, loaded_config.vel_filter);
 
-    
-    ksr_set_max_voices(midi_synth_ctx, live_conf.voice_count); // How many voices the synth can use
+
+    ksr_set_max_voices(midi_synth_ctx, loaded_config.voice_count); // How many voices the synth can use
 
     ksr_init_audio(midi_synth_ctx, INTERNAL_MIDI_PLAYER);
 }
 
-void              LoadMidi(const std::string &midi_path)
+void LoadMidi(const std::string &midi_path)
 {
     if(!Midi_ctx.start_parse(midi_path.c_str()))
     {
@@ -90,7 +89,7 @@ void              LoadMidi(const std::string &midi_path)
 
     is_midi_stream_creating_fn.store(true, std::memory_order_release); // Midi stream is creating
     Log::debug("Creating MIDI Stream...");
-        
+
     ksr_load_midi_file(midi_synth_ctx, midi_path.c_str());
     is_midi_stream_creating_fn.store(false, std::memory_order_release); // Midi stream was created
 
@@ -105,7 +104,7 @@ void Playback::LoadDefaultSoundfonts()
 {
 
 #ifndef NON_ANDROID
- 
+
     // ksr_load_soundfont_file(midi_synth_ctx, DEFAULT_GM_SOUND_FONT_PATH, true);
     // ksr_load_soundfont_file(midi_synth_ctx, DEFAULT_SOUND_FONT_PATH, true);
 #else
@@ -115,7 +114,7 @@ void Playback::LoadDefaultSoundfonts()
 
 bool Playback::LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soundfonts)
 {
-    bool                        is_enabled_sf_available = false;
+    bool is_enabled_sf_available = false;
 
     for(const auto &soundfont : enabled_soundfonts) // Iterate through all enabled soundfonts
     {
@@ -137,9 +136,9 @@ void Playback::ReloadSoundfonts()
     f64  position    = ksr_get_midi_player_pos(midi_synth_ctx);
     bool was_playing = !is_paused;
 
-   
-    //ksr_set_midi_player_pos(midi_synth_ctx, position);
-    long ms = (long)(position * 1000);
+
+    // ksr_set_midi_player_pos(midi_synth_ctx, position);
+    long ms          = (long)(position * 1000);
     ksr_seek_midi(midi_synth_ctx, ms);
 
     if(was_playing)
@@ -179,10 +178,10 @@ void Playback::loadMidiFile(const std::string &midi_path)
 
 void Playback::CloseMidi()
 {
-    
+
     ksr_pause_midi(midi_synth_ctx);
     is_paused = false;
-    
+
     ksr_unload_midi(midi_synth_ctx);
 
     // Reset note lists
@@ -232,7 +231,7 @@ void Playback::seek_playback(f64 seconds)
     // seconds is a relative delta → absolute target in ms
     long target_ms = ksr_get_current_time(midi_synth_ctx) + (long)(seconds * 1000);
     ksr_seek_midi(midi_synth_ctx, target_ms);
-    
+
     Tplay = ksr_get_midi_player_pos(midi_synth_ctx);
 
     // When seeking backwards, reload the note data
