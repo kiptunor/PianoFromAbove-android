@@ -283,6 +283,7 @@ void Playback::pause()
 
         ksr_seek_midi(midi_synth_ctx, 0);
 
+        ksr_set_note_velocity_skipping(midi_synth_ctx, live_conf.vel_min, live_conf.vel_max, live_conf.vel_filter);
         ksr_play_midi(midi_synth_ctx, 0);
         Tplay          = 0.0;
         playback_ended = false;
