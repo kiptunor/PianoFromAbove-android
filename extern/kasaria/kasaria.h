@@ -89,30 +89,38 @@ typedef struct
     the length of the string, regardless if a null string pointer is passed or not
 */
 
+#define LOG_LEVEL_FATAL  0
+#define LOG_LEVEL_ERROR  1
+#define LOG_LEVEL_WARN   2
+#define LOG_LEVEL_INFO   3
+#define LOG_LEVEL_DEBUG  4
+#define LOG_LEVEL_TRACE  5
+
 
 // Soon to be added as argument to ksr_play_midi
 #define REALTIME_MIDI_PLAYER  11
 #define PRERENDER_MIDI_PLAYER 12
 
 // Audio format identifiers for ksr_play_midi
-#define AUDIO_CHAR   1
-#define AUDIO_SHORT  2
-#define AUDIO_INT24  3
-#define AUDIO_LONG   4
-#define AUDIO_FLOAT  5 // Standard audio format (Greater software compatibility)
-#define AUDIO_DOUBLE 6
-#define AUDIO_ULAW   7
+#define AUDIO_CHAR   21
+#define AUDIO_SHORT  22
+#define AUDIO_INT24  23
+#define AUDIO_LONG   24
+#define AUDIO_FLOAT  25 // Standard audio format (Greater software compatibility)
+#define AUDIO_DOUBLE 26
+#define AUDIO_ULAW   27
 
 // MIDI Loading modes
-#define MIDI_MEMORY  21 // Load MIDI data into memory
-#define MIDI_MAPPING 22 // Play MIDI File by reading it from disk (No RAM is used)
+#define MIDI_MEMORY  31 // Load MIDI data into memory
+#define MIDI_MAPPING 32 // Play MIDI File by reading it from disk (No RAM is used)
 
 // Audio initialization scope
-#define INTERNAL_MIDI_PLAYER 31
-#define RAW_MIDI_EVENTS      32
+#define INTERNAL_MIDI_PLAYER 41
+#define RAW_MIDI_EVENTS      42
 
 // Allocate and initialize an instance of Kasaria
-KSR_API Kasaria *ksr_init(void);
+KSR_API Kasaria *ksr_init(bool disable_logs);
+KSR_API void ksr_set_log_level(Kasaria *ksr, int level);
 KSR_API int ksr_init_audio(Kasaria *ksr, int init_scope);
 KSR_API int ksr_start_audio(Kasaria *ksr);
 KSR_API int ksr_stop_audio(Kasaria *ksr);
@@ -189,13 +197,11 @@ KSR_API int ksr_get_song_copyright(Kasaria *ksr, char *buffer, long count);
 
 
 KSR_API int  ksr_load_soundfont_file(Kasaria *ksr, const char *filename, bool preload_instruments); // Currently supports only SF2 format (SFZ Support is also planned)
-KSR_API int  ksr_force_instrument_load(Kasaria *ksr);               // Force all instruments to be loaded
-//KSR_API void ksr_preload_instruments(Kasaria *ksr);                 // Preload all instruments
 KSR_API void ksr_load_soundfont_from_mem(Kasaria *ksr, void *mem, long size, bool preload_instruments); // Todo
 
 
 // --------------------------- MIDI Player API ---------------------------
-KSR_API int  ksr_load_midi_file(Kasaria *ksr, const char *filename); // MIDI file player, only supports standard MIDI files
+KSR_API int  ksr_load_midi_file(Kasaria *ksr, int loading_mode, const char *filename); // MIDI file player, only supports standard MIDI files
 KSR_API int  ksr_load_midi_from_mem(Kasaria *ksr, void *mem, long size); // Todo
 KSR_API short ksr_get_midi_file_format(Kasaria *ksr);
 KSR_API int  ksr_get_loaded_midi_track(Kasaria *ksr);
