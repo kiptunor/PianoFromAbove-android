@@ -112,7 +112,7 @@ typedef struct
 
 // MIDI Loading modes
 #define MIDI_MEMORY  31 // Load MIDI data into memory
-#define MIDI_MAPPING 32 // Play MIDI File by reading it from disk (No RAM is used)
+#define MIDI_MAP     32 // Play MIDI File by reading it from disk (No RAM is used)
 
 // Audio initialization scope
 #define INTERNAL_MIDI_PLAYER 41

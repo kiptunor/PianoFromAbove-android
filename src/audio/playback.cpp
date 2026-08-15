@@ -90,7 +90,7 @@ void LoadMidi(const std::string &midi_path)
     is_midi_stream_creating_fn.store(true, std::memory_order_release); // Midi stream is creating
     Log::debug("Creating MIDI Stream...");
 
-    ksr_load_midi_file(midi_synth_ctx, MIDI_MAPPING, midi_path.c_str());
+    ksr_load_midi_file(midi_synth_ctx, MIDI_MAP, midi_path.c_str());
     is_midi_stream_creating_fn.store(false, std::memory_order_release); // Midi stream was created
 
     Log::debug("MIDI Stream created.");
