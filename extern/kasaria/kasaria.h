@@ -83,12 +83,22 @@ typedef struct
     bool audio_compressor;
 }KasariaConfig;
 
+typedef struct
+{
+    int active_presets;          // Set how many presets to store
+    int bank;                    // Set the current MIDI bank (Currently unused)
+    int preset;                  // Set the current preset
+    bool preload_instruments;    // Preload instruments into tone banks (Required for synthesis)
+    bool load_percussion_bank; // When enabled the soundfont loader also loads the percusion bank used in MIDI Channel 10
+}KsrSoundfontOpts;
+
 /*
     General API notes: Unless otherwise indicated, functions that return a value will return non-0 on success,
     and 0 on failure. Time and duration is represented in milliseconds. API functions for getting strings return
     the length of the string, regardless if a null string pointer is passed or not
 */
 
+// Log level identifiers for ksr_set_log_level
 #define LOG_LEVEL_FATAL  0
 #define LOG_LEVEL_ERROR  1
 #define LOG_LEVEL_WARN   2
@@ -101,7 +111,7 @@ typedef struct
 #define REALTIME_MIDI_PLAYER  11
 #define PRERENDER_MIDI_PLAYER 12
 
-// Audio format identifiers for ksr_play_midi
+// Audio format identifiers for ksr_play_midi_raw
 #define AUDIO_CHAR   21
 #define AUDIO_SHORT  22
 #define AUDIO_INT24  23
@@ -118,26 +128,78 @@ typedef struct
 #define INTERNAL_MIDI_PLAYER 41
 #define RAW_MIDI_EVENTS      42
 
-// Allocate and initialize an instance of Kasaria
+
+/*
+@brief              Allocate and initialize an instance of Kasaria
+@param disable_logs When set to true, the library will not log any important information
+*/
 KSR_API Kasaria *ksr_init(bool disable_logs);
+
+/*
+@brief              Set what log level to avoid
+@param ksr          Kasaria instance
+@param level        Log level to set from 0 to 5 (See Log level identifier macros)
+*/
 KSR_API void ksr_set_log_level(Kasaria *ksr, int level);
+
+/*
+@brief             Initialize the internal audio handler
+@param ksr         Kasaria instance
+@param init_scope  The initialization scope can be for the internal MIDI player or for sending raw MIDI events (See Audio initialization scope macros)
+*/
 KSR_API int ksr_init_audio(Kasaria *ksr, int init_scope);
+
+/*
+@brief     Start the audio thread handeled internally
+@param ksr Kasaria instance
+
+@remark    This function must be called after ksr_init_audio() and works for both internal MIDI player and raw MIDI events
+*/
 KSR_API int ksr_start_audio(Kasaria *ksr);
+
+/*
+@brief     Stop the audio thread handeled internally
+@param ksr Kasaria instance
+
+@remark    It stops the audio thread when used with the internal MIDI player or raw MIDI events
+*/
 KSR_API int ksr_stop_audio(Kasaria *ksr);
 
-KSR_API void ksr_print_config(Kasaria *ksr);                     // Print the configuration to stdout at any time
-KSR_API KasariaConfig ksr_get_config(Kasaria *ksr);              // Read the current config at any time
-KSR_API void ksr_set_config(Kasaria *ksr, KasariaConfig config); // Set config using the provided struct (This overrides majority of the settings)
+/*
+@brief     Print the configuration to stdout at any time
+@param ksr Kasaria instance
+*/
+KSR_API void ksr_print_config(Kasaria *ksr);
 
+/*
+@brief     Read the current configuration into a struct at any time
+@param ksr Kasaria instance
+*/
+KSR_API KasariaConfig ksr_get_config(Kasaria *ksr);
+
+/*
+@brief       Configure Kasaria using the API provided struct
+@param ksr   Kasaria instance
+@param config The configuration to set
+*/
+KSR_API void ksr_set_config(Kasaria *ksr, KasariaConfig config);
+
+/*
+@brief       Restore default settings
+@param ksr   Kasaria instance
+*/
 KSR_API void ksr_restore_defaults(Kasaria *ksr); // Restore default settings
 
 
+/*
+*   The API also provides basic functions to configure the settings of Kasaria individually
+*/
 
-// --------------------------- Settings API ---------------------------
+
 KSR_API void ksr_set_amplification(Kasaria *ksr, int amplification); // Amplification is represented in percent
 KSR_API void ksr_set_max_voices(Kasaria *ksr, int voices);           // The number of voices is clamped between 1 and MAX_VOICES
 KSR_API void ksr_set_immediate_panning(Kasaria *ksr, bool value);    // The value argument for the following functions should be treated as a boolean
-KSR_API void ksr_set_mono(Kasaria *ksr, bool value); //This makes weird noise // Renders mono audio buffers if enabled, interleaved stereo otherwise
+KSR_API void ksr_set_mono(Kasaria *ksr, bool value);                 // This makes weird noise // Renders mono audio buffers if enabled, interleaved stereo otherwise
 
 // These next few functions reload the current sample bank before returning
 KSR_API void ksr_set_fast_decay(Kasaria *ksr, bool value);
@@ -153,7 +215,9 @@ KSR_API void ksr_set_audio_compressor(Kasaria *ksr, bool enabled);
 KSR_API void ksr_set_audio_frame_size(Kasaria *ksr, int size);
 
 
-// --------------------------- Parameters Reading API ---------------------------
+/*
+*   Reading synth parameters and settings is done via the following functions
+*/
 KSR_API int ksr_get_amplification(Kasaria *ksr);
 KSR_API int ksr_get_active_voices(Kasaria *ksr);
 KSR_API int ksr_get_max_voices(Kasaria *ksr);
@@ -196,30 +260,169 @@ KSR_API int ksr_get_song_title(Kasaria *ksr, char *buffer, long count);
 KSR_API int ksr_get_song_copyright(Kasaria *ksr, char *buffer, long count);
 
 
-KSR_API int  ksr_load_soundfont_file(Kasaria *ksr, const char *filename, bool preload_instruments); // Currently supports only SF2 format (SFZ Support is also planned)
-KSR_API void ksr_load_soundfont_from_mem(Kasaria *ksr, void *mem, long size, bool preload_instruments); // Todo
+/*
+*   SoundFont Loading
+*   Currently the only supported soundfont format is SF2
+*/
 
 
-// --------------------------- MIDI Player API ---------------------------
+/*
+@brief                     Load a soundfont file from disk
+@param ksr                 Kasaria instance
+@param filename             The file path + filename of the soundfont file to load
+@param preload_instruments When set to true all soundfont instruments will be preloaded into the tone banks
+                           so the synth can actually produce sound
+*/
+KSR_API int  ksr_load_soundfont_file(Kasaria *ksr, const char *filename, bool preload_instruments);
+
+// Partially implelented !!!
+KSR_API int  ksr_load_soundfont_file_new(Kasaria *ksr, const char *filename, KsrSoundfontOpts soundfont_opts);
+
+// Not yet implemented
+KSR_API void ksr_load_soundfont_from_mem(Kasaria *ksr, void *mem, long size, bool preload_instruments);
+
+
+/*
+*   MIDI Player API
+*/
+
+
+/*
+@brief              Load a MIDI file from disk
+@param ksr          Kasaria instance
+@param filename      The file path + filename of the MIDI file to load
+@param loading_mode Set MIDI loading mode (In memory or from disk)
+
+@remark             When MIDI loading mode is set to MIDI_MEMORY all MIDI file data is loaded into memory
+                    and for MIDI_MAP, the midi loader creates file mapping from where the internal midi player
+                    can read the MIDI data without loading it into memory.
+                    The MIDI loading mode is retained accross all MIDI player functions.
+*/
 KSR_API int  ksr_load_midi_file(Kasaria *ksr, int loading_mode, const char *filename); // MIDI file player, only supports standard MIDI files
 KSR_API int  ksr_load_midi_from_mem(Kasaria *ksr, void *mem, long size); // Todo
+
+/*
+@brief     Get the MIDI file format of the currently loaded MIDI file
+@param ksr Kasaria instance
+@returns   The MIDI file format which can be 0 (standard), 1 (type 1) or 2 (type 2)
+*/
 KSR_API short ksr_get_midi_file_format(Kasaria *ksr);
+
+/*
+@brief     Get the current loaded MIDI track
+@param ksr Kasaria instance
+
+@remarks   It only works in MIDI_MEMORY loading mode
+*/
 KSR_API int  ksr_get_loaded_midi_track(Kasaria *ksr);
+
+/*
+@brief     Get the total tracks of the currently loaded MIDI file
+@param ksr Kasaria instance
+
+@remarks   It only works in MIDI_MEMORY loading mode
+*/
 KSR_API int  ksr_get_midi_track_count(Kasaria *ksr);
+
+/*
+@brief     The midi player skips the initial silence of the MIDI file until the first note is played
+@param ksr Kasaria instance
+@param is  Enable or disable silence skipping
+*/
 KSR_API void ksr_skip_initial_silence(Kasaria *ksr, bool is);
+
+/*
+@brief     Unload the current MIDI file
+@param ksr Kasaria instance
+@remark    Depending on the choosen MIDI loading mode the function can either remove all midi data from memory
+           or it clears off the file mapping
+*/
 KSR_API void ksr_unload_midi(Kasaria *ksr);
+
+/*
+@brief     Reload the current MIDI file
+@param ksr Kasaria instance
+*/
 KSR_API int  ksr_reload_midi(Kasaria *ksr);
-KSR_API int  ksr_play_midi_raw(Kasaria *ksr, long type, unsigned char *buffer, long count); // count is in samples
-KSR_API int  ksr_play_midi(Kasaria *ksr, bool wait_midi_ending);                       // Play MIDI asynchronously (Audio streaming is handeled internally)
-KSR_API int  ksr_seek_midi(Kasaria *ksr, long time);                                    // Absolute seeking
-KSR_API int  ksr_fast_forward_midi(Kasaria *ksr, long time);                            // Relative seeking
+
+/*
+@brief        Play the loaded MIDI file and stream the generated sound to an audio device
+@param ksr    Kasaria instance
+@param type   Sets the audio output format (float, double, short, etc. See Audio format identifier macros)
+@param buffer The audio output buffer that will be feed into the audio device
+@param count  The number of samples to process
+
+@remark     The internal MIDI player is designed to process multiple midi notes in a single audio frame
+            which makes the synth really good for generating the real frequencies of chopped notes.
+            An important capability that most blackers cant go without it
+*/
+KSR_API int  ksr_play_midi_raw(Kasaria *ksr, long type, unsigned char *buffer, long count);
+
+/*
+@brief                  Play the loaded MIDI file and stream the generated sound to an audio device
+@param ksr              Kasaria instance
+@param wait_midi_ending When set to true the function finishes execution only when midi end is reached
+
+@remark                 !! Important !! This is a simplified way to use the internal midi player and it 
+                        requires the internal audio handler to be initialized and started
+*/
+KSR_API int  ksr_play_midi(Kasaria *ksr, bool wait_midi_ending);
+
+/*
+@brief      Seek forward or backward in the MIDI file
+@param ksr  Kasaria instance
+@param time How much time to seek forward or backwards
+*/
+KSR_API int  ksr_seek_midi(Kasaria *ksr, long time);
+
+/*
+@brief      Seek forward or backward in the MIDI file (Relative seeking)
+@param ksr  Kasaria instance
+@param time How much time to seek forward or backwards
+*/
+KSR_API int  ksr_fast_forward_midi(Kasaria *ksr, long time);
+
+/*
+@brief     Check if the internal MIDI player is active
+@param ksr Kasaria instance
+*/
 KSR_API bool ksr_is_midi_player_active(Kasaria *ksr);
+
+/*
+@brief     Toggle pause / resume of the internal MIDI player
+@param ksr Kasaria instance
+*/
 KSR_API bool ksr_pause_midi(Kasaria *ksr);
+
+/*
+@brief     Restart the internal MIDI player from the beginning
+@param ksr Kasaria instance
+*/
 KSR_API int  ksr_rewind_midi(Kasaria *ksr, long time);
-KSR_API int  ksr_restart_midi(Kasaria *ksr); // Unused
+// KSR_API int  ksr_restart_midi(Kasaria *ksr); // Unused
+
+/*
+@brief     Check if the internal MIDI player has ended
+@param ksr Kasaria instance
+*/
 KSR_API bool ksr_is_midi_ended(Kasaria *ksr);
-KSR_API int  ksr_stop_midi(Kasaria *ksr);
+
+// KSR_API int  ksr_stop_midi(Kasaria *ksr); // Unused
+
+/*
+@brief     Get the current position of the internal MIDI player in seconds
+@param ksr Kasaria instance
+
+@remark    The player position is calculated on demand using monotonic time and the current sample count
+           and when used in midi visualizer as a pivot point to iterate and display notes on the screen
+           it can make the visualizer a bit less smooth
+*/
 KSR_API double ksr_get_midi_player_pos(Kasaria *ksr);
+
+
+/*
+* The Following API functions are used for precise control over the MIDI events
+*/
 
 // --------------------------- MIDI Event API ---------------------------
 KSR_API void ksr_channel_note_on(Kasaria *ksr, unsigned char channel, unsigned char note, unsigned char velocity);
@@ -245,6 +448,9 @@ KSR_API void ksr_reset_controllers(Kasaria *ksr); // Reset all MIDI controllers
 KSR_API void ksr_panic(Kasaria *ksr);             // Stop all notes immediately
 KSR_API void ksr_reset(Kasaria *ksr);             // Stop all notes immediately, and reset all MIDI parameters
 
+/*
+*    Raw MIDI event sender functions
+*/
 // Low level input API
 KSR_API void ksr_write_midi_ev(Kasaria *ksr, unsigned char byte1, unsigned char byte2, unsigned char byte3); // Requires long MIDI data manipulation
 KSR_API void ksr_write_midi_ev_packed(Kasaria *ksr, unsigned long data);                                     // Send short MIDI events

@@ -110,7 +110,7 @@ Config::configuration Config::Load()
 
     nlohmann::json audio_obj            = json_in.value("audio",              nlohmann::json::object());
     in_conf.voice_count            = audio_obj.value("voiceCount",            default_settings.voice_count);
-    in_conf.audio_device_index          = audio_obj.value("audioDeviceIndex", default_settings.audio_device_index);
+    //in_conf.audio_device_index          = audio_obj.value("audioDeviceIndex", default_settings.audio_device_index);
 
     nlohmann::json effects_obj          = audio_obj.value("effects",          nlohmann::json::object());
     nlohmann::json vel_filter_obj       = effects_obj.value("velocityFilter", nlohmann::json::object());
@@ -186,7 +186,7 @@ void Config::Save(configuration config)
         { "visual",  visual },
         { "audio", {
             { "voiceCount",       config.voice_count        },
-            { "audioDeviceIndex", config.audio_device_index },
+            //{ "audioDeviceIndex", config.audio_device_index },
                 { "effects", {
                         { "velocityFilter", {
                                 { "enabled", config.vel_filter },
