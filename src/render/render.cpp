@@ -686,15 +686,14 @@ void Render::DrawBackgroundGrid()
         {
             f32 x = KeyX[i - 1] + _KeyWidth[i - 1];
             x     = floorf(x + 0.03f);
-            // DrawRect(Ren, x - 1.0f, 0.0f, 1.8f, WinH, 0x402A2A2A, 0x601F1F1F,
-            // 0x601F1F1F, 0x402A2A2A);// Old
+            DrawRect(Ren, x - 1.0f, 0.0f, 1.8f, WinH, 0x402A2A2A, 0x601F1F1F, 0x601F1F1F, 0x402A2A2A);// Old
             //  Todo: Add color blending with the background color
-            DrawRect(Ren, x, 0.05f, 2.8f, WinH,
-                0xff292929, // top-left: darker (left side)
-                0x14FFFFFF, // top-right: lighter (right side)
-                0x14FFFFFF, // bottom-right: lighter (right side)
-                0xff292929  // bottom-left: darker (left side)
-            );
+            //DrawRect(Ren, x, 0.05f, 2.8f, WinH,
+            //    0xff292929, // top-left: darker (left side)
+            //    0x14FFFFFF, // top-right: lighter (right side)
+            //    0x14FFFFFF, // bottom-right: lighter (right side)
+            //    0xff292929  // bottom-left: darker (left side)
+            //);
         }
     }
 }
