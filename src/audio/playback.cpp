@@ -134,10 +134,10 @@ void Playback::ReloadSoundfonts()
 {
     // Check if the midi player is active
     // Loading new soundfonts while the player is active requires the midi player to be paused first
-    if(ksr_is_midi_player_active(midi_synth_ctx))
+    if(ksr_player_is_active(midi_synth_ctx))
     {
         // Pause the internal midi player of the midi synth
-        ksr_pause_midi(midi_synth_ctx);
+        ksr_player_pause(midi_synth_ctx);
         is_paused = true; // Also pause the midi visualizer
 
         Log::debug("Stop player");
@@ -146,7 +146,7 @@ void Playback::ReloadSoundfonts()
         LoadEnabledSoundfonts(live_soundfont_list);
 
         // Then unpause the synth's internal midi player
-        ksr_pause_midi(midi_synth_ctx);
+        ksr_player_pause(midi_synth_ctx);
         is_paused = false; // And the midi visualizer too
     }
     else // If the midi player is not active load the soundfonts as normal
@@ -182,7 +182,7 @@ void Playback::loadMidiFile(const std::string &midi_path)
 void Playback::CloseMidi()
 {
 
-    ksr_pause_midi(midi_synth_ctx);
+    ksr_player_pause(midi_synth_ctx);
     is_paused = false;
 
     ksr_unload_midi(midi_synth_ctx);
@@ -214,7 +214,7 @@ void Playback::PlayerStateUpdate()
         ksr_set_note_velocity_skipping(midi_synth_ctx, live_conf.vel_min, live_conf.vel_max, live_conf.vel_filter);
 
         // Start playback
-        ksr_play_midi(midi_synth_ctx, false); // and don't wait for this to finish the entire midi
+        ksr_player_begin(midi_synth_ctx, false); // and don't wait for this to finish the entire midi
 
         Log::debug("Player started.");
 
@@ -236,10 +236,10 @@ void Playback::seek_playback(f64 seconds)
 
     // seconds is a relative delta → absolute target in ms
     long target_ms = ksr_get_current_time(midi_synth_ctx) + (long)(seconds * 1000);
-    ksr_seek_midi(midi_synth_ctx, target_ms);
+    ksr_player_seek(midi_synth_ctx, target_ms);
 
     // Update the player position required for the visualizer to render notes on the screen
-    Tplay = ksr_get_midi_player_pos(midi_synth_ctx);
+    Tplay = ksr_player_get_pos(midi_synth_ctx);
 
     // When seeking backwards, reload the note data
     if(seconds < 0)
@@ -262,7 +262,7 @@ void Playback::seek_playback(f64 seconds)
             new_time = 0;
 
         // Set the midi player position in the internal midi player
-        ksr_seek_midi(midi_synth_ctx, 0);
+        ksr_player_seek(midi_synth_ctx, 0);
 
         // Reset visualization properly
         for(int i = 0; i < 128; ++i)
@@ -285,20 +285,20 @@ void Playback::pause()
     Playback::is_paused = !Playback::is_paused;
 
     // Pause the internal midi player
-    ksr_pause_midi(midi_synth_ctx);
+    ksr_player_pause(midi_synth_ctx);
     
     if(playback_ended)
     {
         // If at the end and we press space, restart from beginning
         ReloadSoundfonts(); // Useful for when chaning soundfonts after playback ended
 
-        ksr_seek_midi(midi_synth_ctx, 0); // restart from beginning when the midi player reaches the end
+        ksr_player_seek(midi_synth_ctx, 0); // restart from beginning when the midi player reaches the end
 
         // Set the note velocity skipping again
         ksr_set_note_velocity_skipping(midi_synth_ctx, live_conf.vel_min, live_conf.vel_max, live_conf.vel_filter);
 
         // And start the playback without waiting for it to finish until midi ending is reached
-        ksr_play_midi(midi_synth_ctx, 0);
+        ksr_player_begin(midi_synth_ctx, 0);
         
         Tplay          = 0.0;
         playback_ended = false;
@@ -315,22 +315,22 @@ void Playback::pause()
 // From here these get super ez
 void Playback::UpdateEndPosition()
 {
-    saved_position = ksr_get_midi_player_pos(midi_synth_ctx);
+    saved_position = ksr_player_get_pos(midi_synth_ctx);
 }
 
 void Playback::UpdateMidiPlayerPos()
 {
-    Tplay = ksr_get_midi_player_pos(midi_synth_ctx);
+    Tplay = ksr_player_get_pos(midi_synth_ctx);
 }
 
 bool Playback::IsMidiPlayerActive()
 {
-    return ksr_is_midi_player_active(midi_synth_ctx);
+    return ksr_player_is_active(midi_synth_ctx);
 }
 
 bool Playback::IsMIDIEnded()
 {
-    return ksr_is_midi_ended(midi_synth_ctx);
+    return ksr_player_is_ended(midi_synth_ctx);
 }
 
 void Playback::Close()

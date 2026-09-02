@@ -346,66 +346,67 @@ KSR_API void ksr_unload_midi(Kasaria *ksr);
 KSR_API int  ksr_reload_midi(Kasaria *ksr);
 
 /*
-@brief        Play the loaded MIDI file and stream the generated sound to an audio device
+@brief        Get the generated audio stream from the builtin player
 @param ksr    Kasaria instance
 @param type   Sets the audio output format (float, double, short, etc. See Audio format identifier macros)
-@param buffer The audio output buffer that will be feed into the audio device
+@param buffer The audio output buffer that can be fed to an audio device (Requires audio callback) or 
+              an audio codec
 @param count  The number of samples to process
 
 @remark     The internal MIDI player is designed to process multiple midi notes in a single audio frame
             which makes the synth really good for generating the real frequencies of chopped notes.
             An important capability that most blackers cant go without it
 */
-KSR_API int  ksr_play_midi_raw(Kasaria *ksr, long type, unsigned char *buffer, long count);
+KSR_API int  ksr_player_get_stream(Kasaria *ksr, long audio_fmt, unsigned char *buffer, long count);
 
 /*
-@brief                  Play the loaded MIDI file and stream the generated sound to an audio device
+@brief                  Start the internal player handler
 @param ksr              Kasaria instance
 @param wait_midi_ending When set to true the function finishes execution only when midi end is reached
 
 @remark                 !! Important !! This is a simplified way to use the internal midi player and it 
                         requires the internal audio handler to be initialized and started
 */
-KSR_API int  ksr_play_midi(Kasaria *ksr, bool wait_midi_ending);
+KSR_API int  ksr_player_begin(Kasaria *ksr, bool wait_midi_ending);
 
 /*
 @brief      Seek forward or backward in the MIDI file
 @param ksr  Kasaria instance
 @param time How much time to seek forward or backwards
 */
-KSR_API int  ksr_seek_midi(Kasaria *ksr, long time);
+KSR_API int  ksr_player_seek(Kasaria *ksr, long time);
 
 /*
 @brief      Seek forward or backward in the MIDI file (Relative seeking)
 @param ksr  Kasaria instance
 @param time How much time to seek forward or backwards
 */
-KSR_API int  ksr_fast_forward_midi(Kasaria *ksr, long time);
+KSR_API int  ksr_player_fast_forward(Kasaria *ksr, long time);
 
 /*
 @brief     Check if the internal MIDI player is active
 @param ksr Kasaria instance
 */
-KSR_API bool ksr_is_midi_player_active(Kasaria *ksr);
+KSR_API bool ksr_player_is_active(Kasaria *ksr);
 
 /*
 @brief     Toggle pause / resume of the internal MIDI player
 @param ksr Kasaria instance
 */
-KSR_API bool ksr_pause_midi(Kasaria *ksr);
+KSR_API bool ksr_player_pause(Kasaria *ksr);
 
 /*
 @brief     Restart the internal MIDI player from the beginning
 @param ksr Kasaria instance
 */
-KSR_API int  ksr_rewind_midi(Kasaria *ksr, long time);
+KSR_API int  ksr_player_rewind(Kasaria *ksr, long time);
 // KSR_API int  ksr_restart_midi(Kasaria *ksr); // Unused
 
 /*
 @brief     Check if the internal MIDI player has ended
 @param ksr Kasaria instance
 */
-KSR_API bool ksr_is_midi_ended(Kasaria *ksr);
+KSR_API bool ksr_player_is_ended(Kasaria *ksr);
 
 // KSR_API int  ksr_stop_midi(Kasaria *ksr); // Unused
 
@@ -417,7 +418,7 @@ KSR_API bool ksr_is_midi_ended(Kasaria *ksr);
            and when used in midi visualizer as a pivot point to iterate and display notes on the screen
            it can make the visualizer a bit less smooth
 */
-KSR_API double ksr_get_midi_player_pos(Kasaria *ksr);
+KSR_API double ksr_player_get_pos(Kasaria *ksr);
 
 
 /*
