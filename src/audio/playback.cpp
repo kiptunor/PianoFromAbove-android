@@ -56,6 +56,7 @@ void              Playback::Init()
     ksr_set_fast_decay(midi_synth_ctx, true);
     ksr_set_antialiasing(midi_synth_ctx, true);
     ksr_set_sample_rate(midi_synth_ctx, 48000); // Optional
+    ksr_enable_overlapping_notes(midi_synth_ctx, true);
 
     // Skip notes with velocities in between the low and high specified threasholds
     // And also enable the filter

@@ -80,6 +80,7 @@ typedef struct
     bool pre_resample;
     bool velocity_skipping;
     bool skip_initial_silence;
+    bool allow_overlapping_notes;
     bool audio_compressor;
 }KasariaConfig;
 
@@ -196,6 +197,7 @@ KSR_API void ksr_restore_defaults(Kasaria *ksr); // Restore default settings
 */
 
 
+KSR_API void ksr_enable_overlapping_notes(Kasaria *ksr, bool value);
 KSR_API void ksr_set_amplification(Kasaria *ksr, int amplification); // Amplification is represented in percent
 KSR_API void ksr_set_max_voices(Kasaria *ksr, int voices);           // The number of voices is clamped between 1 and MAX_VOICES
 KSR_API void ksr_set_immediate_panning(Kasaria *ksr, bool value);    // The value argument for the following functions should be treated as a boolean
