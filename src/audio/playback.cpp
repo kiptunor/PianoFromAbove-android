@@ -116,14 +116,20 @@ void Playback::LoadDefaultSoundfonts()
 bool Playback::LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soundfonts)
 {
     bool is_enabled_sf_available = false;
+    Log::debug("Loading enabled soundfonts");
 
-    for(const auto &soundfont : enabled_soundfonts) // Iterate through all enabled soundfonts
+    std::vector<KsrSoundfontOpts> sf_opts;
+
+    for(size_t i = 0; i < enabled_soundfonts.size(); ++i) // Iterate through all enabled soundfonts
     {
-        if(soundfont.checked)
+        const auto &soundfont_item = enabled_soundfonts[i];
+        if(enabled_soundfonts[i].checked)
         {
-            // Soundfonts are currently loaded like this
+            // Set soundfont options (active_presets, bank, preset, load_percussion_bank)
+            sf_opts.emplace_back(KsrSoundfontOpts{5, 0, 0, 1});
             // Soon this will be deprecated
-            ksr_load_soundfont_file(midi_synth_ctx, soundfont.label.c_str(), true);
+            //ksr_load_soundfont_file(midi_synth_ctx, soundfont.label.c_str(), true);
+            ksr_load_soundfont_file_new(midi_synth_ctx, enabled_soundfonts[i].label.c_str(), sf_opts.back());
             is_enabled_sf_available = true;
         }
     }
@@ -140,6 +146,8 @@ void Playback::ReloadSoundfonts()
         // Pause the internal midi player of the midi synth
         ksr_player_pause(midi_synth_ctx);
         is_paused = true; // Also pause the midi visualizer
+
+        //ksr_unload_soundfont(midi_synth_ctx);
 
         Log::debug("Stop player");
 
