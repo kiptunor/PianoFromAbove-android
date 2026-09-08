@@ -197,43 +197,44 @@ KSR_API void ksr_restore_defaults(Kasaria *ksr); // Restore default settings
 */
 
 
-KSR_API void ksr_enable_overlapping_notes(Kasaria *ksr, bool value);
-KSR_API void ksr_set_amplification(Kasaria *ksr, int amplification); // Amplification is represented in percent
-KSR_API void ksr_set_max_voices(Kasaria *ksr, int voices);           // The number of voices is clamped between 1 and MAX_VOICES
-KSR_API void ksr_set_immediate_panning(Kasaria *ksr, bool value);    // The value argument for the following functions should be treated as a boolean
-KSR_API void ksr_set_mono(Kasaria *ksr, bool value);                 // This makes weird noise // Renders mono audio buffers if enabled, interleaved stereo otherwise
+KSR_API void ksr_config_set_overlapping_notes(Kasaria *ksr, bool value);
+KSR_API void ksr_config_set_amplification(Kasaria *ksr, int amplification); // Amplification is represented in percent
+KSR_API void ksr_config_set_max_voices(Kasaria *ksr, int voices);           // The number of voices is clamped between 1 and MAX_VOICES
+KSR_API void ksr_config_set_immediate_panning(Kasaria *ksr, bool value);    // The value argument for the following functions should be treated as a boolean
+KSR_API void ksr_config_set_mono(Kasaria *ksr, bool value);                 // This makes weird noise // Renders mono audio buffers if enabled, interleaved stereo otherwise
 
 // These next few functions reload the current sample bank before returning
-KSR_API void ksr_set_fast_decay(Kasaria *ksr, bool value);
-KSR_API void ksr_set_antialiasing(Kasaria *ksr, bool value);
-KSR_API void ksr_set_pre_resample(Kasaria *ksr, bool value);
-KSR_API void ksr_set_sample_rate(Kasaria *ksr, int rate);                   // The sample rate is clamped between MIN_OUTPUT_RATE and MAX_OUTPUT_RATE
-KSR_API void ksr_set_control_rate(Kasaria *ksr, int rate);                  // The control rate is clamped between current sample rate / MAX_CONTROL_RATIO and current sample rate
-KSR_API void ksr_set_default_program(Kasaria *ksr, int program);            // Sets the default MIDI program, takes effect on next MIDI reset
-KSR_API void ksr_set_drum_channel(Kasaria *ksr, int channel, bool enable);
-KSR_API void ksr_set_quiet_channel(Kasaria *ksr, int channel, bool enable);
-KSR_API void ksr_set_note_velocity_skipping(Kasaria *ksr, uint8_t low_vel, uint8_t high_vel, bool enabled);
-KSR_API void ksr_set_audio_compressor(Kasaria *ksr, bool enabled);
-KSR_API void ksr_set_audio_frame_size(Kasaria *ksr, int size);
+KSR_API void ksr_config_set_fast_decay(Kasaria *ksr, bool value);
+KSR_API void ksr_config_set_antialiasing(Kasaria *ksr, bool value);
+KSR_API void ksr_config_set_pre_resample(Kasaria *ksr, bool value);
+KSR_API void ksr_config_set_sample_rate(Kasaria *ksr, int rate);                   // The sample rate is clamped between MIN_OUTPUT_RATE and MAX_OUTPUT_RATE
+KSR_API void ksr_config_set_control_rate(Kasaria *ksr, int rate);                  // The control rate is clamped between current sample rate / MAX_CONTROL_RATIO and current sample rate
+KSR_API void ksr_config_set_default_program(Kasaria *ksr, int program);            // Sets the default MIDI program, takes effect on next MIDI reset
+KSR_API void ksr_config_set_drum_channel(Kasaria *ksr, int channel, bool enable);
+KSR_API void ksr_config_set_quiet_channel(Kasaria *ksr, int channel, bool enable);
+KSR_API void ksr_config_set_note_skipping(Kasaria *ksr, uint8_t low_vel, uint8_t high_vel, bool enabled);
+KSR_API void ksr_config_set_audio_compressor(Kasaria *ksr, bool enabled);
+KSR_API void ksr_config_set_audio_frame_size(Kasaria *ksr, int size);
 
 
 /*
 *   Reading synth parameters and settings is done via the following functions
 */
-KSR_API int ksr_get_amplification(Kasaria *ksr);
-KSR_API int ksr_get_active_voices(Kasaria *ksr);
-KSR_API int ksr_get_max_voices(Kasaria *ksr);
-KSR_API int ksr_get_immediate_panning(Kasaria *ksr);
-KSR_API int ksr_get_mono(Kasaria *ksr);
-KSR_API int ksr_get_fast_decay(Kasaria *ksr);
-KSR_API int ksr_get_antialiasing(Kasaria *ksr);
-KSR_API int ksr_get_pre_resample(Kasaria *ksr);
+KSR_API int ksr_config_get_amplification(Kasaria *ksr);
+KSR_API int ksr_config_get_max_voices(Kasaria *ksr);
+KSR_API int ksr_config_get_immediate_panning(Kasaria *ksr);
+KSR_API int ksr_config_get_mono(Kasaria *ksr);
+KSR_API int ksr_config_get_fast_decay(Kasaria *ksr);
+KSR_API int ksr_config_get_antialiasing(Kasaria *ksr);
+KSR_API int ksr_config_get_pre_resample(Kasaria *ksr);
 // KSR_API int ksr_get_dynamic_instrument_load(Kasaria *ksr); // Unused and idk what to do with this
-KSR_API int ksr_get_sample_rate(Kasaria *ksr);
-KSR_API int ksr_get_control_rate(Kasaria *ksr);
-KSR_API int ksr_get_default_program(Kasaria *ksr);
-KSR_API int ksr_get_drum_channel_enabled(Kasaria *ksr, int channel);
-KSR_API int ksr_get_quiet_channel_enabled(Kasaria *ksr, int channel);
+KSR_API int ksr_config_get_sample_rate(Kasaria *ksr);
+KSR_API int ksr_config_get_control_rate(Kasaria *ksr);
+KSR_API int ksr_config_get_default_program(Kasaria *ksr);
+//KSR_API int ksr_get_drum_channel_enabled(Kasaria *ksr, int channel);
+//KSR_API int ksr_get_quiet_channel_enabled(Kasaria *ksr, int channel);
+
+KSR_API int ksr_get_active_voices(Kasaria *ksr);
 KSR_API int ksr_get_lost_notes(Kasaria *ksr);
 KSR_API int ksr_get_cut_notes(Kasaria *ksr);
 
@@ -282,8 +283,6 @@ KSR_API int  ksr_load_soundfont_file_new(Kasaria *ksr, const char *filename, Ksr
 
 // Not yet implemented
 KSR_API void ksr_load_soundfont_from_mem(Kasaria *ksr, void *mem, long size, bool preload_instruments);
-
-KSR_API int  ksr_unload_soundfont(Kasaria *ksr);
 
 
 /*

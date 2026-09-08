@@ -53,17 +53,17 @@ void              Playback::Init()
 {
     midi_synth_ctx = ksr_init(0);
 
-    ksr_set_fast_decay(midi_synth_ctx, true);
-    ksr_set_antialiasing(midi_synth_ctx, true);
-    ksr_set_sample_rate(midi_synth_ctx, 48000); // Optional
-    ksr_enable_overlapping_notes(midi_synth_ctx, true);
+    ksr_config_set_fast_decay(midi_synth_ctx, true);
+    ksr_config_set_antialiasing(midi_synth_ctx, true);
+    ksr_config_set_sample_rate(midi_synth_ctx, 48000); // Optional
+    ksr_config_set_overlapping_notes(midi_synth_ctx, true);
 
     // Skip notes with velocities in between the low and high specified threasholds
     // And also enable the filter
-    ksr_set_note_velocity_skipping(midi_synth_ctx, loaded_config.vel_min, loaded_config.vel_max, loaded_config.vel_filter);
+    ksr_config_set_note_skipping(midi_synth_ctx, loaded_config.vel_min, loaded_config.vel_max, loaded_config.vel_filter);
 
 
-    ksr_set_max_voices(midi_synth_ctx, loaded_config.voice_count); // How many voices the synth can use
+    ksr_config_set_max_voices(midi_synth_ctx, loaded_config.voice_count); // How many voices the synth can use
 
     ksr_init_audio(midi_synth_ctx, INTERNAL_MIDI_PLAYER);
 }
@@ -164,7 +164,7 @@ void Playback::ReloadSoundfonts()
 
 void Playback::updateVoiceCount(int voiceCount)
 {
-    ksr_set_max_voices(midi_synth_ctx, voiceCount);
+    ksr_config_set_max_voices(midi_synth_ctx, voiceCount);
 
     // Update the configuration
     live_conf.voice_count = voiceCount;
@@ -220,7 +220,7 @@ void Playback::PlayerStateUpdate()
         Playback::is_midi_loaded = true;
 
         // Set the note velocity skipping filter everytime the midi was laoded
-        ksr_set_note_velocity_skipping(midi_synth_ctx, live_conf.vel_min, live_conf.vel_max, live_conf.vel_filter);
+        ksr_config_set_note_skipping(midi_synth_ctx, live_conf.vel_min, live_conf.vel_max, live_conf.vel_filter);
 
         // Start playback
         ksr_player_begin(midi_synth_ctx, false); // and don't wait for this to finish the entire midi
@@ -304,7 +304,7 @@ void Playback::pause()
         ksr_player_seek(midi_synth_ctx, 0); // restart from beginning when the midi player reaches the end
 
         // Set the note velocity skipping again
-        ksr_set_note_velocity_skipping(midi_synth_ctx, live_conf.vel_min, live_conf.vel_max, live_conf.vel_filter);
+        ksr_config_set_note_skipping(midi_synth_ctx, live_conf.vel_min, live_conf.vel_max, live_conf.vel_filter);
 
         // And start the playback without waiting for it to finish until midi ending is reached
         ksr_player_begin(midi_synth_ctx, 0);
