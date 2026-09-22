@@ -362,6 +362,9 @@ KSR_API int  ksr_reload_midi(Kasaria *ksr);
 */
 KSR_API int  ksr_player_get_stream(Kasaria *ksr, long audio_fmt, unsigned char *buffer, long count);
 
+
+KSR_API void ksr_player_get_byte_pos(Kasaria *ksr, uint64_t *position);
+
 /*
 @brief                  Start the internal player handler
 @param ksr              Kasaria instance
@@ -421,7 +424,7 @@ KSR_API bool ksr_player_is_ended(Kasaria *ksr);
            and when used in midi visualizer as a pivot point to iterate and display notes on the screen
            it can make the visualizer a bit less smooth
 */
-KSR_API double ksr_player_get_pos(Kasaria *ksr);
+//KSR_API double ksr_player_get_pos(Kasaria *ksr);
 
 
 /*
@@ -475,6 +478,7 @@ KSR_API void ksr_render_ulaw(Kasaria *ksr, unsigned char *buffer, long count);
 // --------------------------- Utility functions ---------------------------
 KSR_API int ksr_millis2samples(Kasaria *ksr, long millis);
 KSR_API int ksr_samples2millis(Kasaria *ksr, long samples);
+KSR_API double ksr_byte_pos2sec(Kasaria *ksr, uint64_t byte_pos);
 
 // Close and free an instance of Kasaria. This should be called after all other API function calls
 KSR_API void ksr_shutdown(Kasaria *ksr);

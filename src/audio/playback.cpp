@@ -37,6 +37,7 @@ bool              Playback::playback_ended          = false;
 bool              Playback::is_midi_loading         = false;
 bool              Playback::is_midi_stream_creating = false;
 u64               Playback::saved_position          = 0;
+u64               Playback::current_player_pos      = 0;
 const f64         Playback::seek_amount             = 3.0;
 f64               Playback::Tscr;
 std::atomic<bool> is_midi_loaded_fn          = false;
@@ -248,7 +249,10 @@ void Playback::seek_playback(f64 seconds)
     ksr_player_seek(midi_synth_ctx, target_ms);
 
     // Update the player position required for the visualizer to render notes on the screen
-    Tplay = ksr_player_get_pos(midi_synth_ctx);
+    //Tplay = ksr_player_get_pos(midi_synth_ctx);
+    ksr_player_get_byte_pos(midi_synth_ctx, &current_player_pos);
+    //Tplay = ksr_player_get_pos(midi_synth_ctx);
+    Tplay = ksr_byte_pos2sec(midi_synth_ctx, current_player_pos);
 
     // When seeking backwards, reload the note data
     if(seconds < 0)
@@ -324,12 +328,14 @@ void Playback::pause()
 // From here these get super ez
 void Playback::UpdateEndPosition()
 {
-    saved_position = ksr_player_get_pos(midi_synth_ctx);
+    ksr_player_get_byte_pos(midi_synth_ctx, &current_player_pos);
+    saved_position = ksr_byte_pos2sec(midi_synth_ctx, current_player_pos);
 }
 
 void Playback::UpdateMidiPlayerPos()
 {
-    Tplay = ksr_player_get_pos(midi_synth_ctx);
+    ksr_player_get_byte_pos(midi_synth_ctx, &current_player_pos);
+    Tplay = ksr_byte_pos2sec(midi_synth_ctx, current_player_pos);
 }
 
 bool Playback::IsMidiPlayerActive()

@@ -53,6 +53,7 @@ class Playback
     static bool                     is_midi_stream_creating;
     static bool                     playback_ended;
     static u64                      saved_position;
+    static u64                      current_player_pos;
     static const f64                seek_amount;
     static bool                     is_paused;
     static f64                      Tplay, Tscr;
