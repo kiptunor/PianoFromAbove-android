@@ -73,6 +73,7 @@ typedef struct
     int low_note_velocity;
     int high_note_velocity;
     int audio_frame_size;
+    int midi_chunk_size;
     bool immediate_panning;
     bool mono_audio;
     bool fast_decay;
@@ -81,6 +82,7 @@ typedef struct
     bool velocity_skipping;
     bool skip_initial_silence;
     bool allow_overlapping_notes;
+    bool midi_chunk_limiter;
     bool audio_compressor;
 }KasariaConfig;
 
@@ -213,6 +215,7 @@ KSR_API void ksr_config_set_default_program(Kasaria *ksr, int program);         
 KSR_API void ksr_config_set_drum_channel(Kasaria *ksr, int channel, bool enable);
 KSR_API void ksr_config_set_quiet_channel(Kasaria *ksr, int channel, bool enable);
 KSR_API void ksr_config_set_note_skipping(Kasaria *ksr, uint8_t low_vel, uint8_t high_vel, bool enabled);
+KSR_API void ksr_config_set_midi_chunk_limit(Kasaria *ksr, int size, bool enabled);
 KSR_API void ksr_config_set_audio_compressor(Kasaria *ksr, bool enabled);
 KSR_API void ksr_config_set_audio_frame_size(Kasaria *ksr, int size);
 
@@ -424,7 +427,7 @@ KSR_API bool ksr_player_is_ended(Kasaria *ksr);
            and when used in midi visualizer as a pivot point to iterate and display notes on the screen
            it can make the visualizer a bit less smooth
 */
-//KSR_API double ksr_player_get_pos(Kasaria *ksr);
+// KSR_API double ksr_player_get_pos(Kasaria *ksr);
 
 
 /*

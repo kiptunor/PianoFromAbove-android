@@ -58,6 +58,9 @@ void              Playback::Init()
     ksr_config_set_antialiasing(midi_synth_ctx, true);
     ksr_config_set_sample_rate(midi_synth_ctx, 48000); // Optional
     ksr_config_set_overlapping_notes(midi_synth_ctx, true);
+    // ksr_config_set_audio_frame_size(midi_synth_ctx, 96);
+    ksr_config_set_audio_frame_size(midi_synth_ctx, 800);
+    ksr_config_set_midi_chunk_limit(midi_synth_ctx, 800, true);
 
     // Skip notes with velocities in between the low and high specified threasholds
     // And also enable the filter
