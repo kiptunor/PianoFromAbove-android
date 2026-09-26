@@ -79,6 +79,8 @@ class UI
     static int                      min_velocity;
     static int                      max_velocity;
     static int                      current_audio_dev;
+    static int                      midi_chunk_size;
+    static int                      audio_frame_size;
     static bool                     velocity_filter;
     static bool                     loop_colors;
     static bool                     overlap_remover;
@@ -92,6 +94,8 @@ class UI
     static bool                     internal_logging;
     static bool                     log_to_file;
     static bool                     vsync;
+    static bool                     overlapping_notes;
+    static bool                     midi_chunk_limiter;
     static bool                     use_default_media_paths;
     static bool                     ui_theming;
     static ImVec4                   ui_chcolors[16];

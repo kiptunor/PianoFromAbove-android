@@ -74,5 +74,9 @@ class Playback
     static void                     pause();
     static void                     PlayerStateUpdate();
     static void                     Close();
+    static void                     SetNoteVelSkipping(int low_vel, int high_vel, bool enabled);
+    static void                     SetMidiChunkLimit(int chunk_limit, bool enabled);
+    static void                     SetAudioFrameSize(int frame_size);
+    static void                     SetOverlappingNotes(bool enabled);
 };
 #endif

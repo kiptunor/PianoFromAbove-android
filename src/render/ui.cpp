@@ -90,6 +90,8 @@ bool                        UI::background_image;
 bool                        UI::show_full_path_lost_midis      = false;
 bool                        UI::show_full_path_lost_soundfonts = false;
 bool                        UI::ui_theming                     = false;
+bool                        UI::overlapping_notes;
+bool                        UI::midi_chunk_limiter;
 int                         UI::min_velocity;
 int                         UI::max_velocity;
 std::string                 UI::last_midi_path;
@@ -1181,6 +1183,8 @@ void UI::UpdateWidgetValues()
     UI::no_soundfont_duplicates = live_conf.no_soundfont_duplicates;
     UI::background_image        = live_conf.background_image;
     UI::ui_theming              = live_conf.custom_ui_theme;
+    UI::overlapping_notes       = live_conf.overlapping_notes;
+    UI::midi_chunk_limiter      = live_conf.midi_chunk_limiter;
     live_soundfont_list         = loaded_soundfont_list;
 }
 
@@ -2373,12 +2377,16 @@ void UI::Render(SDL_Renderer *r)
 
 
                     */
-                    if(ImGui::BeginTabItem("Audio"))
+                    if(ImGui::BeginTabItem("Synth"))
                     {
-                        live_conf.audio_device_index = UI::current_audio_dev;
-                        ShowAudioDeviceList(availableAudioDevices);
-                        ImGui::Text("\n");
+                        //live_conf.audio_device_index = UI::current_audio_dev;
+                        //ShowAudioDeviceList(availableAudioDevices);
+                        //ImGui::Text("\n");
+
                         ImGui::Text("Voice Count");
+
+                        ImGui::SameLine();
+                        
                         // Store the previous value to detect changes
                         static int prev_voice_count = live_conf.voice_count;
 
@@ -2400,10 +2408,69 @@ void UI::Render(SDL_Renderer *r)
                             }
                         }
 
-                        ImGui::Text("Effects");
-                        if(ImGui::CollapsingHeader("Velocity Filter *"))
+                        static int prev_audio_frame_sz = live_conf.voice_count;
+                        
+                        ImGui::Text("Audio Frame Size *: ");
+                        ImGui::SameLine();
+                        if(ImGui::InputInt("##TooMuchDrinkin", &live_conf.audio_frame_size))
                         {
-                            ImGui::Checkbox("Enabled", &velocity_filter);
+                            // Ensure value is within reasonable limits
+                            if(live_conf.audio_frame_size < 1)
+                                live_conf.audio_frame_size = 1;
+                            
+                            if(live_conf.audio_frame_size > 90000)
+                                live_conf.audio_frame_size = 90000;
+                            
+                            // Apply the change in real-time if the value has changed
+                            if(prev_audio_frame_sz != live_conf.audio_frame_size)
+                            {
+                                //Playback::updateVoiceCount(live_conf.midi_chunk_size);
+                                //Playback::SetAudioFrameSize(live_conf.audio_frame_size);
+                                prev_audio_frame_sz = live_conf.audio_frame_size;
+                            }
+                        }
+
+                        if(ImGui::CollapsingHeader("MIDI Chunk Limiter"))
+                        {
+                            if(ImGui::Checkbox("Enabled", &midi_chunk_limiter))
+                            {
+                                live_conf.midi_chunk_limiter = midi_chunk_limiter;
+                                Playback::SetMidiChunkLimit(live_conf.midi_chunk_size, live_conf.midi_chunk_limiter);
+                            }
+                            
+                            static int prev_midi_chunk_sz = live_conf.voice_count;
+                            
+                            ImGui::Text("Size:");
+                            ImGui::SameLine();
+                            ImGui::BeginDisabled(!live_conf.midi_chunk_limiter); // Disable widgets if isDisabled is true
+                            {
+                                if(ImGui::InputInt("##ImDrunkLmfAOOIOiuouk", &live_conf.midi_chunk_size))
+                                {
+                                    // Ensure value is within reasonable limits
+                                    if(live_conf.midi_chunk_size < 1)
+                                        live_conf.midi_chunk_size = 1;
+                                    
+                                    if(live_conf.midi_chunk_size > 90000)
+                                        live_conf.midi_chunk_size = 90000;
+                                    
+                                    // Apply the change in real-time if the value has changed
+                                    if(prev_midi_chunk_sz != live_conf.midi_chunk_size)
+                                    {
+                                        //Playback::updateVoiceCount(live_conf.midi_chunk_size);
+                                        Playback::SetMidiChunkLimit(live_conf.midi_chunk_size, live_conf.midi_chunk_limiter);
+                                        prev_midi_chunk_sz = live_conf.midi_chunk_size;
+                                    }
+                                }
+                            }
+                            ImGui::EndDisabled();
+                        }
+
+                        // ImGui::Text("Effects");
+                        if(ImGui::CollapsingHeader("Velocity Filter"))
+                        {
+                            if(ImGui::Checkbox("Enabled", &velocity_filter))
+                                Playback::SetNoteVelSkipping(min_velocity, max_velocity, live_conf.vel_filter);
+                            
                             live_conf.vel_filter = velocity_filter;
 
                             ImGui::BeginDisabled(!live_conf.vel_filter); // Disable widgets if isDisabled is true
@@ -2415,6 +2482,12 @@ void UI::Render(SDL_Renderer *r)
 
                             live_conf.vel_min = min_velocity;
                             live_conf.vel_max = max_velocity;
+                        }
+
+                        if(ImGui::Checkbox("Allow overlapping notes", &overlapping_notes))
+                        {
+                            live_conf.overlapping_notes = overlapping_notes;
+                            Playback::SetOverlappingNotes(live_conf.overlapping_notes);
                         }
                         ImGui::EndTabItem();
                     }

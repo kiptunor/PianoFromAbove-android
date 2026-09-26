@@ -57,10 +57,10 @@ void              Playback::Init()
     ksr_config_set_fast_decay(midi_synth_ctx, true);
     ksr_config_set_antialiasing(midi_synth_ctx, true);
     ksr_config_set_sample_rate(midi_synth_ctx, 48000); // Optional
-    ksr_config_set_overlapping_notes(midi_synth_ctx, true);
+    ksr_config_set_overlapping_notes(midi_synth_ctx, live_conf.overlapping_notes);
     // ksr_config_set_audio_frame_size(midi_synth_ctx, 96);
-    ksr_config_set_audio_frame_size(midi_synth_ctx, 800);
-    ksr_config_set_midi_chunk_limit(midi_synth_ctx, 800, true);
+    ksr_config_set_audio_frame_size(midi_synth_ctx, live_conf.audio_frame_size);
+    ksr_config_set_midi_chunk_limit(midi_synth_ctx, live_conf.midi_chunk_size, live_conf.midi_chunk_limiter);
 
     // Skip notes with velocities in between the low and high specified threasholds
     // And also enable the filter
@@ -326,6 +326,26 @@ void Playback::pause()
 
         Midi_ctx.list_seek(0);
     }
+}
+
+void Playback::SetNoteVelSkipping(int low_vel, int high_vel, bool enabled)
+{
+    ksr_config_set_note_skipping(midi_synth_ctx, low_vel, high_vel, enabled);
+}
+
+void Playback::SetAudioFrameSize(int frame_size)
+{
+    ksr_config_set_audio_frame_size(midi_synth_ctx, frame_size);
+}
+
+void Playback::SetMidiChunkLimit(int chunk_limit, bool enabled)
+{
+    ksr_config_set_midi_chunk_limit(midi_synth_ctx, chunk_limit, enabled);
+}
+
+void Playback::SetOverlappingNotes(bool enabled)
+{
+    ksr_config_set_overlapping_notes(midi_synth_ctx, enabled);
 }
 
 // From here these get super ez

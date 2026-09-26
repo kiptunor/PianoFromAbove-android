@@ -45,6 +45,8 @@ class Config
         int                      vel_max;
         int                      midi_index;
         int                      fps;
+        int                      audio_frame_size;
+        int                      midi_chunk_size;
         int                      builtin_ui_theme_idx;
         bool                     audio_limiter;
         bool                     vel_filter;
@@ -62,6 +64,8 @@ class Config
         bool                     log_to_file;
         bool                     custom_ui_theme;
         bool                     builtin_ui_theme;
+        bool                     midi_chunk_limiter;
+        bool                     overlapping_notes;
         bool                     OR; // Overlap remover
         //std::string              last_midi_file; // Moved midi_list.h
         std::string              last_ccol_file_path;

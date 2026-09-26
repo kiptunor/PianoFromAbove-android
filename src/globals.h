@@ -71,6 +71,8 @@ inline Config::configuration              default_settings = {
     .vel_max                 = 32,
     .midi_index              = 0,
     .fps                     = 500,
+    .audio_frame_size        = 800,
+    .midi_chunk_size         = 800,
     .builtin_ui_theme_idx    = 0,
     .audio_limiter           = true,
     .vel_filter              = false,
@@ -84,6 +86,8 @@ inline Config::configuration              default_settings = {
     .internal_log_buffer     = true,
     .custom_ui_theme         = false,
     .builtin_ui_theme        = true,
+    .midi_chunk_limiter      = false,
+    .overlapping_notes        = true,
     .OR                      = true,
 };
 

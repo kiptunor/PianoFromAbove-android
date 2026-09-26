@@ -109,7 +109,9 @@ Config::configuration Config::Load()
     in_conf.OR                          = visual_obj.value("overlapRemover",  default_settings.OR);
 
     nlohmann::json audio_obj            = json_in.value("audio",              nlohmann::json::object());
-    in_conf.voice_count            = audio_obj.value("voiceCount",            default_settings.voice_count);
+    in_conf.audio_frame_size            = audio_obj.value("audioFrameSize",   default_settings.audio_frame_size);
+    in_conf.overlapping_notes            = audio_obj.value("overlapingNotes",  default_settings.overlapping_notes);
+    in_conf.voice_count                 = audio_obj.value("voiceCount",            default_settings.voice_count);
     //in_conf.audio_device_index          = audio_obj.value("audioDeviceIndex", default_settings.audio_device_index);
 
     nlohmann::json effects_obj          = audio_obj.value("effects",          nlohmann::json::object());
@@ -117,6 +119,10 @@ Config::configuration Config::Load()
     in_conf.vel_filter                  = vel_filter_obj.value("enabled",     default_settings.vel_filter);
     in_conf.vel_min                     = vel_filter_obj.value("lowVel",      default_settings.vel_min);
     in_conf.vel_max                     = vel_filter_obj.value("hiVel",       default_settings.vel_max);
+
+    nlohmann::json midi_chunk_lim_obj   = effects_obj.value("midiChunkLimiter", nlohmann::json::object());
+    in_conf.midi_chunk_limiter          = midi_chunk_lim_obj.value("enabled", default_settings.midi_chunk_limiter);
+    in_conf.midi_chunk_size             = midi_chunk_lim_obj.value("chunkSize", default_settings.midi_chunk_size);
 
     nlohmann::json limiter_obj          = effects_obj.value("audioLimiter",   nlohmann::json::object());
     in_conf.audio_limiter               = limiter_obj.value("enabled",        default_settings.audio_limiter);
@@ -186,6 +192,8 @@ void Config::Save(configuration config)
         { "visual",  visual },
         { "audio", {
             { "voiceCount",       config.voice_count        },
+            { "audioFrameSize",   config.audio_frame_size   },
+            { "overlapingNotes",  config.overlapping_notes   },
             //{ "audioDeviceIndex", config.audio_device_index },
                 { "effects", {
                         { "velocityFilter", {
@@ -196,6 +204,11 @@ void Config::Save(configuration config)
                         },
                         { "audioLimiter", {
                                 { "enabled", config.audio_limiter }
+                            }
+                        },
+                        { "midiChunkLimiter", {
+                                { "enabled", config.midi_chunk_limiter },
+                                { "chunkSize", config.midi_chunk_size }
                             }
                         }
                     }
