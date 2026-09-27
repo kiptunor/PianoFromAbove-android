@@ -2432,7 +2432,7 @@ void UI::Render(SDL_Renderer *r)
 
                         if(ImGui::CollapsingHeader("MIDI Chunk Limiter"))
                         {
-                            if(ImGui::Checkbox("Enabled", &midi_chunk_limiter))
+                            if(ImGui::Checkbox("Enabled##someIdIdk", &midi_chunk_limiter))
                             {
                                 live_conf.midi_chunk_limiter = midi_chunk_limiter;
                                 Playback::SetMidiChunkLimit(live_conf.midi_chunk_size, live_conf.midi_chunk_limiter);
@@ -2468,8 +2468,11 @@ void UI::Render(SDL_Renderer *r)
                         // ImGui::Text("Effects");
                         if(ImGui::CollapsingHeader("Velocity Filter"))
                         {
-                            if(ImGui::Checkbox("Enabled", &velocity_filter))
+                            if(ImGui::Checkbox("Enabled##DifferentIdNoConflicts", &velocity_filter))
+                            {
+                                live_conf.vel_filter = velocity_filter;
                                 Playback::SetNoteVelSkipping(min_velocity, max_velocity, live_conf.vel_filter);
+                            }
                             
                             live_conf.vel_filter = velocity_filter;
 
