@@ -145,7 +145,7 @@ void Playback::ReloadSoundfonts()
 {
     // Check if the midi player is active
     // Loading new soundfonts while the player is active requires the midi player to be paused first
-    if(ksr_player_is_active(midi_synth_ctx))
+    if(!is_paused)
     {
         // Pause the internal midi player of the midi synth
         ksr_player_pause(midi_synth_ctx);
