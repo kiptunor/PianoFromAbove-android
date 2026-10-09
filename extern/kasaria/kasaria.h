@@ -91,7 +91,6 @@ typedef struct
     int active_presets;          // Set how many presets to store
     int bank;                    // Set the current MIDI bank (Currently unused)
     int preset;                  // Set the current preset
-    //bool preload_instruments;    // Preload instruments into tone banks (Required for synthesis)
     bool load_percussion_bank; // When enabled the soundfont loader also loads the percusion bank used in MIDI Channel 10
 }KsrSoundfontOpts;
 
@@ -130,6 +129,127 @@ typedef struct
 // Audio initialization scope
 #define INTERNAL_MIDI_PLAYER 41
 #define RAW_MIDI_EVENTS      42
+
+
+
+// Reverb presets
+enum
+{
+  KSR_REVERB_PRESET_GENERIC = 0,
+  KSR_REVERB_PRESET_PADDEDCELL,
+  KSR_REVERB_PRESET_ROOM,
+  KSR_REVERB_PRESET_BATHROOM,
+  KSR_REVERB_PRESET_LIVINGROOM,
+  KSR_REVERB_PRESET_STONEROOM,
+  KSR_REVERB_PRESET_AUDITORIUM,
+  KSR_REVERB_PRESET_CONCERTHALL,
+  KSR_REVERB_PRESET_CAVE,
+  KSR_REVERB_PRESET_ARENA,
+  KSR_REVERB_PRESET_HANGAR,
+  KSR_REVERB_PRESET_CARPETEDHALLWAY,
+  KSR_REVERB_PRESET_HALLWAY,
+  KSR_REVERB_PRESET_STONECORRIDOR,
+  KSR_REVERB_PRESET_ALLEY,
+  KSR_REVERB_PRESET_FOREST,
+  KSR_REVERB_PRESET_CITY,
+  KSR_REVERB_PRESET_MOUNTAINS,
+  KSR_REVERB_PRESET_QUARRY,
+  KSR_REVERB_PRESET_PLAIN,
+  KSR_REVERB_PRESET_PARKINGLOT,
+  KSR_REVERB_PRESET_SEWERPIPE,
+  KSR_REVERB_PRESET_UNDERWATER,
+  KSR_REVERB_PRESET_DRUGGED,
+  KSR_REVERB_PRESET_DIZZY,
+  KSR_REVERB_PRESET_PSYCHOTIC,
+  KSR_REVERB_PRESET_CASTLE_SMALLROOM,
+  KSR_REVERB_PRESET_CASTLE_SHORTPASSAGE,
+  KSR_REVERB_PRESET_CASTLE_MEDIUMROOM,
+  KSR_REVERB_PRESET_CASTLE_LARGEROOM,
+  KSR_REVERB_PRESET_CASTLE_LONGPASSAGE,
+  KSR_REVERB_PRESET_CASTLE_HALL,
+  KSR_REVERB_PRESET_CASTLE_CUPBOARD,
+  KSR_REVERB_PRESET_CASTLE_COURTYARD,
+  KSR_REVERB_PRESET_CASTLE_ALCOVE,
+  KSR_REVERB_PRESET_FACTORY_SMALLROOM,
+  KSR_REVERB_PRESET_FACTORY_SHORTPASSAGE,
+  KSR_REVERB_PRESET_FACTORY_MEDIUMROOM,
+  KSR_REVERB_PRESET_FACTORY_LARGEROOM,
+  KSR_REVERB_PRESET_FACTORY_LONGPASSAGE,
+  KSR_REVERB_PRESET_FACTORY_HALL,
+  KSR_REVERB_PRESET_FACTORY_CUPBOARD,
+  KSR_REVERB_PRESET_FACTORY_COURTYARD,
+  KSR_REVERB_PRESET_FACTORY_ALCOVE,
+  KSR_REVERB_PRESET_ICEPALACE_SMALLROOM,
+  KSR_REVERB_PRESET_ICEPALACE_SHORTPASSAGE,
+  KSR_REVERB_PRESET_ICEPALACE_MEDIUMROOM,
+  KSR_REVERB_PRESET_ICEPALACE_LARGEROOM,
+  KSR_REVERB_PRESET_ICEPALACE_LONGPASSAGE,
+  KSR_REVERB_PRESET_ICEPALACE_HALL,
+  KSR_REVERB_PRESET_ICEPALACE_CUPBOARD,
+  KSR_REVERB_PRESET_ICEPALACE_COURTYARD,
+  KSR_REVERB_PRESET_ICEPALACE_ALCOVE,
+  KSR_REVERB_PRESET_SPACESTATION_SMALLROOM,
+  KSR_REVERB_PRESET_SPACESTATION_SHORTPASSAGE,
+  KSR_REVERB_PRESET_SPACESTATION_MEDIUMROOM,
+  KSR_REVERB_PRESET_SPACESTATION_LARGEROOM,
+  KSR_REVERB_PRESET_SPACESTATION_LONGPASSAGE,
+  KSR_REVERB_PRESET_SPACESTATION_HALL,
+  KSR_REVERB_PRESET_SPACESTATION_CUPBOARD,
+  KSR_REVERB_PRESET_SPACESTATION_ALCOVE,
+  KSR_REVERB_PRESET_WOODEN_SMALLROOM,
+  KSR_REVERB_PRESET_WOODEN_SHORTPASSAGE,
+  KSR_REVERB_PRESET_WOODEN_MEDIUMROOM,
+  KSR_REVERB_PRESET_WOODEN_LARGEROOM,
+  KSR_REVERB_PRESET_WOODEN_LONGPASSAGE,
+  KSR_REVERB_PRESET_WOODEN_HALL,
+  KSR_REVERB_PRESET_WOODEN_CUPBOARD,
+  KSR_REVERB_PRESET_WOODEN_COURTYARD,
+  KSR_REVERB_PRESET_WOODEN_ALCOVE,
+  KSR_REVERB_PRESET_SPORT_EMPTYSTADIUM,
+  KSR_REVERB_PRESET_SPORT_SQUASHCOURT,
+  KSR_REVERB_PRESET_SPORT_SMALLSWIMMINGPOOL, // Sounds cursed
+  KSR_REVERB_PRESET_SPORT_LARGESWIMMINGPOOL, // Sounds really cursed
+  KSR_REVERB_PRESET_SPORT_GYMNASIUM,
+  KSR_REVERB_PRESET_SPORT_FULLSTADIUM,
+  KSR_REVERB_PRESET_SPORT_STADIUMTANNOY,
+  KSR_REVERB_PRESET_PREFAB_WORKSHOP,
+  KSR_REVERB_PRESET_PREFAB_SCHOOLROOM,
+  KSR_REVERB_PRESET_PREFAB_PRACTISEROOM,
+  KSR_REVERB_PRESET_PREFAB_OUTHOUSE,
+  KSR_REVERB_PRESET_PREFAB_CARAVAN,
+  KSR_REVERB_PRESET_DOME_TOMB,
+  KSR_REVERB_PRESET_PIPE_SMALL,
+  KSR_REVERB_PRESET_DOME_SAINTPAULS,
+  KSR_REVERB_PRESET_PIPE_LONGTHIN,
+  KSR_REVERB_PRESET_PIPE_LARGE,
+  KSR_REVERB_PRESET_PIPE_RESONANT,
+  KSR_REVERB_PRESET_OUTDOORS_BACKYARD,
+  KSR_REVERB_PRESET_OUTDOORS_ROLLINGPLAINS,
+  KSR_REVERB_PRESET_OUTDOORS_DEEPCANYON,
+  KSR_REVERB_PRESET_OUTDOORS_CREEK,
+  KSR_REVERB_PRESET_OUTDOORS_VALLEY,
+  KSR_REVERB_PRESET_MOOD_HEAVEN,
+  KSR_REVERB_PRESET_MOOD_HELL,
+  KSR_REVERB_PRESET_MOOD_MEMORY,
+  KSR_REVERB_PRESET_DRIVING_COMMENTATOR,
+  KSR_REVERB_PRESET_DRIVING_PITGARAGE,
+  KSR_REVERB_PRESET_DRIVING_INCAR_RACER,
+  KSR_REVERB_PRESET_DRIVING_INCAR_SPORTS,
+  KSR_REVERB_PRESET_DRIVING_INCAR_LUXURY,
+  KSR_REVERB_PRESET_DRIVING_FULLGRANDSTAND,
+  KSR_REVERB_PRESET_DRIVING_EMPTYGRANDSTAND,
+  KSR_REVERB_PRESET_DRIVING_TUNNEL,
+  KSR_REVERB_PRESET_CITY_STREETS,
+  KSR_REVERB_PRESET_CITY_SUBWAY,
+  KSR_REVERB_PRESET_CITY_MUSEUM,
+  KSR_REVERB_PRESET_CITY_LIBRARY,
+  KSR_REVERB_PRESET_CITY_UNDERPASS,
+  KSR_REVERB_PRESET_CITY_ABANDONED,
+  KSR_REVERB_PRESET_DUSTYROOM,
+  KSR_REVERB_PRESET_CHAPEL,
+  KSR_REVERB_PRESET_SMALLWATERROOM,
+  NUM_TIMID_REVERB_PRESETS
+};
 
 
 /*
@@ -204,6 +324,9 @@ KSR_API void ksr_config_set_amplification(Kasaria *ksr, int amplification); // A
 KSR_API void ksr_config_set_max_voices(Kasaria *ksr, int voices);           // The number of voices is clamped between 1 and MAX_VOICES
 KSR_API void ksr_config_set_immediate_panning(Kasaria *ksr, bool value);    // The value argument for the following functions should be treated as a boolean
 KSR_API void ksr_config_set_mono(Kasaria *ksr, bool value);                 // This makes weird noise // Renders mono audio buffers if enabled, interleaved stereo otherwise
+KSR_API void ksr_config_enable_reverb(Kasaria *ksr, bool value);
+KSR_API void ksr_config_set_reverb_only(Kasaria *ksr, bool value);
+KSR_API void ksr_config_set_reverb_preset(Kasaria *ksr, int preset);
 
 // These next few functions reload the current sample bank before returning
 KSR_API void ksr_config_set_fast_decay(Kasaria *ksr, bool value);
@@ -273,16 +396,13 @@ KSR_API int ksr_get_song_copyright(Kasaria *ksr, char *buffer, long count);
 
 
 /*
-@brief                     Load a soundfont file from disk
-@param ksr                 Kasaria instance
-@param filename             The file path + filename of the soundfont file to load
-@param preload_instruments When set to true all soundfont instruments will be preloaded into the tone banks
-                           so the synth can actually produce sound
+@brief                Load a soundfont file from disk
+@param ksr            Kasaria instance
+@param filename        The file path + filename of the soundfont file to load
+@param soundfont_opts Set custom options for each soundfont. See KsrSoundfontOpts struct
 */
-KSR_API int  ksr_load_soundfont_file(Kasaria *ksr, const char *filename, bool preload_instruments);
-
 // Partially implelented !!!
-KSR_API int  ksr_load_soundfont_file_new(Kasaria *ksr, const char *filename, KsrSoundfontOpts soundfont_opts);
+KSR_API int  ksr_load_soundfont_file(Kasaria *ksr, const char *filename, KsrSoundfontOpts soundfont_opts);
 
 // Not yet implemented
 KSR_API void ksr_load_soundfont_from_mem(Kasaria *ksr, void *mem, long size, bool preload_instruments);
@@ -367,6 +487,8 @@ KSR_API int  ksr_player_get_stream(Kasaria *ksr, long audio_fmt, unsigned char *
 
 
 KSR_API void ksr_player_get_byte_pos(Kasaria *ksr, uint64_t *position);
+KSR_API void ksr_player_pos_start_update(Kasaria *ksr);
+KSR_API void ksr_player_pos_end_update(Kasaria *ksr, unsigned int frame_count);
 
 /*
 @brief                  Start the internal player handler
@@ -434,6 +556,8 @@ KSR_API bool ksr_player_is_ended(Kasaria *ksr);
 * The Following API functions are used for precise control over the MIDI events
 */
 
+void ksr_set_chorus_depth(Kasaria *ksr, int percent);
+
 // --------------------------- MIDI Event API ---------------------------
 KSR_API void ksr_channel_note_on(Kasaria *ksr, unsigned char channel, unsigned char note, unsigned char velocity);
 KSR_API void ksr_channel_note_off(Kasaria *ksr, unsigned char channel, unsigned char note);
@@ -442,6 +566,8 @@ KSR_API void ksr_channel_set_volume(Kasaria *ksr, unsigned char channel, unsigne
 KSR_API void ksr_channel_set_pan(Kasaria *ksr, unsigned char channel, unsigned char pan);
 KSR_API void ksr_channel_set_expression(Kasaria *ksr, unsigned char channel, unsigned char expression);
 KSR_API void ksr_channel_set_sustain(Kasaria *ksr, unsigned char channel, unsigned char sustain);
+KSR_API void ksr_channel_set_reverb(Kasaria *ksr, unsigned char channel, unsigned char reverb);
+KSR_API void ksr_channel_set_chorus(Kasaria *ksr, unsigned char channel, unsigned char level);
 KSR_API void ksr_channel_set_pitch_wheel(Kasaria *ksr, unsigned char channel, unsigned short pitch);
 KSR_API void ksr_channel_set_pitch_range(Kasaria *ksr, unsigned char channel, unsigned char range);
 KSR_API void ksr_channel_set_program(Kasaria *ksr, unsigned char channel, unsigned char program);

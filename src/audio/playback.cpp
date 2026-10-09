@@ -133,7 +133,7 @@ bool Playback::LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soun
             sf_opts.emplace_back(KsrSoundfontOpts{5, 0, 0, 1});
             // Soon this will be deprecated
             //ksr_load_soundfont_file(midi_synth_ctx, soundfont.label.c_str(), true);
-            ksr_load_soundfont_file_new(midi_synth_ctx, enabled_soundfonts[i].label.c_str(), sf_opts.back());
+            ksr_load_soundfont_file(midi_synth_ctx, enabled_soundfonts[i].label.c_str(), sf_opts.back());
             is_enabled_sf_available = true;
         }
     }
