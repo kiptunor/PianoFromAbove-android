@@ -7,6 +7,7 @@
 #include "../mb_types.h"
 #include "seq.h"
 
+#include <vector>
 #include <list>
 //#include <vector>
 #include <stack>
@@ -33,6 +34,23 @@ struct NVnote /* ===== Note class rendering ===== */
     NVnote(f64 T, const NVseq_event &E);
 };
 
+struct NVtempoEvent /* ===== Tempo change for grid rendering ===== */
+{
+    u64 tick;         // Absolute tick when this tempo takes effect
+    f64 T;            // Time in seconds
+    f64 usPerQuarter; // Microseconds per quarter note
+};
+
+struct TempoSegment
+{
+    u64 startTick;
+    u64 endTick;        // exclusive
+    f64 startTime;      // seconds
+    f64 secondsPerTick;
+    f64 T;              // Time in seconds
+    f64 usPerQuarter;   // Microseconds per quarter note
+};
+
 class NVnoteList /* ===== Note queue class ===== */
 {
   public:
@@ -42,6 +60,14 @@ class NVnoteList /* ===== Note queue class ===== */
 
     /* MIDI Parsing */
     bool              start_parse(const char *name);
+
+    std::vector<NVtempoEvent> TempoEvents;
+    std::vector<TempoSegment> TempoCache;
+    f64               get_tempo_at_time(f64 t) const;
+    void              build_tempo_cache();
+    f64            tickToSeconds(uint64_t tick) const;
+    u64          secondsToTick(double seconds) const;
+    f64               get_tempo_at_tick(uint64_t tick) const;
 
     /* Close component */
     void              destroy_all();

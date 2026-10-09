@@ -85,6 +85,7 @@ bool                        UI::internal_logging;
 bool                        UI::log_to_file;
 int                         UI::fps;
 bool                        UI::vertical_lines;
+bool                        UI::meas_lines;
 bool                        UI::use_default_media_paths = true;
 bool                        UI::background_image;
 bool                        UI::show_full_path_lost_midis      = false;
@@ -1180,6 +1181,7 @@ void UI::UpdateWidgetValues()
     UI::last_sf_path            = live_fd_state.soundfont_path;
     UI::no_midi_duplicates      = live_conf.no_midi_duplicates;
     UI::vertical_lines          = live_conf.draw_vertical_lines;
+    UI::meas_lines              = live_conf.draw_measure_lines;
     UI::no_soundfont_duplicates = live_conf.no_soundfont_duplicates;
     UI::background_image        = live_conf.background_image;
     UI::ui_theming              = live_conf.custom_ui_theme;
@@ -2235,6 +2237,9 @@ void UI::Render(SDL_Renderer *r)
 
                             ImGui::Checkbox("Vertical Lines", &vertical_lines);
                             live_conf.draw_vertical_lines = vertical_lines;
+
+                            ImGui::Checkbox("Measure Lines", &meas_lines);
+                            live_conf.draw_measure_lines = meas_lines;
 
                             if(ImGui::BeginItemTooltip())
                             {

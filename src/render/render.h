@@ -1,6 +1,9 @@
 #ifndef RENDER_H
 #define RENDER_H
 
+#include <string>
+
+
 #include "../mb_types.h"
 #include "../nv_midi/list.h"
 #include <SDL3/SDL.h>
@@ -39,6 +42,7 @@ class Render
     void        DrawKeyBoard();
     void        DrawNote(NVMidi::u16_t k, const NVnote &n, int pps);
     void        DrawBackgroundGrid();
+    void        DrawHorizontalLines();
     void        LoadBackgroundImage(std::string file);
     void        HandleResize(int newWidth, int newHeight);
     void        CreateNote(int k, int yb, int ye, us_int c);

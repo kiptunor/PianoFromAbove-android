@@ -27,8 +27,7 @@
 
 
 int                _KeyWidth[128];
-const f32          SharpRatio = 0.64f;
-f32                fDeflate;
+const f32          SharpRatio = 0.65f;
 
 // Define the vertex structure
 SDL_Vertex         vert[4];
@@ -50,10 +49,10 @@ us_int             Render::note_color;
 
 static const short GenKeyX[] = { 0, 12, 18, 33, 36, 54, 66, 72, 85, 90, 105, 108 };
 
-const char *video_driver;
+const char        *video_driver;
 
 
-bool Render::isDesktopSession()
+bool               Render::isDesktopSession()
 {
     return strcmp(video_driver, "wayland") == 0 || strcmp(video_driver, "x11") == 0;
 }
@@ -67,7 +66,7 @@ bool Render::isDesktopSession()
 
 
 
-   This is where the window creation takes place
+   This is where the window creaton takes place
 */
 
 Render::Render()
@@ -94,19 +93,16 @@ Render::Render()
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error!!!!!", "Failed to create window", nullptr);
     }
 
-#ifdef PLATFORM_ANDROID
-    Ren = SDL_CreateRenderer(Win, "opengles2");
-#else
+
     Ren = SDL_CreateRenderer(Win, "gpu");
     if(Ren == nullptr)
     {
-        Log::trace("", "Your GPU isn't cooperating with us today. Let's get revenge on it!!! | SDL_GetError(): %s", SDL_GetError());
+        Log::trace("", "GPU Ain't cooerating with us so lets go the good old way XD | SDL_GetError(): %s", SDL_GetError());
         if(isDesktopSession())
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error!!!!!", "Failed to create render context", nullptr);
-        
+
         Ren = SDL_CreateRenderer(Win, "opengles2"); // This works well on DRM from tty sessions
     }
-#endif
 
     // const char *backend = SDL_GetRendererName(Ren);
     // Log::info("", "SDL_GetRendererName(): %s", backend);
@@ -132,7 +128,6 @@ Render::Render()
     TW = scale(684), TH = scale(610);
     BkeyW = scale(60), WkeyW = scale(94);
     BkeyH = scale(386), WkeyH = scale(608);
-    fDeflate = WkeyW * 0.15f / 2.0f;
 
     HandleResize(WinW, WinH);
 }
@@ -218,7 +213,7 @@ void Render::HandleResize(int newWidth, int newHeight)
 
 int Render::scale(int x)
 {
-    // Fixed a small note glitch LMfaoerGdfgg
+    // Fixed a smal note glitch LMfaoerGdfgg
     return (x * WinW + 4700) / 7330;
 }
 
@@ -379,9 +374,10 @@ void Render::DrawKeyBoard()
             // Key body
             DrawRect(Ren, fCurX + fKeyGap1, fCurY + WinH - WinW * 82.0 / 1000, _KeyWidth[j] - fKeyGap, fTopCY + fNearCY, 0xFFCCCCCC, 0xFFCCCCCC, 0xFFFFFFFF, 0xFFFFFFFF);
 
-            // The bottom side of the key with a subtle gradient
-            DrawRect(Ren, fCurX + fKeyGap1, fCurY + fTopCY + WinH - WinW * 82.0 / 1000, _KeyWidth[j] - fKeyGap, 2.4f, 0xFF242424, 0xFF242424, 0xFFA3A3A3, 0xFFA3A3A3);
-            DrawRect(Ren, fCurX + fKeyGap1, fCurY + fTopCY + WinH - WinW * 80.5 / 1000, _KeyWidth[j] - fKeyGap, 6.0f, 0xFFBABABA, 0xFFBABABA, 0xFF9C9C9C, 0xFF9C9C9C);
+            // PFA-style near edge: dark → verydark gradient (bottom bevel)
+            DrawRect(Ren, fCurX + fKeyGap1, fCurY + fTopCY + WinH - WinW * 82.0 / 1000, _KeyWidth[j] - fKeyGap, fNearCY, 0xFFCCCCCC, 0xFFCCCCCC, 0xFF999999, 0xFF999999);
+            // PFA-style 2px transition line at the near-edge top
+            DrawRect(Ren, fCurX + fKeyGap1, fCurY + fTopCY + WinH - WinW * 82.0 / 1000, _KeyWidth[j] - fKeyGap, 2.0f, 0xFF3D3D3D, 0xFF3D3D3D, 0xFF999999, 0xFF999999);
 
             // Middle C square on C60
             if(j == 60)
@@ -434,13 +430,29 @@ void Render::DrawKeyBoard()
 
     for(int i = 75; i != 128; i++)
     {
-        int j                 = KeyMap[i];
-        f32 fNudgeX           = 0.2; // Black key spacing
+        int j       = KeyMap[i];
+        f32 fNudgeX = 0.2f;
+        {
+            int n = j % 12;
+            if(n == 1 || n == 6)
+                fNudgeX =  0.203f;  // C#, F# -- match PFA center
+            else if(n == 3 || n == 10)
+                fNudgeX =  0.297f;  // D#, A#
+            else if(n == 8)
+              fNudgeX =  0.278f;  // G#
+          
+            if(n == 1 || n == 6)
+                fNudgeX = 0.203f; // C#, F# — match PFA center
+            else if(n == 3 || n == 10)
+                fNudgeX = 0.297f; // D#, A#
+            else if(n == 8)
+                fNudgeX = 0.278f; // G#
+        }
         fCurX                 = KeyX[j];
         const f32 cx          = _KeyWidth[0] * SharpRatio;
         const f32 x           = fCurX - _KeyWidth[0] * (SharpRatio / 2.0f - fNudgeX);
-        const f32 fSharpTopX1 = x + _KeyWidth[0] * (SharpRatio - fSharpTop) / 2.0f + cx * 0.01f;
-        const f32 fSharpTopX2 = fSharpTopX1 + _KeyWidth[0] * fSharpTop - cx * 0.01f;
+        const f32 fSharpTopX1 = x + _KeyWidth[0] * (SharpRatio - fSharpTop) / 2.0f;
+        const f32 fSharpTopX2 = fSharpTopX1 + _KeyWidth[0] * fSharpTop;
 
         if(!KeyPress[j]) // If the key is not pressed
         {
@@ -521,11 +533,27 @@ bool Render::IsSharp(int note)
 
 void Render::CreateNote(int k, int yb, int ye, us_int c)
 {
+    int j = KeyMap[k];
+    int x = KeyX[j];
+    int w;
 
-    int x = KeyX[KeyMap[k]] - 1;
-    int w = (k >= 75) ? (int)(_KeyWidth[0] * SharpRatio) : WkeyW + 1;
-    if(k >= 75)
-        x -= (int)(_KeyWidth[0] * (SharpRatio / 2.0f - 0.2f));
+    if(k >= 75) // Black keys
+    {
+        f32 fNudge = 0.2f;
+        int n      = j % 12;
+        if(n == 1 || n == 6)
+            fNudge = 0.203f;
+        else if(n == 3 || n == 10)
+            fNudge = 0.297f;
+        else if(n == 8)
+            fNudge = 0.278f;
+        x -= (int)(_KeyWidth[0] * (SharpRatio / 2.0f - fNudge));
+        w  = (int)(_KeyWidth[0] * SharpRatio);
+    }
+    else // White keys
+    {
+        w = _KeyWidth[j];
+    }
 
     int      h       = yb - ye;
 
@@ -541,18 +569,20 @@ void Render::CreateNote(int k, int yb, int ye, us_int c)
     us_short g2      = g * 0.2f;
     us_short b2      = b * 0.2f;
 
-    // Convert original to BGR as well
     us_int   c_bgr   = 0xFF000000 | (b << 16) | (g << 8) | r;
     us_int   darker  = 0xFF000000 | (b2 << 16) | (g2 << 8) | r2;
     us_int   lighter = 0xFF000000 | (b1 << 16) | (g1 << 8) | r1;
 
-    // Draw a darker rect which serves as the note outline
+    // PFA-style deflate: white key width * 0.15 / 2, floor, clamp [1, 3]
+    f32      fd      = floor(_KeyWidth[0] * 0.15f / 2.0f + 0.5f);
+    fd               = std::max(std::min(fd, 3.0f), 1.0f);
+
+    // Dark outline (border) -- like PFA's iVeryDarkRGB
     DrawRect(Ren, x, ye, w, h, darker, darker, darker, darker);
 
-    // Draw a sligtly smaller rect with color blending gradient on top of the
-    // darker rect
-    if(h - 2.0f * fDeflate > 0)
-        DrawRect(Ren, x + fDeflate, ye + fDeflate, w - 2.0f * fDeflate, h - 2.0f * fDeflate, c_bgr, lighter, lighter, c_bgr);
+    // Inner note with PFA-style diagonal gradient (primary, dark, dark, primary)
+    if(h - 2.0f * fd > 0)
+        DrawRect(Ren, x + fd, ye + fd, w - 2.0f * fd, h - 2.0f * fd, c_bgr, lighter, lighter, c_bgr);
 }
 
 void Render::DrawNote(NVMidi::u16_t k, const NVnote &n, int pps)
@@ -620,7 +650,7 @@ void Render::DrawNote(NVMidi::u16_t k, const NVnote &n, int pps)
     int key = KeyMap[k];
 
     int y_0 = std::clamp((int)floor(_WinH - (n.Tstart - Playback::Tplay) * pps + 0.5f), 0, _WinH);
-    int y_1 = (n.Tend < Playback::Tplay + Tscr) ? std::clamp((int)floor(_WinH - (n.Tend - Playback::Tplay) * pps + 0.5f), 0, _WinH) : 0;
+    int y_1 = (n.Tend < Playback::Tplay + vis_Tscr) ? std::clamp((int)floor(_WinH - (n.Tend - Playback::Tplay) * pps + 0.5f), 0, _WinH) : 0;
 
     if(n.Tstart <= Playback::Tplay && Playback::Tplay < n.Tend)
     {
@@ -678,23 +708,88 @@ void Render::LoadBackgroundImage(std::string file)
 
 */
 
+static void DeriveGridColors(int bgR, int bgG, int bgB, us_int &outDark, us_int &outVeryDark)
+{
+    // PianoFromAbove style: dark = 0.7x brightness, verydark = 1.3x (brighter, capped)
+    int dR = (int)(bgR * 0.7f), dG = (int)(bgG * 0.7f), dB = (int)(bgB * 0.7f);
+    int vdR     = std::min(255, (int)(bgR * 1.3f));
+    int vdG     = std::min(255, (int)(bgG * 1.3f));
+    int vdB     = std::min(255, (int)(bgB * 1.3f));
+    outDark     = 0xFF000000 | (dB << 16) | (dG << 8) | dR;
+    outVeryDark = 0xFF000000 | (vdB << 16) | (vdG << 8) | vdR;
+}
+
 void Render::DrawBackgroundGrid()
 {
+    us_int iDark = 0, iVeryDark = 0;
+    DeriveGridColors(live_conf.bg_R, live_conf.bg_G, live_conf.bg_B, iDark, iVeryDark);
+
     for(int i = 1; i <= 127; i++)
     {
         if(!IsSharp(i - 1) && !IsSharp(i))
         {
             f32 x = KeyX[i - 1] + _KeyWidth[i - 1];
-            x     = floorf(x + 0.03f);
-            DrawRect(Ren, x - 1.0f, 0.0f, 1.8f, WinH, 0x402A2A2A, 0x601F1F1F, 0x601F1F1F, 0x402A2A2A);// Old
-            //  Todo: Add color blending with the background color
-            //DrawRect(Ren, x, 0.05f, 2.8f, WinH,
-            //    0xff292929, // top-left: darker (left side)
-            //    0x14FFFFFF, // top-right: lighter (right side)
-            //    0x14FFFFFF, // bottom-right: lighter (right side)
-            //    0xff292929  // bottom-left: darker (left side)
-            //);
+            x     = floorf(x + 0.5f);
+            // 3px vertical line with left/right gradient (PianoFromAbove)
+            DrawRect(Ren, x - 1.0f, 0.0f, 3.0f, (f32)_WinH, iDark, iVeryDark, iVeryDark, iDark);
         }
+    }
+}
+
+void Render::DrawHorizontalLines()
+{
+    if(!Playback::is_playback_started)
+        return;
+
+    us_int iDark = 0, iVeryDark = 0;
+    DeriveGridColors(live_conf.bg_R, live_conf.bg_G, live_conf.bg_B, iDark, iVeryDark);
+
+    auto &te = Midi_ctx.TempoEvents;
+    if(te.empty())
+        return;
+
+    const int  beatsPerMeasure = 4;
+    f64        pps             = (f64)_WinH / vis_Tscr; // pixels per second
+    f64        t_cur           = Playback::Tplay;
+    f64        t_end           = t_cur + vis_Tscr;
+    
+    // const int beatsPerMeasure = 4;
+    // f64       pps             = (f64)_WinH / Tscr; // pixels per second
+    // f64       t_cur           = Playback::Tplay;
+    // f64       t_end           = t_cur + Tscr;
+
+    // Walk tempo segments, drawing a measure line every beatsPerMeasure beats
+    f64       beatAccum       = 0.0;
+    for(size_t s = 0; s < te.size(); s++)
+    {
+        f64 segStart = te[s].T;
+        f64 segEnd   = (s + 1 < te.size()) ? te[s + 1].T : t_end + 1e12;
+        if(segEnd <= t_cur)
+        {
+            beatAccum += (segEnd - segStart) / (te[s].usPerQuarter * 1e-6);
+            continue;
+        }
+
+        f64 segStartClamped = std::max(segStart, t_cur);
+        f64 spb             = te[s].usPerQuarter * 1e-6;
+        if(spb <= 0)
+            spb = 0.5;
+
+        f64 relBeat         = beatAccum + (segStartClamped - segStart) / spb;
+        f64 nextMeasureBeat = std::ceil(relBeat / beatsPerMeasure) * beatsPerMeasure;
+        f64 t               = segStart + (nextMeasureBeat - beatAccum) * spb;
+
+        while(t <= segEnd && t <= t_end)
+        {
+            f32 y = (f32)_WinH - (f32)((t - t_cur) * pps);
+            y     = floorf(y + 0.5f);
+            if(y >= 0.0f && y <= (f32)_WinH)
+                // 3px horizontal line with top/bottom gradient (PianoFromAbove)
+                DrawRect(Ren, 0.0f, y - 1.0f, (f32)WinW, 3.0f, iDark, iDark, iVeryDark, iVeryDark);
+            nextMeasureBeat += beatsPerMeasure;
+            t                = segStart + (nextMeasureBeat - beatAccum) * spb;
+        }
+        beatAccum += (segEnd - segStart) / spb;
     }
 }
 

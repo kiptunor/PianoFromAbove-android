@@ -121,6 +121,21 @@ VisualizerHandler::VisualizerHandler()
         _WinH     = RenderWin->WinH - RenderWin->WinW * 80 / 1000;
         Tscr      = (double)_WinH / UI::live_note_speed;
 
+        
+        f64 tick_target = 1.0;
+        if(live_conf.tick_based_playback && Midi_ctx.TempoCache.size() > 1)
+        {
+            f64 tempo = Midi_ctx.get_tempo_at_time(Playback::Tplay);
+            f64 ref   = Midi_ctx.get_tempo_at_time(0.0);
+            if(ref > 0.0) tick_target = ref / tempo;
+        }
+        if(smooth_tick_scale <= 0.0)
+            smooth_tick_scale = tick_target;
+        else
+            smooth_tick_scale += (tick_target - smooth_tick_scale) * 0.12;
+        f64 eff_scale = (smooth_tick_scale > 0.001) ? smooth_tick_scale : 1.0;
+        vis_Tscr = Tscr / eff_scale;
+
 
         // Repeatedly call this function to start midi playback until the midi loader thread is finished
         Playback::PlayerStateUpdate();
@@ -199,6 +214,9 @@ VisualizerHandler::VisualizerHandler()
         // and on top of the background image draw the vertical lines
         if(live_conf.draw_vertical_lines)
             RenderWin->DrawBackgroundGrid();
+
+        if(live_conf.draw_measure_lines)
+            RenderWin->DrawHorizontalLines();
 
 
         note_buf.clear();

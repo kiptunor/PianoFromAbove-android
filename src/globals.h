@@ -32,6 +32,7 @@ inline std::vector<Playback::AudioDevice> availableAudioDevices;
 inline Render                            *RenderWin;
 inline int                                _WinH;
 inline f64                                Tscr;
+inline f64                                vis_Tscr;
 inline bool                               is_defaultconfig;
 inline bool                               Playback::is_paused;
 inline std::vector<UI::SoundfontItem>     loaded_soundfont_list;
@@ -82,6 +83,7 @@ inline Config::configuration              default_settings = {
     .no_soundfont_duplicates = false,
     .loop_colors             = false,
     .draw_vertical_lines     = true,
+    .draw_measure_lines      = true,
     .vsync                   = true,
     .internal_log_buffer     = true,
     .custom_ui_theme         = false,
