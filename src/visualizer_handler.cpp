@@ -123,12 +123,7 @@ VisualizerHandler::VisualizerHandler()
 
         
         f64 tick_target = 1.0;
-        //if(live_conf.tick_based_playback && Midi_ctx.TempoCache.size() > 1)
-        //{
-        //    f64 tempo = Midi_ctx.get_tempo_at_time(Playback::Tplay);
-        //    f64 ref   = Midi_ctx.get_tempo_at_time(0.0);
-        //    if(ref > 0.0) tick_target = ref / tempo;
-        //}
+        
         if(smooth_tick_scale <= 0.0)
             smooth_tick_scale = tick_target;
         else
