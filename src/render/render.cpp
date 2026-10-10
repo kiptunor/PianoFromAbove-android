@@ -715,8 +715,15 @@ static void DeriveGridColors(int bgR, int bgG, int bgB, us_int &outDark, us_int 
     int vdR     = std::min(255, (int)(bgR * 1.3f));
     int vdG     = std::min(255, (int)(bgG * 1.3f));
     int vdB     = std::min(255, (int)(bgB * 1.3f));
-    outDark     = 0xFF000000 | (dB << 16) | (dG << 8) | dR;
-    outVeryDark = 0xFF000000 | (vdB << 16) | (vdG << 8) | vdR;
+    us_int alpha;
+    
+    if(live_conf.background_image)
+        alpha = 0x32AFAFAF;
+    else
+        alpha = 0xFF000000;
+    
+    outDark     = alpha | (dB << 16) | (dG << 8) | dR;
+    outVeryDark = alpha | (vdB << 16) | (vdG << 8) | vdR;
 }
 
 void Render::DrawBackgroundGrid()
