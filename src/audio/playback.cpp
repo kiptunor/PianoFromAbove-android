@@ -3,6 +3,7 @@
 #include <sstream>
 #include <thread>
 #include <vector>
+#include <iostream>
 
 
 
@@ -25,10 +26,63 @@
 
 
 Kasaria          *midi_synth_ctx;
+MIDIAudioStream  *au_stm;
 
 
 
 
+void MIDIAudioStream::callback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
+{
+    (void)userdata;
+    (void)total_amount;
+
+    if(additional_amount == 0)
+        return;
+
+    int frames = additional_amount / (int)(sizeof(float) * 2);   // stereo float
+    float raw_audio[live_conf.audio_frame_size * 2];
+
+    while(frames > 0)
+    {
+        int chunk = frames > live_conf.audio_frame_size ? live_conf.audio_frame_size : frames;
+
+        if(midi_synth_ctx)
+            ksr_player_render(midi_synth_ctx, raw_audio, chunk);
+        else
+            memset(raw_audio, 0, (size_t)chunk * 2 * sizeof(float));
+   
+        SDL_PutAudioStreamData(stream, raw_audio, chunk * 2 * sizeof(float));
+        frames -= chunk;
+    }
+}
+
+MIDIAudioStream::MIDIAudioStream()
+{
+    SDL_Init(SDL_INIT_AUDIO);
+    
+    config.format             = SDL_AUDIO_F32;
+    config.channels           = 2;
+    config.freq               = DEFAULT_SAMPLE_RATE;
+
+    std::ostringstream str;
+    str << live_conf.audio_frame_size;
+    SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, str.str().c_str());
+
+    stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &config, callback, this);
+
+    if (!stream)
+    {
+        SDL_Log("Failed to create audio stream: %s", SDL_GetError());
+        return;
+    }
+
+    SDL_Log("Created stream: %p", (void *)stream);
+}
+
+MIDIAudioStream::~MIDIAudioStream()
+{
+    SDL_DestroyAudioStream(stream);
+}
 
 f64               Playback::Tplay                   = 0.0;
 bool              Playback::is_midi_loaded          = false;
@@ -62,6 +116,8 @@ void              Playback::Init()
     ksr_config_set_audio_frame_size(midi_synth_ctx, live_conf.audio_frame_size);
     ksr_config_set_midi_chunk_limit(midi_synth_ctx, live_conf.midi_chunk_size, live_conf.midi_chunk_limiter);
 
+    //Log::debug("Audio frame size: %s", live_conf.audio_frame_size);
+    std::cout << "Audio frame size: " << live_conf.audio_frame_size << "\n";
     // Skip notes with velocities in between the low and high specified threasholds
     // And also enable the filter
     ksr_config_set_note_skipping(midi_synth_ctx, loaded_config.vel_min, loaded_config.vel_max, loaded_config.vel_filter);
@@ -69,7 +125,9 @@ void              Playback::Init()
 
     ksr_config_set_max_voices(midi_synth_ctx, loaded_config.voice_count); // How many voices the synth can use
 
-    ksr_init_audio(midi_synth_ctx, INTERNAL_MIDI_PLAYER);
+    //ksr_init_audio(midi_synth_ctx, INTERNAL_MIDI_PLAYER);
+
+    au_stm = new MIDIAudioStream();
 }
 
 void LoadMidi(const std::string &midi_path)
@@ -130,7 +188,8 @@ bool Playback::LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soun
         if(enabled_soundfonts[i].checked)
         {
             // Set soundfont options (active_presets, bank, preset, load_percussion_bank)
-            sf_opts.emplace_back(KsrSoundfontOpts{5, 0, 0, 1});
+            //sf_opts.emplace_back(KsrSoundfontOpts{5, 0, 0, 1});
+            sf_opts.emplace_back(KsrSoundfontOpts{128, 0, 0, 1});
             // Soon this will be deprecated
             //ksr_load_soundfont_file(midi_synth_ctx, soundfont.label.c_str(), true);
             ksr_load_soundfont_file(midi_synth_ctx, enabled_soundfonts[i].label.c_str(), sf_opts.back());
@@ -227,7 +286,16 @@ void Playback::PlayerStateUpdate()
         ksr_config_set_note_skipping(midi_synth_ctx, live_conf.vel_min, live_conf.vel_max, live_conf.vel_filter);
 
         // Start playback
-        ksr_player_begin(midi_synth_ctx, false); // and don't wait for this to finish the entire midi
+        //ksr_player_begin(midi_synth_ctx, false); // and don't wait for this to finish the entire midi
+        //SDL_ResumeAudioStreamDevice(au_stm->stream);
+        if (!SDL_ResumeAudioStreamDevice(au_stm->stream))
+        {
+            SDL_Log("Resume failed: %s", SDL_GetError());
+        }
+        else
+        {
+            SDL_Log("Audio device resumed successfully");
+        }
 
         Log::debug("Player started.");
 
@@ -373,5 +441,6 @@ bool Playback::IsMIDIEnded()
 
 void Playback::Close()
 {
+    delete au_stm;
     ksr_shutdown(midi_synth_ctx);
 }

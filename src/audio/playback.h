@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <SDL3/SDL.h>
+
 
 
 #include "../mb_types.h"
@@ -20,7 +22,7 @@
 #endif
 
 
-
+#define DEFAULT_SAMPLE_RATE 48000
 
 
 
@@ -78,5 +80,17 @@ class Playback
     static void                     SetMidiChunkLimit(int chunk_limit, bool enabled);
     static void                     SetAudioFrameSize(int frame_size);
     static void                     SetOverlappingNotes(bool enabled);
+};
+
+class MIDIAudioStream
+{
+    public:
+        SDL_AudioSpec config;
+        SDL_AudioStream *stream;
+
+        static void callback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount);
+        
+        MIDIAudioStream();
+        ~MIDIAudioStream();
 };
 #endif

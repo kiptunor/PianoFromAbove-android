@@ -319,6 +319,9 @@ KSR_API void ksr_restore_defaults(Kasaria *ksr); // Restore default settings
 */
 
 
+KSR_API void ksr_lock_config(Kasaria *ksr);
+KSR_API void ksr_unlock_config(Kasaria *ksr);
+KSR_API bool ksr_is_config_locked(Kasaria *ksr);
 KSR_API void ksr_config_set_overlapping_notes(Kasaria *ksr, bool value);
 KSR_API void ksr_config_set_amplification(Kasaria *ksr, int amplification); // Amplification is represented in percent
 KSR_API void ksr_config_set_max_voices(Kasaria *ksr, int voices);           // The number of voices is clamped between 1 and MAX_VOICES
@@ -483,12 +486,33 @@ KSR_API int  ksr_reload_midi(Kasaria *ksr);
             which makes the synth really good for generating the real frequencies of chopped notes.
             An important capability that most blackers cant go without it
 */
-KSR_API int  ksr_player_get_stream(Kasaria *ksr, long audio_fmt, unsigned char *buffer, long count);
+KSR_API int ksr_player_get_stream(Kasaria *ksr, long audio_fmt, unsigned char *buffer, long count);
 
+/*
+@brief        Handle advamced player controls (play, pause, seek forward / backwards, position tracking) and get the generated audio
+              from the internal MIDI Player
+              
+@param ksr    Kasaria instance
+@param out    Raw audio output from the midi player + synth
+@param frames Audio frame counter
 
+@remark       The API function is almost as similar to ksr_get_player_stream() and it's more suitable for realtime
+              midi playback
+*/
+KSR_API int ksr_player_render(Kasaria *ksr, float *out, unsigned int frames);
+
+/*
+@brief          Read the current position of the midi player from audio frames in raw bytes
+
+@param ksr      Kasaria instance
+@param position Current player byte position
+
+@remark         64 bit integer is used for much more precision which can matter in some cases.
+                The raw byte position can be represented in many ways depending on the purpose.
+                One example is converting the raw byte position to seconds which uses 64 bit float.
+                See ksr_byte_pos2sec()
+*/
 KSR_API void ksr_player_get_byte_pos(Kasaria *ksr, uint64_t *position);
-KSR_API void ksr_player_pos_start_update(Kasaria *ksr);
-KSR_API void ksr_player_pos_end_update(Kasaria *ksr, unsigned int frame_count);
 
 /*
 @brief                  Start the internal player handler
