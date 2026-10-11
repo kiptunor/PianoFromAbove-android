@@ -117,8 +117,6 @@ void              Playback::Init()
     ksr_config_set_audio_frame_size(midi_synth_ctx, live_conf.audio_frame_size);
     ksr_config_set_midi_chunk_limit(midi_synth_ctx, live_conf.midi_chunk_size, live_conf.midi_chunk_limiter);
 
-    //Log::debug("Audio frame size: %s", live_conf.audio_frame_size);
-    std::cout << "Audio frame size: " << live_conf.audio_frame_size << "\n";
     // Skip notes with velocities in between the low and high specified threasholds
     // And also enable the filter
     ksr_config_set_note_skipping(midi_synth_ctx, loaded_config.vel_min, loaded_config.vel_max, loaded_config.vel_filter);
@@ -189,10 +187,10 @@ bool Playback::LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soun
         if(enabled_soundfonts[i].checked)
         {
             // Set soundfont options (active_presets, bank, preset, load_percussion_bank)
+            
             //sf_opts.emplace_back(KsrSoundfontOpts{5, 0, 0, 1});
             sf_opts.emplace_back(KsrSoundfontOpts{128, 0, 0, 1});
-            // Soon this will be deprecated
-            //ksr_load_soundfont_file(midi_synth_ctx, soundfont.label.c_str(), true);
+            
             ksr_load_soundfont_file(midi_synth_ctx, enabled_soundfonts[i].label.c_str(), sf_opts.back());
             is_enabled_sf_available = true;
         }
@@ -280,7 +278,6 @@ void Playback::PlayerStateUpdate()
     // This function is called every frame and the check below fires only once the midi was loaded
     if(is_midi_loaded_fn.exchange(false))
     {
-
         Playback::is_midi_loaded = true;
 
         // Set the note velocity skipping filter everytime the midi was laoded
@@ -288,15 +285,7 @@ void Playback::PlayerStateUpdate()
 
         // Start playback
         //ksr_player_begin(midi_synth_ctx, false); // and don't wait for this to finish the entire midi
-        //SDL_ResumeAudioStreamDevice(au_stm->stream);
-        if (!SDL_ResumeAudioStreamDevice(au_stm->stream))
-        {
-            SDL_Log("Resume failed: %s", SDL_GetError());
-        }
-        else
-        {
-            SDL_Log("Audio device resumed successfully");
-        }
+        SDL_ResumeAudioStreamDevice(au_stm->stream);
 
         Log::debug("Player started.");
 
@@ -321,9 +310,7 @@ void Playback::seek_playback(f64 seconds)
     ksr_player_seek(midi_synth_ctx, target_ms);
 
     // Update the player position required for the visualizer to render notes on the screen
-    //Tplay = ksr_player_get_pos(midi_synth_ctx);
     ksr_player_get_byte_pos(midi_synth_ctx, &current_player_pos);
-    //Tplay = ksr_player_get_pos(midi_synth_ctx);
     Tplay = ksr_byte_pos2sec(midi_synth_ctx, current_player_pos);
 
     // When seeking backwards, reload the note data
@@ -369,8 +356,9 @@ void Playback::pause()
 
     Playback::is_paused = !Playback::is_paused;
 
-    // Pause the internal midi player
-    ksr_player_pause(midi_synth_ctx);
+    // Pause the internal midi player only if the MIDI was not ended
+    if(!ksr_player_is_ended(midi_synth_ctx))
+        ksr_player_pause(midi_synth_ctx);
     
     if(playback_ended)
     {
@@ -382,8 +370,8 @@ void Playback::pause()
         // Set the note velocity skipping again
         ksr_config_set_note_skipping(midi_synth_ctx, live_conf.vel_min, live_conf.vel_max, live_conf.vel_filter);
 
-        // And start the playback without waiting for it to finish until midi ending is reached
-        ksr_player_begin(midi_synth_ctx, 0);
+        // And start the SDL audio thread again for midi playback
+        SDL_ResumeAudioStreamDevice(au_stm->stream);
         
         Tplay          = 0.0;
         playback_ended = false;
