@@ -58,6 +58,7 @@ void MIDIAudioStream::callback(void *userdata, SDL_AudioStream *stream, int addi
 
 MIDIAudioStream::MIDIAudioStream()
 {
+    SDL_SetHint(SDL_HINT_AUDIO_DRIVER, "pulseaudio");
     SDL_Init(SDL_INIT_AUDIO);
     
     config.format             = SDL_AUDIO_F32;
