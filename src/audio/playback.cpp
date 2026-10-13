@@ -26,7 +26,6 @@
 
 
 Kasaria          *midi_synth_ctx;
-MIDIAudioStream  *au_stm;
 
 
 
@@ -56,9 +55,63 @@ void MIDIAudioStream::callback(void *userdata, SDL_AudioStream *stream, int addi
     }
 }
 
-MIDIAudioStream::MIDIAudioStream()
+void MIDIAudioStream::CreateDriverList()
 {
-    SDL_SetHint(SDL_HINT_AUDIO_DRIVER, "pulseaudio");
+    int count = SDL_GetNumAudioDrivers();
+    const char *current = SDL_GetCurrentAudioDriver();
+    
+    for(int i = 0; i < count; ++i)
+    {
+        const char *driver = SDL_GetAudioDriver(i);
+        driverList.emplace_back(driver);
+        //std::printf("[%d] %s%s\n", i, driver ? driver : "(unknown)", current && driver && strcmp(driver, current) == 0 ? " (active)" : "");
+    }
+}
+
+void MIDIAudioStream::CreateDeviceList()
+{
+    int count = 0;
+    devices = SDL_GetAudioPlaybackDevices(&count);
+
+    if(!devices)
+    {
+        Log::error("Failed to list audio devices: %s", SDL_GetError());
+        return;
+    }
+
+    for(int i = 0; i < count; ++i)
+    {
+        const char *name = SDL_GetAudioDeviceName(devices[i]);
+        deviceList.emplace_back(Device{i, static_cast<int>(devices[i]), name});
+        std::printf("[%d] ID=%u, Name=%s\n", i, static_cast<unsigned>(devices[i]), name ? name : "(unknown)");
+    }
+
+    SDL_free(devices);
+}
+
+void MIDIAudioStream::SetDevice(int devID_Index)
+{
+    if(devID_Index < 0 || devID_Index >= static_cast<int>(deviceList.size())) return;
+        SDL_AudioDeviceID id = static_cast<SDL_AudioDeviceID>(deviceList[devID_Index].ID);
+        
+    Log::trace("Device ID: %u", static_cast<unsigned>(id));
+    stream = SDL_OpenAudioDeviceStream(id, &config, callback, this);
+
+    if(!stream)
+    {
+        Log::error("", "Failed to create audio stream: %s", SDL_GetError());
+        return;
+    }
+
+    Log::info("Created stream: %p", (void *)stream);
+}
+
+MIDIAudioStream::MIDIAudioStream(std::string audioDrvName)
+{
+    //SDL_SetHint(SDL_HINT_AUDIO_DRIVER, "pulseaudio");
+    //SDL_SetHint(SDL_HINT_AUDIO_DRIVER, "disk");
+    SDL_SetHint(SDL_HINT_AUDIO_DRIVER, audioDrvName.c_str());
+    
     SDL_Init(SDL_INIT_AUDIO);
     
     config.format             = SDL_AUDIO_F32;
@@ -68,22 +121,16 @@ MIDIAudioStream::MIDIAudioStream()
     std::ostringstream str;
     str << live_conf.audio_frame_size;
     SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, str.str().c_str());
-
-    stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &config, callback, this);
-
-    if (!stream)
-    {
-        SDL_Log("Failed to create audio stream: %s", SDL_GetError());
-        return;
-    }
-
-    SDL_Log("Created stream: %p", (void *)stream);
 }
 
 MIDIAudioStream::~MIDIAudioStream()
 {
     SDL_DestroyAudioStream(stream);
 }
+
+
+
+
 
 f64               Playback::Tplay                   = 0.0;
 bool              Playback::is_midi_loaded          = false;
@@ -126,7 +173,13 @@ void              Playback::Init()
 
     //ksr_init_audio(midi_synth_ctx, INTERNAL_MIDI_PLAYER);
 
-    au_stm = new MIDIAudioStream();
+    au_stm = new MIDIAudioStream(loaded_config.audio_drv_name);
+    
+    au_stm->CreateDriverList();
+    au_stm->CreateDeviceList();
+
+    au_stm->SetDevice(loaded_config.audio_device_index);
+    //au_stm->SetDriver(loaded_config.audio_device_index);
 }
 
 void LoadMidi(const std::string &midi_path)

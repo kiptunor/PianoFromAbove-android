@@ -87,10 +87,27 @@ class MIDIAudioStream
     public:
         SDL_AudioSpec config;
         SDL_AudioStream *stream;
+        SDL_AudioDeviceID *devices;
+
+        typedef struct
+        {
+            int index;
+            int ID;
+            std::string name;
+        }Device;
 
         static void callback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount);
-        
-        MIDIAudioStream();
+
+        MIDIAudioStream(std::string audioDrvName);
         ~MIDIAudioStream();
+
+        std::vector<std::string> driverList;
+        std::vector<Device> deviceList;
+
+        bool isDiskDriverAvailable; // Todo
+        void CreateDriverList();
+        void CreateDeviceList();
+        void SetAudioFilenamePath(std::string audioFName);
+        void SetDevice(int devID_Index);
 };
 #endif

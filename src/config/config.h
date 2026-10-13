@@ -72,6 +72,7 @@ class Config
         std::string              last_ccol_file_path;
         std::string              background_image_path;
         std::string              ui_theme_file_path;
+        std::string              audio_drv_name;
         std::vector<std::string> current_soundfonts;
         std::vector<std::string> extra_midi_paths;
         std::vector<std::string> extra_sf_paths;

@@ -30,6 +30,7 @@ inline std::vector<std::string>           live_midi_list;
 inline std::vector<std::string>           loaded_midi_list;
 inline std::vector<Playback::AudioDevice> availableAudioDevices;
 inline Render                            *RenderWin;
+inline MIDIAudioStream                   *au_stm;
 inline int                                _WinH;
 inline f64                                Tscr;
 inline f64                                vis_Tscr;

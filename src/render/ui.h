@@ -79,6 +79,7 @@ class UI
     static int                      min_velocity;
     static int                      max_velocity;
     static int                      current_audio_dev;
+    static int                      current_audio_drv;
     static int                      midi_chunk_size;
     static int                      audio_frame_size;
     static bool                     velocity_filter;

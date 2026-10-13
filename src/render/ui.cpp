@@ -1,5 +1,7 @@
 #include <filesystem>
 #include <string>
+#include <algorithm>
+#include <iterator>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 
@@ -102,6 +104,7 @@ ImVec4                      UI::clear_color;
 UI::RGBAint                 UI::liveColor;
 ImVec4                      UI::ui_chcolors[16];
 int                         UI::current_audio_dev;
+int                         UI::current_audio_drv;
 std::vector<std::string>    UI::soundfont_paths;
 std::vector<std::string>    UI::prev_images;
 static int                  builtin_ui_theme_idx = 0;
@@ -911,11 +914,11 @@ void RenderSoundfontsPathsList(const std::vector<std::string> &items, int &selec
     ImGui::EndChild();
 }
 
-void ShowAudioDeviceList(const std::vector<Playback::AudioDevice> &audioDevices)
+void ShowAudioDeviceList(const std::vector<MIDIAudioStream::Device> &audioDevices)
 {
     std::vector<const char *> deviceNames;
     for(const auto &device : audioDevices)
-        deviceNames.push_back(device.name);
+        deviceNames.push_back(device.name.c_str());
 
     // Ensure current_audio_dev is valid
     if(deviceNames.empty())
@@ -954,6 +957,44 @@ void ShowAudioDeviceList(const std::vector<Playback::AudioDevice> &audioDevices)
                 if(isSelected)
                     ImGui::SetItemDefaultFocus();
             }
+        }
+        ImGui::EndCombo();
+    }
+}
+
+void ShowAudioDriverList(const std::vector<std::string> &audioDrivers)
+{
+    static bool initialized = false;
+    if(!initialized)
+    {
+        auto it = std::find(audioDrivers.begin(), audioDrivers.end(), loaded_config.audio_drv_name);
+        UI::current_audio_drv = (it != audioDrivers.end()) ? static_cast<int>(std::distance(audioDrivers.begin(), it)) : 0;
+        initialized = true;
+    }
+
+    if(audioDrivers.empty())
+    {
+        UI::current_audio_drv = 0;
+        allow_audio_dev_ssave = false;
+        ImGui::BeginCombo("Audio Drivers *", "No drivers available");
+        ImGui::EndCombo();
+        return;
+    }
+
+    if(UI::current_audio_drv < 0 || UI::current_audio_drv >= static_cast<int>(audioDrivers.size()))
+        UI::current_audio_drv = 0;
+
+    if(ImGui::BeginCombo("Audio Drivers *", audioDrivers[UI::current_audio_drv].c_str()))
+    {
+        for(size_t i = 0; i < audioDrivers.size(); i++)
+        {
+            bool isSelected = UI::current_audio_drv == static_cast<int>(i);
+            if(ImGui::Selectable(audioDrivers[i].c_str(), isSelected))
+            {
+                UI::current_audio_drv = static_cast<int>(i);
+                live_conf.audio_drv_name = audioDrivers[i];
+            }
+            if(isSelected) ImGui::SetItemDefaultFocus();
         }
         ImGui::EndCombo();
     }
@@ -2384,9 +2425,32 @@ void UI::Render(SDL_Renderer *r)
                     */
                     if(ImGui::BeginTabItem("Synth"))
                     {
-                        //live_conf.audio_device_index = UI::current_audio_dev;
+                        live_conf.audio_device_index = UI::current_audio_dev;
                         //ShowAudioDeviceList(availableAudioDevices);
+                        ShowAudioDeviceList(au_stm->deviceList);
+                        ShowAudioDriverList(au_stm->driverList);
                         //ImGui::Text("\n");
+
+                        static int prev_audio_frame_sz = live_conf.voice_count;
+                        ImGui::Text("Audio Frame Size *: ");
+                        ImGui::SameLine();
+                        if(ImGui::InputInt("##TooMuchDrinkin", &live_conf.audio_frame_size))
+                        {
+                            // Ensure value is within reasonable limits
+                            if(live_conf.audio_frame_size < 1)
+                                live_conf.audio_frame_size = 1;
+                            
+                            if(live_conf.audio_frame_size > 90000)
+                                live_conf.audio_frame_size = 90000;
+                            
+                            // Apply the change in real-time if the value has changed
+                            if(prev_audio_frame_sz != live_conf.audio_frame_size)
+                            {
+                                //Playback::updateVoiceCount(live_conf.midi_chunk_size);
+                                //Playback::SetAudioFrameSize(live_conf.audio_frame_size);
+                                prev_audio_frame_sz = live_conf.audio_frame_size;
+                            }
+                        }
 
                         ImGui::Text("Voice Count");
 
@@ -2410,28 +2474,6 @@ void UI::Render(SDL_Renderer *r)
                             {
                                 Playback::updateVoiceCount(live_conf.voice_count);
                                 prev_voice_count = live_conf.voice_count;
-                            }
-                        }
-
-                        static int prev_audio_frame_sz = live_conf.voice_count;
-                        
-                        ImGui::Text("Audio Frame Size *: ");
-                        ImGui::SameLine();
-                        if(ImGui::InputInt("##TooMuchDrinkin", &live_conf.audio_frame_size))
-                        {
-                            // Ensure value is within reasonable limits
-                            if(live_conf.audio_frame_size < 1)
-                                live_conf.audio_frame_size = 1;
-                            
-                            if(live_conf.audio_frame_size > 90000)
-                                live_conf.audio_frame_size = 90000;
-                            
-                            // Apply the change in real-time if the value has changed
-                            if(prev_audio_frame_sz != live_conf.audio_frame_size)
-                            {
-                                //Playback::updateVoiceCount(live_conf.midi_chunk_size);
-                                //Playback::SetAudioFrameSize(live_conf.audio_frame_size);
-                                prev_audio_frame_sz = live_conf.audio_frame_size;
                             }
                         }
 
