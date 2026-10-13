@@ -109,5 +109,6 @@ class MIDIAudioStream
         void CreateDeviceList();
         void SetAudioFilenamePath(std::string audioFName);
         void SetDevice(int devID_Index);
+        void Close();
 };
 #endif

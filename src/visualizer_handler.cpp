@@ -112,6 +112,9 @@ VisualizerHandler::VisualizerHandler()
 
             // Save the position at the end
             Playback::UpdateEndPosition();
+
+            if(loaded_config.audio_drv_name == "disk")
+                au_stm->Close();
         }
 
 

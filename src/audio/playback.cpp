@@ -111,6 +111,9 @@ MIDIAudioStream::MIDIAudioStream(std::string audioDrvName)
     //SDL_SetHint(SDL_HINT_AUDIO_DRIVER, "pulseaudio");
     //SDL_SetHint(SDL_HINT_AUDIO_DRIVER, "disk");
     SDL_SetHint(SDL_HINT_AUDIO_DRIVER, audioDrvName.c_str());
+
+    if(loaded_config.audio_drv_name == "disk")
+        SDL_SetHint(SDL_HINT_AUDIO_DISK_TIMESCALE, "0");
     
     SDL_Init(SDL_INIT_AUDIO);
     
@@ -123,9 +126,17 @@ MIDIAudioStream::MIDIAudioStream(std::string audioDrvName)
     SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, str.str().c_str());
 }
 
+void MIDIAudioStream::Close()
+{
+    SDL_Delay(280); // It impacts how much time is left after the midi conversion ended
+    SDL_DestroyAudioStream(stream);
+    Log::info("Stream Closed");
+}
+
 MIDIAudioStream::~MIDIAudioStream()
 {
-    SDL_DestroyAudioStream(stream);
+    if(loaded_config.audio_drv_name != "disk")
+        SDL_DestroyAudioStream(stream);
 }
 
 
@@ -178,7 +189,8 @@ void              Playback::Init()
     au_stm->CreateDriverList();
     au_stm->CreateDeviceList();
 
-    au_stm->SetDevice(loaded_config.audio_device_index);
+    if(loaded_config.audio_drv_name != "disk")
+        au_stm->SetDevice(loaded_config.audio_device_index);
     //au_stm->SetDriver(loaded_config.audio_device_index);
 }
 
@@ -336,6 +348,9 @@ void Playback::PlayerStateUpdate()
         // Set the note velocity skipping filter everytime the midi was laoded
         ksr_config_set_note_skipping(midi_synth_ctx, live_conf.vel_min, live_conf.vel_max, live_conf.vel_filter);
 
+        if(loaded_config.audio_drv_name == "disk")
+            au_stm->SetDevice(loaded_config.audio_device_index);
+        
         // Start playback
         //ksr_player_begin(midi_synth_ctx, false); // and don't wait for this to finish the entire midi
         SDL_ResumeAudioStreamDevice(au_stm->stream);
