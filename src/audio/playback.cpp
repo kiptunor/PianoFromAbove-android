@@ -38,8 +38,8 @@ void MIDIAudioStream::callback(void *userdata, SDL_AudioStream *stream, int addi
     if(additional_amount == 0)
         return;
 
-    int frames = additional_amount / (int)(sizeof(float) * 2);   // stereo float
-    float raw_audio[live_conf.audio_frame_size * 2];
+    int frames = additional_amount / (int)(sizeof(f32) * 2);   // stereo float
+    f32 raw_audio[live_conf.audio_frame_size * 2];
 
     while(frames > 0)
     {
@@ -48,9 +48,9 @@ void MIDIAudioStream::callback(void *userdata, SDL_AudioStream *stream, int addi
         if(midi_synth_ctx)
             ksr_player_render(midi_synth_ctx, raw_audio, chunk);
         else
-            memset(raw_audio, 0, (size_t)chunk * 2 * sizeof(float));
+            memset(raw_audio, 0, (size_t)chunk * 2 * sizeof(f32));
    
-        SDL_PutAudioStreamData(stream, raw_audio, chunk * 2 * sizeof(float));
+        SDL_PutAudioStreamData(stream, raw_audio, chunk * 2 * sizeof(f32));
         frames -= chunk;
     }
 }
@@ -322,6 +322,9 @@ void Playback::CloseMidi()
     is_paused = false;
 
     ksr_unload_midi(midi_synth_ctx);
+
+    if(loaded_config.audio_drv_name == "disk")
+        au_stm->Close();
 
     // Reset note lists
     for(int i = 0; i < 128; ++i)
