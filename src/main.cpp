@@ -171,7 +171,7 @@ extern "C" int APP_ENTRY(int argc, char *argv[])
 
             std::string        msg_str    = msg.str();
             SDL_MessageBoxData msgboxdata = {
-                SDL_MESSAGEBOX_WARNING, RenderWin->Win, "Missing Files", msg_str.c_str(), SDL_arraysize(buttons), buttons,
+                SDL_MESSAGEBOX_WARNING, NULL, "Missing Files", msg_str.c_str(), SDL_arraysize(buttons), buttons,
                 NULL // color scheme (optional)
             };
 
