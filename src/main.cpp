@@ -11,9 +11,9 @@
 
 
 #ifdef PLATFORM_ANDROID
-    #define APP_ENTRY SDL_main
+    #define APP_ENTRY extern "C" int SDL_main
 #else
-    #define APP_ENTRY main
+    #define APP_ENTRY int main
 #endif
 
 
@@ -56,7 +56,7 @@ VisualizerHandler *vis;
 
 
 
-extern "C" int APP_ENTRY(int argc, char *argv[])
+APP_ENTRY(int argc, char *argv[])
 {
     // CLI Parsing
     //if(argc > 1)

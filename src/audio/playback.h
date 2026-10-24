@@ -39,14 +39,6 @@ extern NVnoteList Midi_ctx;
 class Playback
 {
   public:
-    typedef struct
-    {
-        int         index;
-        const char *name;
-        const char *driver;
-        bool        is_default;
-        bool        is_enabled;
-    } AudioDevice;
 
     static u32       main_stream;
     static bool      is_playback_started;
@@ -96,6 +88,8 @@ class MIDIAudioStream
             std::string name;
         }Device;
 
+        SDL_AudioDeviceID logical_audio_dev;
+
         static void callback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount);
 
         MIDIAudioStream(std::string audioDrvName);
@@ -105,6 +99,7 @@ class MIDIAudioStream
         std::vector<Device> deviceList;
 
         bool isDiskDriverAvailable; // Todo
+        bool isInitialized;
         void CreateDriverList();
         void CreateDeviceList();
         void SetAudioFilenamePath(std::string audioFName);

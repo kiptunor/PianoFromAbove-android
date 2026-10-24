@@ -83,7 +83,7 @@ void MIDIAudioStream::CreateDeviceList()
     {
         const char *name = SDL_GetAudioDeviceName(devices[i]);
         deviceList.emplace_back(Device{i, static_cast<int>(devices[i]), name});
-        std::printf("[%d] ID=%u, Name=%s\n", i, static_cast<unsigned>(devices[i]), name ? name : "(unknown)");
+        //std::printf("[%d] ID=%u, Name=%s\n", i, static_cast<unsigned>(devices[i]), name ? name : "(unknown)");
     }
 
     SDL_free(devices);
@@ -95,7 +95,7 @@ void MIDIAudioStream::SetDevice(int devID_Index)
         SDL_AudioDeviceID id = static_cast<SDL_AudioDeviceID>(deviceList[devID_Index].ID);
         
     Log::trace("Device ID: %u", static_cast<unsigned>(id));
-    stream = SDL_OpenAudioDeviceStream(id, &config, callback, this);
+    stream = SDL_OpenAudioDeviceStream(id, &config, callback, this); // Physical audio device is opened
 
     if(!stream)
     {
@@ -103,13 +103,16 @@ void MIDIAudioStream::SetDevice(int devID_Index)
         return;
     }
 
-    Log::info("Created stream: %p", (void *)stream);
+    logical_audio_dev = SDL_GetAudioStreamDevice(stream); // Logical audio device is returned
+    isInitialized = true;
+
+    Log::info("Audio Stream Created: %p", (void *)stream);
 }
 
 MIDIAudioStream::MIDIAudioStream(std::string audioDrvName)
 {
-    //SDL_SetHint(SDL_HINT_AUDIO_DRIVER, "pulseaudio");
-    //SDL_SetHint(SDL_HINT_AUDIO_DRIVER, "disk");
+    isInitialized = false;
+    
     SDL_SetHint(SDL_HINT_AUDIO_DRIVER, audioDrvName.c_str());
 
     if(loaded_config.audio_drv_name == "disk")
@@ -128,15 +131,18 @@ MIDIAudioStream::MIDIAudioStream(std::string audioDrvName)
 
 void MIDIAudioStream::Close()
 {
-    SDL_Delay(280); // It impacts how much time is left after the midi conversion ended
+    SDL_Delay(380); // It impacts how much time is left after the midi conversion ended
     SDL_DestroyAudioStream(stream);
-    Log::info("Stream Closed");
+    Log::info("Audio Stream Closed");
 }
 
 MIDIAudioStream::~MIDIAudioStream()
 {
     if(loaded_config.audio_drv_name != "disk")
+    {
+        SDL_CloseAudioDevice(logical_audio_dev);
         SDL_DestroyAudioStream(stream);
+    }
 }
 
 
@@ -189,8 +195,11 @@ void              Playback::Init()
     au_stm->CreateDriverList();
     au_stm->CreateDeviceList();
 
+    // Any audio device can be set here
     if(loaded_config.audio_drv_name != "disk")
         au_stm->SetDevice(loaded_config.audio_device_index);
+
+    // Setting an audio device too early using the "disk" driver can make super large raw audio files
     //au_stm->SetDriver(loaded_config.audio_device_index);
 }
 
@@ -218,9 +227,9 @@ void LoadMidi(const std::string &midi_path)
     Log::debug("Creating MIDI Stream...");
 
     ksr_load_midi_file(midi_synth_ctx, MIDI_MAP, midi_path.c_str());
-    is_midi_stream_creating_fn.store(false, std::memory_order_release); // Midi stream was created
-
     Log::debug("MIDI Stream created.");
+    
+    is_midi_stream_creating_fn.store(false, std::memory_order_release); // Midi stream was created
 
     is_midi_loading_fn.store(false, std::memory_order_release);
     is_midi_loaded_fn.store(true, std::memory_order_release);
@@ -323,7 +332,9 @@ void Playback::CloseMidi()
 
     ksr_unload_midi(midi_synth_ctx);
 
-    if(loaded_config.audio_drv_name == "disk")
+    // Normally the audio stream is closed once the MIDI player (kasaria midi player) reached MIDI end
+    // and no audio steeam should be closed if no audio stream was initialized
+    if(loaded_config.audio_drv_name == "disk" && au_stm->isInitialized)
         au_stm->Close();
 
     // Reset note lists
@@ -352,7 +363,7 @@ void Playback::PlayerStateUpdate()
         ksr_config_set_note_skipping(midi_synth_ctx, live_conf.vel_min, live_conf.vel_max, live_conf.vel_filter);
 
         if(loaded_config.audio_drv_name == "disk")
-            au_stm->SetDevice(loaded_config.audio_device_index);
+            au_stm->SetDevice(0); // No actual audio device needed
         
         // Start playback
         //ksr_player_begin(midi_synth_ctx, false); // and don't wait for this to finish the entire midi

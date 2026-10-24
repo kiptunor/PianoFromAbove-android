@@ -47,7 +47,7 @@ void VisualizerHandler::shutdown()
     Midi_ctx.destroy_all();
 
     const char *sdl_err = SDL_GetError();
-    if(strlen(sdl_err) << 1)
+    if(sdl_err && *sdl_err)
     {
         std::ostringstream temp;
         temp << "Caught last Error: " << sdl_err;
