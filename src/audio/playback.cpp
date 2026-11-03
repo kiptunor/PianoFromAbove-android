@@ -226,7 +226,7 @@ void LoadMidi(const std::string &midi_path)
     is_midi_stream_creating_fn.store(true, std::memory_order_release); // Midi stream is creating
     Log::debug("Creating MIDI Stream...");
 
-    ksr_load_midi_file(midi_synth_ctx, MIDI_MAP, midi_path.c_str());
+    ksr_load_midi_file(midi_synth_ctx, MIDI_MAP, PRERENDER_MIDI_PLAYER, midi_path.c_str());
     Log::debug("MIDI Stream created.");
     
     is_midi_stream_creating_fn.store(false, std::memory_order_release); // Midi stream was created
@@ -383,51 +383,37 @@ void Playback::PlayerStateUpdate()
 
 void Playback::seek_playback(f64 seconds)
 {
-    if(!is_midi_loaded || playback_ended)
+    if(!is_midi_loaded)
         return;
 
+    // Get the actual playback position from the published PCM position.
+    ksr_player_get_byte_pos(midi_synth_ctx, &current_player_pos);
+    f64 current_seconds = ksr_byte_pos2sec(midi_synth_ctx, current_player_pos);
 
-    // seconds is a relative delta → absolute target in ms
-    long target_ms = ksr_get_current_time(midi_synth_ctx) + (long)(seconds * 1000);
-    ksr_player_seek(midi_synth_ctx, target_ms);
+    // Calculate the absolute seek target.
+    f64 target_seconds = current_seconds + seconds;
+    if(target_seconds < 0.0)
+        target_seconds = 0.0;
 
-    // Update the player position required for the visualizer to render notes on the screen
+    // Seek the prerendered audio.
+    ksr_player_seek(midi_synth_ctx, (long)(target_seconds * 1000.0));
+
+    // Read the resulting playback position.
     ksr_player_get_byte_pos(midi_synth_ctx, &current_player_pos);
     Tplay = ksr_byte_pos2sec(midi_synth_ctx, current_player_pos);
 
-    // When seeking backwards, reload the note data
-    if(seconds < 0)
-    {
-        // Clear the note list
-        for(int i = 0; i < 128; ++i)
-            Midi_ctx.Note_list[i].clear();
+    // Reset and synchronize the visualizer.
+    for(int i = 0; i < 128; ++i)
+        Midi_ctx.Note_list[i].clear();
 
-
-        // Seek the list to the new position and update
-        Midi_ctx.list_seek(Tplay);
-        Midi_ctx.update_to(Tplay + Tscr);
-    }
+    Midi_ctx.list_seek(Tplay);
+    Midi_ctx.update_to(Tplay + Tscr);
 
     if(playback_ended)
     {
-        // If at the end and trying to seek back, restart playback from desired position
-        f64 new_time = Tplay + (-seek_amount);
-        if(new_time < 0)
-            new_time = 0;
-
-        // Set the midi player position in the internal midi player
-        ksr_player_seek(midi_synth_ctx, 0);
-
-        // Reset visualization properly
-        for(int i = 0; i < 128; ++i)
-            Midi_ctx.Note_list[i].clear();
-
-
-        // Update time and reset flags
-        Tplay = new_time;
-        Midi_ctx.list_seek(Tplay);
         playback_ended = false;
-        is_paused      = false;
+        is_paused = false;
+        SDL_ResumeAudioStreamDevice(au_stm->stream);
     }
 }
 
@@ -496,6 +482,7 @@ void Playback::UpdateEndPosition()
 
 void Playback::UpdateMidiPlayerPos()
 {
+    playback_ended = ksr_player_is_ended(midi_synth_ctx);
     ksr_player_get_byte_pos(midi_synth_ctx, &current_player_pos);
     Tplay = ksr_byte_pos2sec(midi_synth_ctx, current_player_pos);
 }
