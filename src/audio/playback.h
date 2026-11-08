@@ -65,6 +65,9 @@ class Playback
     static void UpdateMidiPlayerPos();
     static bool IsMidiPlayerActive();
     static bool IsMIDIEnded();
+    static f64  GetEndPos();
+    static f64  GetPrerenderPos();
+    static bool IsPrerenderFinished();
     static void pause();
     static void PlayerStateUpdate();
     static void Close();

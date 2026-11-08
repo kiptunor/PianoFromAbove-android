@@ -387,8 +387,8 @@ void Playback::seek_playback(f64 seconds)
         return;
 
     // Get the actual playback position from the published PCM position.
-    ksr_player_get_byte_pos(midi_synth_ctx, &current_player_pos);
-    f64 current_seconds = ksr_byte_pos2sec(midi_synth_ctx, current_player_pos);
+    ksr_player_get_pos(midi_synth_ctx, &current_player_pos);
+    f64 current_seconds = ksr_raw_pos2sec(midi_synth_ctx, current_player_pos);
 
     // Calculate the absolute seek target.
     f64 target_seconds = current_seconds + seconds;
@@ -399,8 +399,8 @@ void Playback::seek_playback(f64 seconds)
     ksr_player_seek(midi_synth_ctx, (long)(target_seconds * 1000.0));
 
     // Read the resulting playback position.
-    ksr_player_get_byte_pos(midi_synth_ctx, &current_player_pos);
-    Tplay = ksr_byte_pos2sec(midi_synth_ctx, current_player_pos);
+    ksr_player_get_pos(midi_synth_ctx, &current_player_pos);
+    Tplay = ksr_raw_pos2sec(midi_synth_ctx, current_player_pos);
 
     // Reset and synchronize the visualizer.
     for(int i = 0; i < 128; ++i)
@@ -476,15 +476,21 @@ void Playback::SetOverlappingNotes(bool enabled)
 // From here these get super ez
 void Playback::UpdateEndPosition()
 {
-    ksr_player_get_byte_pos(midi_synth_ctx, &current_player_pos);
-    saved_position = ksr_byte_pos2sec(midi_synth_ctx, current_player_pos);
+    ksr_player_get_pos(midi_synth_ctx, &current_player_pos);
+    saved_position = ksr_raw_pos2sec(midi_synth_ctx, current_player_pos);
 }
 
 void Playback::UpdateMidiPlayerPos()
 {
     playback_ended = ksr_player_is_ended(midi_synth_ctx);
-    ksr_player_get_byte_pos(midi_synth_ctx, &current_player_pos);
-    Tplay = ksr_byte_pos2sec(midi_synth_ctx, current_player_pos);
+    
+    ksr_player_get_pos(midi_synth_ctx, &current_player_pos);
+    Tplay = ksr_raw_pos2sec(midi_synth_ctx, current_player_pos) + 0.1f; // And give just a little bit more so the piano visualizer does not remain stuck
+}
+
+bool Playback::IsPrerenderFinished()
+{
+    return ksr_prerender_is_eos(midi_synth_ctx);
 }
 
 bool Playback::IsMidiPlayerActive()
@@ -495,6 +501,22 @@ bool Playback::IsMidiPlayerActive()
 bool Playback::IsMIDIEnded()
 {
     return ksr_player_is_ended(midi_synth_ctx);
+}
+
+f64  Playback::GetPrerenderPos()
+{
+    u64 pr_pos;
+    ksr_prerender_get_pos(midi_synth_ctx, &pr_pos);
+
+    return ksr_raw_pos2sec(midi_synth_ctx, pr_pos);
+}
+
+f64 Playback::GetEndPos()
+{
+    u64 end_pos;
+    ksr_player_get_end_pos(midi_synth_ctx, &end_pos);
+    
+    return ksr_raw_pos2sec(midi_synth_ctx, end_pos);
 }
 
 void Playback::Close()

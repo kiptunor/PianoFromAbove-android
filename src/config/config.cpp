@@ -85,6 +85,7 @@ Config::configuration Config::Load()
     nlohmann::json visual_obj           = json_in.value("visual",               nlohmann::json::object());
     in_conf.vsync                       = visual_obj.value("vsync",             default_settings.vsync);
     in_conf.fps                         = visual_obj.value("fps",               default_settings.fps);
+    in_conf.overlay_stats               = visual_obj.value("overlayStats",      default_settings.overlay_stats);
     in_conf.note_speed                  = visual_obj.value("noteSpeed",         default_settings.note_speed);
     in_conf.loop_colors                 = visual_obj.value("loopNoteColors",    default_settings.loop_colors);
     in_conf.draw_vertical_lines         = visual_obj.value("drawVerticalLines", default_settings.draw_vertical_lines);
@@ -142,6 +143,7 @@ void Config::Save(configuration config)
     {
         { "vsync",             config.vsync               },
         { "fps",               config.fps                 },
+        { "overlayStats",      config.overlay_stats       },
         { "noteSpeed",         config.note_speed          },
         { "loopNoteColors",    config.loop_colors         },
         { "channelColors",     config.last_ccol_file_path },

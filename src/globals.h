@@ -24,24 +24,24 @@
 
 
 
-inline Config::configuration              loaded_config;
-inline Config::configuration              live_conf;
-inline std::vector<std::string>           live_midi_list;
-inline std::vector<std::string>           loaded_midi_list;
-inline Render                            *RenderWin;
-inline MIDIAudioStream                   *au_stm;
-inline int                                _WinH;
-inline f64                                Tscr;
-inline f64                                vis_Tscr;
-inline f64                                smooth_tick_scale = 0.0;
-inline bool                               is_defaultconfig;
-inline bool                               Playback::is_paused;
-inline std::vector<UI::SoundfontItem>     loaded_soundfont_list;
-inline FileDialogState::DirPaths          loaded_file_dialog_state;
-inline FileDialogState::DirPaths          live_fd_state;
-inline std::vector<NoteBuffer::Note>      note_buf;
+inline Config::configuration          loaded_config;
+inline Config::configuration          live_conf;
+inline std::vector<std::string>       live_midi_list;
+inline std::vector<std::string>       loaded_midi_list;
+inline Render                        *RenderWin;
+inline MIDIAudioStream               *au_stm;
+inline int                            _WinH;
+inline f64                            Tscr;
+inline f64                            vis_Tscr;
+inline f64                            smooth_tick_scale = 0.0;
+inline bool                           is_defaultconfig;
+inline bool                           Playback::is_paused;
+inline std::vector<UI::SoundfontItem> loaded_soundfont_list;
+inline FileDialogState::DirPaths      loaded_file_dialog_state;
+inline FileDialogState::DirPaths      live_fd_state;
+inline std::vector<NoteBuffer::Note>  note_buf;
 
-inline Config::configuration              default_settings = {
+inline Config::configuration          default_settings = {
     .voice_count             = 500,
     .audio_device_index      = 1,
     .note_speed              = 4271,
@@ -50,7 +50,7 @@ inline Config::configuration              default_settings = {
     .bg_B                    = 47,
     .bg_A                    = 255,
     // clang-format off
-    .channel_colors          = { 
+    .channel_colors          = {
         0x3366FF,
         0xFF7E33,
         0x33FF66,
@@ -90,7 +90,8 @@ inline Config::configuration              default_settings = {
     .custom_ui_theme         = false,
     .builtin_ui_theme        = true,
     .midi_chunk_limiter      = false,
-    .overlapping_notes        = true,
+    .overlapping_notes       = true,
+    .overlay_stats           = true,
     .OR                      = true,
 };
 

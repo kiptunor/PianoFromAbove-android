@@ -95,8 +95,10 @@ bool                        UI::show_full_path_lost_soundfonts = false;
 bool                        UI::ui_theming                     = false;
 bool                        UI::overlapping_notes;
 bool                        UI::midi_chunk_limiter;
+bool                        UI::overlay_stats_window;
 int                         UI::min_velocity;
 int                         UI::max_velocity;
+f32                         UI::current_midi_pos_sl;
 std::string                 UI::last_midi_path;
 std::string                 UI::last_midi_file;
 std::string                 UI::last_sf_path;
@@ -1228,6 +1230,7 @@ void UI::UpdateWidgetValues()
     UI::ui_theming              = live_conf.custom_ui_theme;
     UI::overlapping_notes       = live_conf.overlapping_notes;
     UI::midi_chunk_limiter      = live_conf.midi_chunk_limiter;
+    UI::overlay_stats_window    = live_conf.overlay_stats;
     live_soundfont_list         = loaded_soundfont_list;
 }
 
@@ -2136,6 +2139,9 @@ void UI::Render(SDL_Renderer *r)
 
                         live_conf.fps = fps;
 
+                        ImGui::Checkbox("Stats overlay", &overlay_stats_window);
+                        live_conf.overlay_stats = overlay_stats_window;
+
                         ImGui::Separator();
 
                         ImGui::Checkbox("Overlap Remover *", &overlap_remover);
@@ -2820,7 +2826,74 @@ void UI::Render(SDL_Renderer *r)
         ImGui::End();
     }
 
+    ConstrainWindowMove("##overlay_Stats");
+
+    if(overlay_stats_window)
+    {
+#ifndef PLATFORM_ANDROID
+        ImGui::SetNextWindowSizeConstraints(ImVec2(200, 200), ImVec2(FLT_MAX, FLT_MAX));
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, IM_COL32(0, 0, 0, 130));
+        ImGui::Begin("##overlay_Stats", &overlay_stats_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+#else // Setting up a different ui layout for mobile users
+        ImGui::SetNextWindowSize(ImVec2(1500.0f, 860.0f));
+        ImGui::Begin("##overlay_Stats", &overlay_stats_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+#endif
+        ImGui::Text("FPS: %.1f", io.Framerate);
+        ImGui::Text("Prerender status: ");
+        ImGui::SameLine();
+        if(Playback::IsPrerenderFinished() && Playback::is_midi_loaded)
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "finished! (Audio ready to export!)");
+        else
+            if(Playback::is_midi_loaded)
+                ImGui::Text("running...");
+            else
+                ImGui::Text("Idle");
+        
+        ImGui::End();
+        ImGui::PopStyleColor();
+    }
+
     ImGui::End();
+
+    if(ImGui::BeginMainMenuBar())
+    {
+        current_midi_pos_sl = Playback::Tplay - 0.1f;
+        
+        float endPos   = static_cast<float>(Playback::GetEndPos());
+        float progress = endPos > 0.0f ? static_cast<float>(Playback::GetPrerenderPos()) / endPos : 0.0f;
+        progress      = ImClamp(progress, 0.0f, 1.0f);
+        
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 4.0f));
+        
+        // Get slider dimensions and position
+        ImVec2 pos  = ImGui::GetCursorScreenPos();
+        float width  = ImGui::GetContentRegionAvail().x;
+        float height = ImGui::GetFrameHeight();
+        
+        // Pre-render track thing
+        ImDrawList* draw = ImGui::GetWindowDrawList();
+        
+        draw->AddRectFilled(pos, ImVec2(pos.x + width, pos.y + height), IM_COL32(45, 45, 45, 255));
+        
+        // Pre-render position
+        draw->AddRectFilled(pos, ImVec2(pos.x + width * progress, pos.y + height), IM_COL32(51, 153, 255, 255));
+        
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0, 0, 0, 0));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0, 0, 0, 0));
+        ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(1.0f, 0.9f, 0.2f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(1.0f, 1.0f, 0.4f, 1.0f));
+    
+        // Render slider over pre-render progress
+        ImGui::SetNextItemWidth(width);
+    
+        ImGui::SliderFloat("##PlaybackPosition", &current_midi_pos_sl, 0.0f, endPos, "", ImGuiSliderFlags_NoInput);
+    
+        ImGui::PopStyleColor(5);
+        
+        ImGui::EndMainMenuBar();
+        ImGui::PopStyleVar();
+    }
 
     // Rendering
     ImGui::Render();

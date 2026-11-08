@@ -67,6 +67,7 @@ class Config
         bool                     builtin_ui_theme;
         bool                     midi_chunk_limiter;
         bool                     overlapping_notes;
+        bool                     overlay_stats;
         bool                     OR; // Overlap remover
         //std::string              last_midi_file; // Moved midi_list.h
         std::string              last_ccol_file_path;

@@ -82,6 +82,7 @@ class UI
     static int                      current_audio_drv;
     static int                      midi_chunk_size;
     static int                      audio_frame_size;
+    static f32                      current_midi_pos_sl;
     static bool                     velocity_filter;
     static bool                     loop_colors;
     static bool                     overlap_remover;
@@ -100,6 +101,7 @@ class UI
     static bool                     midi_chunk_limiter;
     static bool                     use_default_media_paths;
     static bool                     ui_theming;
+    static bool                     overlay_stats_window;
     static ImVec4                   ui_chcolors[16];
     static ImVec4                   clear_color;
     static RGBAint                  liveColor;

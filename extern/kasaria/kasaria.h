@@ -119,6 +119,7 @@ typedef struct
 // Soon to be added as argument to ksr_play_midi
 #define REALTIME_MIDI_PLAYER  11
 #define PRERENDER_MIDI_PLAYER 12
+#define MULTITHREADED_PRERENDER_MIDI_PLAYER 13
 
 // Audio format identifiers for ksr_play_midi_raw
 #define AUDIO_CHAR   21
@@ -356,6 +357,7 @@ KSR_API void ksr_config_set_note_skipping(Kasaria *ksr, uint8_t low_vel, uint8_t
 KSR_API void ksr_config_set_midi_chunk_limit(Kasaria *ksr, int size, bool enabled);
 KSR_API void ksr_config_set_audio_compressor(Kasaria *ksr, bool enabled);
 KSR_API void ksr_config_set_audio_frame_size(Kasaria *ksr, int size);
+KSR_API void ksr_config_set_prerender_retention(Kasaria *ksr, bool enabled);
 
 
 /*
@@ -486,6 +488,15 @@ KSR_API void ksr_unload_midi(Kasaria *ksr);
 */
 KSR_API int  ksr_reload_midi(Kasaria *ksr);
 
+// Todo
+KSR_API int  ksr_prerender_read_buf(Kasaria *ksr, float *out_buffer, unsigned int frames);
+
+KSR_API bool ksr_prerender_is_eos(Kasaria *ksr); // Maybe better than calculating and comparing current position with end position ?
+
+KSR_API int  ksr_prerender_clear(Kasaria *ksr);
+
+KSR_API void ksr_prerender_get_pos(Kasaria *ksr, uint64_t *position);
+
 /*
 @brief        Get the generated audio stream from the builtin player
 @param ksr    Kasaria instance
@@ -498,7 +509,7 @@ KSR_API int  ksr_reload_midi(Kasaria *ksr);
             which makes the synth really good for generating the real frequencies of chopped notes.
             An important capability that most blackers cant go without it
 */
-KSR_API int ksr_player_get_stream(Kasaria *ksr, long audio_fmt, unsigned char *buffer, long count);
+KSR_API int ksr_player_render_raw(Kasaria *ksr, long audio_fmt, unsigned char *buffer, long count);
 
 /*
 @brief        Handle advamced player controls (play, pause, seek forward / backwards, position tracking) and get the generated audio
@@ -522,9 +533,9 @@ KSR_API int ksr_player_render(Kasaria *ksr, float *out, unsigned int frames);
 @remark         64 bit integer is used for much more precision which can matter in some cases.
                 The raw byte position can be represented in many ways depending on the purpose.
                 One example is converting the raw byte position to seconds which uses 64 bit float.
-                See ksr_byte_pos2sec()
+                See ksr_raw_pos2sec()
 */
-KSR_API void ksr_player_get_byte_pos(Kasaria *ksr, uint64_t *position);
+KSR_API void ksr_player_get_pos(Kasaria *ksr, uint64_t *position);
 
 /*
 @brief                  Start the internal player handler
@@ -574,6 +585,8 @@ KSR_API int  ksr_player_rewind(Kasaria *ksr, long time);
 @param ksr Kasaria instance
 */
 KSR_API bool ksr_player_is_ended(Kasaria *ksr);
+
+KSR_API int ksr_player_get_end_pos(Kasaria *ksr, uint64_t *pos);
 
 // KSR_API int  ksr_stop_midi(Kasaria *ksr); // Unused
 
@@ -643,7 +656,7 @@ KSR_API void ksr_render_ulaw(Kasaria *ksr, unsigned char *buffer, long count);
 // --------------------------- Utility functions ---------------------------
 KSR_API int ksr_millis2samples(Kasaria *ksr, long millis);
 KSR_API int ksr_samples2millis(Kasaria *ksr, long samples);
-KSR_API double ksr_byte_pos2sec(Kasaria *ksr, uint64_t byte_pos);
+KSR_API double ksr_raw_pos2sec(Kasaria *ksr, uint64_t byte_pos);
 
 // Close and free an instance of Kasaria. This should be called after all other API function calls
 KSR_API void ksr_shutdown(Kasaria *ksr);
