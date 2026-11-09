@@ -1423,7 +1423,7 @@ void UI::Render(SDL_Renderer *r)
     {
         ImVec2 center = ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f);
 #ifndef PLATFORM_ANDROID
-        ImGui::SetNextWindowSizeConstraints(ImVec2(758, 380), ImVec2(FLT_MAX, FLT_MAX));
+        ImGui::SetNextWindowSizeConstraints(ImVec2(768, 380), ImVec2(FLT_MAX, FLT_MAX));
         ImGui::Begin("PFA Android", &main_gui_window);
 #else // Setting up a different ui layout for mobile users
         ImGui::SetNextWindowPos(center, ImGuiCond_Once, ImVec2(0.5f, 0.5f)); // Pivot 0.5 = center
@@ -1648,6 +1648,41 @@ void UI::Render(SDL_Renderer *r)
                     ImGui::Text("Show file information");
                     ImGui::EndTooltip();
                 }
+
+                ImGui::SameLine();
+
+                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(51, 204, 51, 255));
+                if(ImGui::Button(ICON_FA_FILE_EXPORT))
+                {
+                    IGFD::FileDialogConfig config;
+                    config.path  = live_fd_state.midi_path;
+                    config.flags = ImGuiFileDialogFlags_HideColumnType;
+                    ImGuiFileDialog::Instance()->OpenDialog("ExportFD", "Export audio", ".wav", config);
+                }
+                ImGui::PopStyleColor();
+
+                if(ImGui::BeginItemTooltip())
+                {
+                    ImGui::Text("Export audio");
+                    ImGui::EndTooltip();
+                }
+
+                ImGui::PushFont(FONT_icon_set);
+                ConstrainWindowMove("Export audio##ExportFD"); // Very smart tweaking XDD (See ImGuiFileDialog.cpp:3841)
+                if(ImGuiFileDialog::Instance()->Display("ExportFD", 0, ImVec2(700, 500), ImVec2(FLT_MAX, FLT_MAX)))
+                {
+                    if(ImGuiFileDialog::Instance()->IsOk())
+                    {
+                        std::string audio_file   = ImGuiFileDialog::Instance()->GetFilePathName();
+                        live_fd_state.audio_path = ImGuiFileDialog::Instance()->GetCurrentPath();
+                        FileDialogState::save(live_fd_state);
+                        
+                        Playback::ExportAudio(audio_file);
+                    }
+
+                    ImGuiFileDialog::Instance()->Close();
+                }
+                ImGui::PopFont();
 
                 ImVec2 center = ImGui::GetMainViewport()->GetCenter();
                 ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));

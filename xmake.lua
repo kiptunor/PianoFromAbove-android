@@ -4,6 +4,7 @@ add_rules("mode.debug", "mode.release", "plugin.compile_commands.autoupdate")
 
 add_requires("sdl3",       {system = true})
 add_requires("sdl3-image", {system = true})
+add_requires("ffmpeg",     {system = true})
 
 
 
@@ -16,7 +17,7 @@ set_toolchains("clang")
 target("nvi-pfa-ksr")
     
     set_kind("binary")
-    add_packages("sdl3", "sdl3-image")
+    add_packages("sdl3", "sdl3-image", "ffmpeg")
 
     add_includedirs(
         "extern/kasaria/",

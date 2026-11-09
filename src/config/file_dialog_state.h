@@ -31,6 +31,7 @@ class FileDialogState
     typedef struct
     {
         std::string midi_path;
+        std::string audio_path;
         std::string soundfont_path;
         std::string bg_image_path;
         std::string ccol_path;

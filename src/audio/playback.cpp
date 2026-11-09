@@ -3,7 +3,6 @@
 #include <sstream>
 #include <thread>
 #include <vector>
-#include <iostream>
 
 
 
@@ -16,6 +15,7 @@
 #include "../logger.h"
 #include "../nv_midi/list.h"
 #include "../render/note_buffer.h"
+#include "audio_enc.h"
 #include "playback.h"
 
 
@@ -25,12 +25,12 @@
 
 
 
-Kasaria          *midi_synth_ctx;
+Kasaria *midi_synth_ctx;
 
 
 
 
-void MIDIAudioStream::callback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
+void     MIDIAudioStream::callback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
     (void)userdata;
     (void)total_amount;
@@ -38,7 +38,7 @@ void MIDIAudioStream::callback(void *userdata, SDL_AudioStream *stream, int addi
     if(additional_amount == 0)
         return;
 
-    int frames = additional_amount / (int)(sizeof(f32) * 2);   // stereo float
+    int frames = additional_amount / (int)(sizeof(f32) * 2); // stereo float
     f32 raw_audio[live_conf.audio_frame_size * 2];
 
     while(frames > 0)
@@ -49,7 +49,7 @@ void MIDIAudioStream::callback(void *userdata, SDL_AudioStream *stream, int addi
             ksr_player_render(midi_synth_ctx, raw_audio, chunk);
         else
             memset(raw_audio, 0, (size_t)chunk * 2 * sizeof(f32));
-   
+
         SDL_PutAudioStreamData(stream, raw_audio, chunk * 2 * sizeof(f32));
         frames -= chunk;
     }
@@ -57,21 +57,21 @@ void MIDIAudioStream::callback(void *userdata, SDL_AudioStream *stream, int addi
 
 void MIDIAudioStream::CreateDriverList()
 {
-    int count = SDL_GetNumAudioDrivers();
+    int         count   = SDL_GetNumAudioDrivers();
     const char *current = SDL_GetCurrentAudioDriver();
-    
+
     for(int i = 0; i < count; ++i)
     {
         const char *driver = SDL_GetAudioDriver(i);
         driverList.emplace_back(driver);
-        //std::printf("[%d] %s%s\n", i, driver ? driver : "(unknown)", current && driver && strcmp(driver, current) == 0 ? " (active)" : "");
+        // std::printf("[%d] %s%s\n", i, driver ? driver : "(unknown)", current && driver && strcmp(driver, current) == 0 ? " (active)" : "");
     }
 }
 
 void MIDIAudioStream::CreateDeviceList()
 {
     int count = 0;
-    devices = SDL_GetAudioPlaybackDevices(&count);
+    devices   = SDL_GetAudioPlaybackDevices(&count);
 
     if(!devices)
     {
@@ -82,8 +82,8 @@ void MIDIAudioStream::CreateDeviceList()
     for(int i = 0; i < count; ++i)
     {
         const char *name = SDL_GetAudioDeviceName(devices[i]);
-        deviceList.emplace_back(Device{i, static_cast<int>(devices[i]), name});
-        //std::printf("[%d] ID=%u, Name=%s\n", i, static_cast<unsigned>(devices[i]), name ? name : "(unknown)");
+        deviceList.emplace_back(Device { i, static_cast<int>(devices[i]), name });
+        // std::printf("[%d] ID=%u, Name=%s\n", i, static_cast<unsigned>(devices[i]), name ? name : "(unknown)");
     }
 
     SDL_free(devices);
@@ -91,9 +91,10 @@ void MIDIAudioStream::CreateDeviceList()
 
 void MIDIAudioStream::SetDevice(int devID_Index)
 {
-    if(devID_Index < 0 || devID_Index >= static_cast<int>(deviceList.size())) return;
-        SDL_AudioDeviceID id = static_cast<SDL_AudioDeviceID>(deviceList[devID_Index].ID);
-        
+    if(devID_Index < 0 || devID_Index >= static_cast<int>(deviceList.size()))
+        return;
+    SDL_AudioDeviceID id = static_cast<SDL_AudioDeviceID>(deviceList[devID_Index].ID);
+
     Log::trace("Device ID: %u", static_cast<unsigned>(id));
     stream = SDL_OpenAudioDeviceStream(id, &config, callback, this); // Physical audio device is opened
 
@@ -104,7 +105,7 @@ void MIDIAudioStream::SetDevice(int devID_Index)
     }
 
     logical_audio_dev = SDL_GetAudioStreamDevice(stream); // Logical audio device is returned
-    isInitialized = true;
+    isInitialized     = true;
 
     Log::info("Audio Stream Created: %p", (void *)stream);
 }
@@ -112,17 +113,17 @@ void MIDIAudioStream::SetDevice(int devID_Index)
 MIDIAudioStream::MIDIAudioStream(std::string audioDrvName)
 {
     isInitialized = false;
-    
+
     SDL_SetHint(SDL_HINT_AUDIO_DRIVER, audioDrvName.c_str());
 
     if(loaded_config.audio_drv_name == "disk")
         SDL_SetHint(SDL_HINT_AUDIO_DISK_TIMESCALE, "0");
-    
+
     SDL_Init(SDL_INIT_AUDIO);
-    
-    config.format             = SDL_AUDIO_F32;
-    config.channels           = 2;
-    config.freq               = DEFAULT_SAMPLE_RATE;
+
+    config.format   = SDL_AUDIO_F32;
+    config.channels = 2;
+    config.freq     = DEFAULT_SAMPLE_RATE;
 
     std::ostringstream str;
     str << live_conf.audio_frame_size;
@@ -188,10 +189,10 @@ void              Playback::Init()
 
     ksr_config_set_max_voices(midi_synth_ctx, loaded_config.voice_count); // How many voices the synth can use
 
-    //ksr_init_audio(midi_synth_ctx, INTERNAL_MIDI_PLAYER);
+    // ksr_init_audio(midi_synth_ctx, INTERNAL_MIDI_PLAYER);
 
     au_stm = new MIDIAudioStream(loaded_config.audio_drv_name);
-    
+
     au_stm->CreateDriverList();
     au_stm->CreateDeviceList();
 
@@ -200,7 +201,7 @@ void              Playback::Init()
         au_stm->SetDevice(loaded_config.audio_device_index);
 
     // Setting an audio device too early using the "disk" driver can make super large raw audio files
-    //au_stm->SetDriver(loaded_config.audio_device_index);
+    // au_stm->SetDriver(loaded_config.audio_device_index);
 }
 
 void LoadMidi(const std::string &midi_path)
@@ -228,7 +229,7 @@ void LoadMidi(const std::string &midi_path)
 
     ksr_load_midi_file(midi_synth_ctx, MIDI_MAP, PRERENDER_MIDI_PLAYER, midi_path.c_str());
     Log::debug("MIDI Stream created.");
-    
+
     is_midi_stream_creating_fn.store(false, std::memory_order_release); // Midi stream was created
 
     is_midi_loading_fn.store(false, std::memory_order_release);
@@ -261,10 +262,10 @@ bool Playback::LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soun
         if(enabled_soundfonts[i].checked)
         {
             // Set soundfont options (active_presets, bank, preset, load_percussion_bank)
-            
-            //sf_opts.emplace_back(KsrSoundfontOpts{5, 0, 0, 1});
-            sf_opts.emplace_back(KsrSoundfontOpts{128, 0, 0, 1});
-            
+
+            // sf_opts.emplace_back(KsrSoundfontOpts{5, 0, 0, 1});
+            sf_opts.emplace_back(KsrSoundfontOpts { 128, 0, 0, 1 });
+
             ksr_load_soundfont_file(midi_synth_ctx, enabled_soundfonts[i].label.c_str(), sf_opts.back());
             is_enabled_sf_available = true;
         }
@@ -283,7 +284,7 @@ void Playback::ReloadSoundfonts()
         ksr_player_pause(midi_synth_ctx);
         is_paused = true; // Also pause the midi visualizer
 
-        //ksr_unload_soundfont(midi_synth_ctx);
+        // ksr_unload_soundfont(midi_synth_ctx);
 
         Log::debug("Stop player");
 
@@ -364,9 +365,9 @@ void Playback::PlayerStateUpdate()
 
         if(loaded_config.audio_drv_name == "disk")
             au_stm->SetDevice(0); // No actual audio device needed
-        
+
         // Start playback
-        //ksr_player_begin(midi_synth_ctx, false); // and don't wait for this to finish the entire midi
+        // ksr_player_begin(midi_synth_ctx, false); // and don't wait for this to finish the entire midi
         SDL_ResumeAudioStreamDevice(au_stm->stream);
 
         Log::debug("Player started.");
@@ -391,7 +392,7 @@ void Playback::seek_playback(f64 seconds)
     f64 current_seconds = ksr_raw_pos2sec(midi_synth_ctx, current_player_pos);
 
     // Calculate the absolute seek target.
-    f64 target_seconds = current_seconds + seconds;
+    f64 target_seconds  = current_seconds + seconds;
     if(target_seconds < 0.0)
         target_seconds = 0.0;
 
@@ -412,7 +413,7 @@ void Playback::seek_playback(f64 seconds)
     if(playback_ended)
     {
         playback_ended = false;
-        is_paused = false;
+        is_paused      = false;
         SDL_ResumeAudioStreamDevice(au_stm->stream);
     }
 }
@@ -427,7 +428,7 @@ void Playback::pause()
     // Pause the internal midi player only if the MIDI was not ended
     if(!ksr_player_is_ended(midi_synth_ctx))
         ksr_player_pause(midi_synth_ctx);
-    
+
     if(playback_ended)
     {
         // If at the end and we press space, restart from beginning
@@ -440,7 +441,7 @@ void Playback::pause()
 
         // And start the SDL audio thread again for midi playback
         SDL_ResumeAudioStreamDevice(au_stm->stream);
-        
+
         Tplay          = 0.0;
         playback_ended = false;
         is_paused      = false;
@@ -451,6 +452,56 @@ void Playback::pause()
 
         Midi_ctx.list_seek(0);
     }
+}
+
+void Playback::ExportAudio(std::string fname)
+{
+    // This sucks but it works at least
+
+    // The prerender worker may still be running.
+    if(!ksr_prerender_is_eos(midi_synth_ctx) && !ksr_player_is_ended(midi_synth_ctx))
+    {
+        Log::error("Player / pre-render did not finished!");
+        return;
+    }
+
+    ksr_prerender_rewind(midi_synth_ctx);
+
+    constexpr unsigned int bufferFrames = 1024;
+    constexpr int          channels     = 2;
+
+    AudioEncoder           encoder;
+
+    if(!encoder.open(fname, ksr_config_get_sample_rate(midi_synth_ctx), channels))
+        return;
+
+    std::vector<float> buffer(bufferFrames * channels);
+
+    for(;;)
+    {
+        unsigned int framesRead = 0;
+
+        int          result     = ksr_prerender_read_buf(midi_synth_ctx, buffer.data(), bufferFrames, &framesRead);
+
+        if(result < 0)
+            break;
+
+        // Pre-render still running and no data available yet.
+        if(result == 1)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            continue;
+        }
+
+        // result == 0 and no frames = end of prerendered audio.
+        if(framesRead == 0)
+            break;
+
+        if(!encoder.write(buffer.data(), framesRead))
+            break;
+    }
+
+    encoder.close();
 }
 
 void Playback::SetNoteVelSkipping(int low_vel, int high_vel, bool enabled)
@@ -483,7 +534,7 @@ void Playback::UpdateEndPosition()
 void Playback::UpdateMidiPlayerPos()
 {
     playback_ended = ksr_player_is_ended(midi_synth_ctx);
-    
+
     ksr_player_get_pos(midi_synth_ctx, &current_player_pos);
     Tplay = ksr_raw_pos2sec(midi_synth_ctx, current_player_pos) + 0.1f; // And give just a little bit more so the piano visualizer does not remain stuck
 }
@@ -503,7 +554,7 @@ bool Playback::IsMIDIEnded()
     return ksr_player_is_ended(midi_synth_ctx);
 }
 
-f64  Playback::GetPrerenderPos()
+f64 Playback::GetPrerenderPos()
 {
     u64 pr_pos;
     ksr_prerender_get_pos(midi_synth_ctx, &pr_pos);
@@ -515,7 +566,7 @@ f64 Playback::GetEndPos()
 {
     u64 end_pos;
     ksr_player_get_end_pos(midi_synth_ctx, &end_pos);
-    
+
     return ksr_raw_pos2sec(midi_synth_ctx, end_pos);
 }
 

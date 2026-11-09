@@ -47,6 +47,7 @@ FileDialogState::DirPaths FileDialogState::load()
     {
         Log::warn("File dialog state is empty or not found!");
         dir_paths.midi_path          = DEFAULT_FD_LOCATION;
+        dir_paths.audio_path         = DEFAULT_FD_LOCATION;
         dir_paths.soundfont_path     = DEFAULT_FD_LOCATION;
         dir_paths.bg_image_path      = DEFAULT_FD_LOCATION;
         dir_paths.ccol_path          = DEFAULT_FD_LOCATION;
@@ -59,11 +60,12 @@ FileDialogState::DirPaths FileDialogState::load()
 
     nlohmann::json dir_paths_obj = json_in.value("directoryPaths", nlohmann::json::object());
 
-    dir_paths.midi_path          = dir_paths_obj.value("midi",      DEFAULT_FD_LOCATION);
-    dir_paths.soundfont_path     = dir_paths_obj.value("soundfont", DEFAULT_FD_LOCATION);
-    dir_paths.bg_image_path      = dir_paths_obj.value("bgImage",   DEFAULT_FD_LOCATION);
-    dir_paths.ccol_path          = dir_paths_obj.value("ccol",      DEFAULT_FD_LOCATION);
-    dir_paths.ui_theme_path      = dir_paths_obj.value("uiTheme",   DEFAULT_FD_LOCATION);
+    dir_paths.midi_path          = dir_paths_obj.value("midi",            DEFAULT_FD_LOCATION);
+    dir_paths.audio_path         = dir_paths_obj.value("audioExportFile", DEFAULT_FD_LOCATION);
+    dir_paths.soundfont_path     = dir_paths_obj.value("soundfont",       DEFAULT_FD_LOCATION);
+    dir_paths.bg_image_path      = dir_paths_obj.value("bgImage",         DEFAULT_FD_LOCATION);
+    dir_paths.ccol_path          = dir_paths_obj.value("ccol",            DEFAULT_FD_LOCATION);
+    dir_paths.ui_theme_path      = dir_paths_obj.value("uiTheme",         DEFAULT_FD_LOCATION);
 
     return dir_paths;
 }
@@ -76,11 +78,12 @@ void FileDialogState::save(DirPaths dir_paths)
     json_out = {
         { "directoryPaths",
             {
-                { "midi",      dir_paths.midi_path      },
-                { "soundfont", dir_paths.soundfont_path },
-                { "bgImage",   dir_paths.bg_image_path  },
-                { "ccol",      dir_paths.ccol_path      },
-                { "uiTheme",   dir_paths.ui_theme_path  }
+                { "midi",            dir_paths.midi_path      },
+                { "audioExportFile", dir_paths.audio_path     },
+                { "soundfont",       dir_paths.soundfont_path },
+                { "bgImage",         dir_paths.bg_image_path  },
+                { "ccol",            dir_paths.ccol_path      },
+                { "uiTheme",         dir_paths.ui_theme_path  }
             }
         },
     };

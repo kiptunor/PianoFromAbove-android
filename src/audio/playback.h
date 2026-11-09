@@ -75,6 +75,7 @@ class Playback
     static void SetMidiChunkLimit(int chunk_limit, bool enabled);
     static void SetAudioFrameSize(int frame_size);
     static void SetOverlappingNotes(bool enabled);
+    static void ExportAudio(std::string fname);
 };
 
 class MIDIAudioStream
