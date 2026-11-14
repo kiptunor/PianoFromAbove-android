@@ -418,6 +418,31 @@ void Playback::seek_playback(f64 seconds)
     }
 }
 
+// prob the one above is kinda obsolete idk
+void Playback::seek(f64 seconds)
+{
+    // Seek the prerendered audio.
+    ksr_player_seek(midi_synth_ctx, (long)(seconds * 1000.0));
+
+    ksr_player_get_pos(midi_synth_ctx, &current_player_pos);
+    f64 current_seconds = ksr_raw_pos2sec(midi_synth_ctx, current_player_pos);
+
+    if(playback_ended)
+    {
+        playback_ended = false;
+        is_paused      = false;
+    }
+
+    Tplay = ksr_raw_pos2sec(midi_synth_ctx, current_player_pos);
+
+    // Reset and synchronize the visualizer.
+    for(int i = 0; i < 128; ++i)
+        Midi_ctx.Note_list[i].clear();
+
+    Midi_ctx.list_seek(Tplay);
+    Midi_ctx.update_to(Tplay + Tscr);
+}
+
 void Playback::pause()
 {
     if(!is_midi_loaded)

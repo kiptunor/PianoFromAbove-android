@@ -40,7 +40,7 @@ class Playback
 {
   public:
 
-    static u32       main_stream;
+    //static u32       main_stream;
     static bool      is_playback_started;
     static bool      is_midi_loaded;
     static bool      is_midi_loading;
@@ -61,6 +61,7 @@ class Playback
     static void ReloadSoundfonts();
     static void updateVoiceCount(int voiceCount);
     static void seek_playback(f64 seconds);
+    static void seek(f64 seconds);
     static void UpdateEndPosition();
     static void UpdateMidiPlayerPos();
     static bool IsMidiPlayerActive();

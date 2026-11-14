@@ -1655,7 +1655,7 @@ void UI::Render(SDL_Renderer *r)
                 if(ImGui::Button(ICON_FA_FILE_EXPORT))
                 {
                     IGFD::FileDialogConfig config;
-                    config.path  = live_fd_state.midi_path;
+                    config.path  = live_fd_state.audio_path;
                     config.flags = ImGuiFileDialogFlags_HideColumnType;
                     ImGuiFileDialog::Instance()->OpenDialog("ExportFD", "Export audio", ".wav", config);
                 }
@@ -2922,7 +2922,9 @@ void UI::Render(SDL_Renderer *r)
         // Render slider over pre-render progress
         ImGui::SetNextItemWidth(width);
     
-        ImGui::SliderFloat("##PlaybackPosition", &current_midi_pos_sl, 0.0f, endPos, "", ImGuiSliderFlags_NoInput);
+        if(ImGui::SliderFloat("##PlaybackPosition", &current_midi_pos_sl, 0.0f, endPos, "", ImGuiSliderFlags_NoInput))
+            if(ImGui::IsItemClicked())
+                Playback::seek(current_midi_pos_sl);
     
         ImGui::PopStyleColor(5);
         
