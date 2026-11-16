@@ -77,6 +77,7 @@ class Playback
     static void SetAudioFrameSize(int frame_size);
     static void SetOverlappingNotes(bool enabled);
     static void ExportAudio(std::string fname);
+    static int GetActiveVoices();
 };
 
 class MIDIAudioStream

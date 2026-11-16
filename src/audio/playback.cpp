@@ -579,6 +579,11 @@ bool Playback::IsMIDIEnded()
     return ksr_player_is_ended(midi_synth_ctx);
 }
 
+int Playback::GetActiveVoices()
+{
+    return ksr_get_active_voices(midi_synth_ctx);
+}
+
 f64 Playback::GetPrerenderPos()
 {
     u64 pr_pos;

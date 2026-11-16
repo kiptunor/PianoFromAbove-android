@@ -2874,6 +2874,7 @@ void UI::Render(SDL_Renderer *r)
         ImGui::Begin("##overlay_Stats", &overlay_stats_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 #endif
         ImGui::Text("FPS: %.1f", io.Framerate);
+        ImGui::Text("Active Voices: %d", Playback::GetActiveVoices());
         ImGui::Text("Prerender status: ");
         ImGui::SameLine();
         if(Playback::IsPrerenderFinished() && Playback::is_midi_loaded)
