@@ -76,6 +76,7 @@ inline Config::configuration          default_settings = {
     .audio_frame_size        = 800,
     .midi_chunk_size         = 800,
     .builtin_ui_theme_idx    = 0,
+    .reverb_preset_idx       = 1,
     .audio_limiter           = true,
     .vel_filter              = false,
     .use_default_paths       = true,

@@ -2,6 +2,9 @@
 #include <string>
 #include <algorithm>
 #include <iterator>
+#include <array>
+
+#include <kasaria.h>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 
@@ -107,6 +110,7 @@ UI::RGBAint                 UI::liveColor;
 ImVec4                      UI::ui_chcolors[16];
 int                         UI::current_audio_dev;
 int                         UI::current_audio_drv;
+int                         UI::selected_reverb_preset = 0;
 std::vector<std::string>    UI::soundfont_paths;
 std::vector<std::string>    UI::prev_images;
 static int                  builtin_ui_theme_idx = 0;
@@ -120,10 +124,126 @@ const char                 *builtin_ui_theme_names[] =
     "Arctic Horizon",
     "Cyberpunk"
 };
+
+// Ugh umm
+// It's ugly that's not how it should be done lmao
+constexpr std::array<const char*, NUM_TIMID_REVERB_PRESETS> reverbPresetNames =
+{
+    "Generic",
+    "Padded cell",
+    "Room",
+    "Bathroom",
+    "Livingroom",
+    "Stoneroom",
+    "Auditorium",
+    "Concert hall",
+    "Cave",
+    "Arena",
+    "Hangar",
+    "Carpeted hallway",
+    "Hallway",
+    "Stone corridor",
+    "Alley",
+    "Forest",
+    "City",
+    "Mountains",
+    "Quarry",
+    "Plain",
+    "Parking Lot",
+    "Sewer Pipe",
+    "Underwater",
+    "Drugged",
+    "Dizzy",
+    "Psychotic",
+    "Castle Small Room",
+    "Castle Short Passage",
+    "Castle Medium Room",
+    "Castle Large Room",
+    "Castle Long Passage",
+    "Castle Hall",
+    "Castle Cupboard",
+    "Castle Courtyard",
+    "Castle Alcove",
+    "Factory Small Room",
+    "Factory Short Passage",
+    "Factory Medium Room",
+    "Factory Large Room",
+    "Factory Long Passage",
+    "Factory Hall",
+    "Factory Cupboard",
+    "Factory Courtyard",
+    "Factory Alcove",
+    "Ice Palace Small Room",
+    "Ice Palace Short Passage",
+    "Ice Palace Medium Room",
+    "Ice Palace Large Room",
+    "Ice Palace Long Passage",
+    "Ice Palace Hall",
+    "Ice Palace Cupboard",
+    "Ice Palace Courtyard",
+    "Ice Palace Alcove",
+    "Space Station Small Room",
+    "Space Station Short Passage",
+    "Space Station Medium Room",
+    "Space Station Large Room",
+    "Space Station Long Passage",
+    "Space Station Hall",
+    "Space Station Cupboard",
+    "Space Station Alcove",
+    "Wooden Small Room",
+    "Wooden Short Passage",
+    "Wooden Medium Room",
+    "Wooden Large Room",
+    "Wooden Long Passage",
+    "Wooden Hall",
+    "Wooden Cupboard",
+    "Wooden Courtyard",
+    "Wooden Alcove",
+    "Sport Empty Stadium",
+    "Sport Squash Court",
+    "Sport Small Swimming Pool",
+    "Sport Large Swimming Pool",
+    "Sport Gymnasium",
+    "Sport Full Stadium",
+    "Sport Stadium Tannoy",
+    "Prefab Workshop",
+    "Prefab School Room",
+    "Prefab Practise Room",
+    "Prefab Outhouse",
+    "Prefab Caravan",
+    "Dome Tomb",
+    "Pipe Small",
+    "Dome Saint Pauls",
+    "Pipe Long Thin",
+    "Pipe Large",
+    "Pipe Resonant",
+    "Outdoors Backyard",
+    "Outdoors Rolling Plains",
+    "Outdoors Deep Canyon",
+    "Outdoors Creek",
+    "Outdoors Valley",
+    "Mood Heaven",
+    "Mood Hell",
+    "Mood Memory",
+    "Driving Commentator",
+    "Driving Pit Garage",
+    "Driving In Car Racer",
+    "Driving In Car Sports",
+    "Driving In Car Luxury",
+    "Driving Full Grandstand",
+    "Driving Empty Grandstand",
+    "Driving Tunnel",
+    "City Streets",
+    "City Subway",
+    "City Museum",
+    "City Library",
+    "City Underpass",
+    "City Abandoned",
+    "Dusty Room",
+    "Chapel",
+    "Small Water Room"
+};
 // clang-format on
-
-
-
 
 
 
@@ -1231,6 +1351,7 @@ void UI::UpdateWidgetValues()
     UI::overlapping_notes       = live_conf.overlapping_notes;
     UI::midi_chunk_limiter      = live_conf.midi_chunk_limiter;
     UI::overlay_stats_window    = live_conf.overlay_stats;
+    UI::selected_reverb_preset  = live_conf.reverb_preset_idx;
     live_soundfont_list         = loaded_soundfont_list;
 }
 
@@ -2573,6 +2694,13 @@ void UI::Render(SDL_Renderer *r)
 
                             live_conf.vel_min = min_velocity;
                             live_conf.vel_max = max_velocity;
+                        }
+
+                        if(ImGui::Combo("Reverb Preset", &selected_reverb_preset, reverbPresetNames.data(), static_cast<int>(reverbPresetNames.size())))
+                        {
+                            Log::debug("Reverb Preset: %d", selected_reverb_preset);
+                            live_conf.reverb_preset_idx = selected_reverb_preset;
+                            Playback::SetReverbPreset(selected_reverb_preset);
                         }
 
                         if(ImGui::Checkbox("Allow overlapping notes", &overlapping_notes))

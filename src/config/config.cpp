@@ -119,6 +119,7 @@ Config::configuration Config::Load()
 
     nlohmann::json effects_obj          = audio_obj.value("effects",          nlohmann::json::object());
     nlohmann::json vel_filter_obj       = effects_obj.value("velocityFilter", nlohmann::json::object());
+    in_conf.reverb_preset_idx           = effects_obj.value("reverbPresetIdx", default_settings.reverb_preset_idx);
     in_conf.vel_filter                  = vel_filter_obj.value("enabled",     default_settings.vel_filter);
     in_conf.vel_min                     = vel_filter_obj.value("lowVel",      default_settings.vel_min);
     in_conf.vel_max                     = vel_filter_obj.value("hiVel",       default_settings.vel_max);
@@ -202,6 +203,7 @@ void Config::Save(configuration config)
             { "overlapingNotes",  config.overlapping_notes   },
             { "audioDeviceIndex", config.audio_device_index },
                 { "effects", {
+                        { "reverbPresetIdx", config.reverb_preset_idx },
                         { "velocityFilter", {
                                 { "enabled", config.vel_filter },
                                 { "lowVel",  config.vel_min    },

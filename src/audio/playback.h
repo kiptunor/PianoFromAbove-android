@@ -63,6 +63,7 @@ class Playback
     static void seek_playback(f64 seconds);
     static void seek(f64 seconds);
     static void UpdateEndPosition();
+    static void SetReverbPreset(int rv_pr_idx);
     static void UpdateMidiPlayerPos();
     static bool IsMidiPlayerActive();
     static bool IsMIDIEnded();

@@ -76,6 +76,7 @@ class UI
     static int                      live_note_speed;
     static int                      fps;
     static int                      selected_midi_index;
+    static int                      selected_reverb_preset;
     static int                      min_velocity;
     static int                      max_velocity;
     static int                      current_audio_dev;

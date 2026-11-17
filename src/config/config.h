@@ -48,6 +48,7 @@ class Config
         int                      audio_frame_size;
         int                      midi_chunk_size;
         int                      builtin_ui_theme_idx;
+        int                      reverb_preset_idx;
         bool                     audio_limiter;
         bool                     vel_filter;
         bool                     use_default_paths;

@@ -529,6 +529,11 @@ void Playback::ExportAudio(std::string fname)
     encoder.close();
 }
 
+void Playback::SetReverbPreset(int rv_pr_idx)
+{
+    ksr_config_set_reverb_preset(midi_synth_ctx, rv_pr_idx);
+}
+
 void Playback::SetNoteVelSkipping(int low_vel, int high_vel, bool enabled)
 {
     ksr_config_set_note_skipping(midi_synth_ctx, low_vel, high_vel, enabled);
