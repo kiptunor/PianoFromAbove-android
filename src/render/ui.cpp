@@ -11,7 +11,7 @@
 #include "../../assets/FA6FreeSolidFontData.h"
 #include "../../assets/IconsFontAwesome6.h"
 #include "../../assets/Metrophobic_Regular.h"
-#include "../audio/playback.h"
+#include "../audio/MIDIPlayer.h"
 #include "../config/channel_colors.h"
 #include "../config/file_dialog_state.h"
 #include "../config/midi_list.h"
@@ -1013,7 +1013,7 @@ void RenderSoundfontList(std::vector<UI::SoundfontItem> &items, std::string find
     {
         checked_soundfonts = GetCheckedSoundfonts(items);
         SoundfontList::Save(live_soundfont_list);
-        Playback::ReloadSoundfonts();
+        MIDIPlayer::ReloadSoundfonts();
     }
 }
 
@@ -1476,7 +1476,7 @@ void UI::Render(SDL_Renderer *r)
     f32 sb_col_w = ImGui::GetColumnWidth();
     f32 sb_btn_h = ImGui::GetContentRegionAvail().y;
     if(ImGui::InvisibleButton("<<", ImVec2(sb_col_w, sb_btn_h)))
-        Playback::Seek_lazy(-Playback::seek_amount);
+        MIDIPlayer::Seek_lazy(-MIDIPlayer::seek_amount);
 
     if(ImGui::IsItemActive())
     {
@@ -1491,8 +1491,8 @@ void UI::Render(SDL_Renderer *r)
 
     f32 ps_col_w = ImGui::GetColumnWidth();
     f32 ps_btn_h = ImGui::GetContentRegionAvail().y;
-    if(ImGui::InvisibleButton(Playback::is_paused ? "|>" : "||", ImVec2(ps_col_w, ps_btn_h)))
-        Playback::Pause();
+    if(ImGui::InvisibleButton(MIDIPlayer::is_paused ? "|>" : "||", ImVec2(ps_col_w, ps_btn_h)))
+        MIDIPlayer::Pause();
 
     if(ImGui::IsItemActive())
     {
@@ -1508,7 +1508,7 @@ void UI::Render(SDL_Renderer *r)
     f32 sf_col_w = ImGui::GetColumnWidth();
     f32 sf_btn_h = ImGui::GetContentRegionAvail().y;
     if(ImGui::InvisibleButton(">>", ImVec2(sf_col_w, sf_btn_h)))
-        Playback::Seek_lazy(Playback::seek_amount);
+        MIDIPlayer::Seek_lazy(MIDIPlayer::seek_amount);
 
     if(ImGui::IsItemActive())
     {
@@ -1632,9 +1632,9 @@ void UI::Render(SDL_Renderer *r)
                         midi_file               = ImGuiFileDialog::Instance()->GetFilePathName();
                         live_fd_state.midi_path = ImGuiFileDialog::Instance()->GetCurrentPath();
                         FileDialogState::save(live_fd_state);
-                        Playback::CloseMidi(); // Close previous MIDI file
+                        MIDIPlayer::CloseMidi(); // Close previous MIDI file
                         ImGui::OpenPopup("Loading MIDI...");
-                        Playback::LoadMidiFile(midi_file);
+                        MIDIPlayer::LoadMidiFile(midi_file);
 
                         if(no_midi_duplicates)
                         {
@@ -1664,11 +1664,11 @@ void UI::Render(SDL_Renderer *r)
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(51, 204, 51, 255));
                 if(ImGui::Button(ICON_FA_PLAY))
                 {
-                    Playback::CloseMidi();
+                    MIDIPlayer::CloseMidi();
                     MidiList::last_midi_file = live_midi_list[selected_midi_index];
                     MidiList::save(live_midi_list, MidiList::last_midi_file);
                     ImGui::OpenPopup("Loading MIDI...");
-                    Playback::LoadMidiFile(live_midi_list[selected_midi_index]);
+                    MIDIPlayer::LoadMidiFile(live_midi_list[selected_midi_index]);
                 }
                 ImGui::PopStyleColor();
 
@@ -1681,10 +1681,10 @@ void UI::Render(SDL_Renderer *r)
                     sprintf(buf, "Loading track: %d/%d", (int)(progress * Midi_ctx.MIDI_File.tracks - 1), Midi_ctx.MIDI_File.tracks - 1);
                     ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f), buf);
 
-                    if(Playback::is_midi_stream_creating)
+                    if(MIDIPlayer::is_midi_stream_creating)
                         ImGui::ProgressBar(-1.0f * (float)ImGui::GetTime(), ImVec2(0.0f, 0.0f), "Creating MIDI Stream...");
 
-                    if(Playback::is_midi_loaded)
+                    if(MIDIPlayer::is_midi_loaded)
                     {
                         ImGui::CloseCurrentPopup();
                         main_gui_window = false;
@@ -1703,7 +1703,7 @@ void UI::Render(SDL_Renderer *r)
 
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 92, 51, 255));
                 if(ImGui::Button(ICON_FA_SQUARE))
-                    Playback::CloseMidi();
+                    MIDIPlayer::CloseMidi();
                 ImGui::PopStyleColor();
 
                 if(ImGui::BeginItemTooltip())
@@ -1798,7 +1798,7 @@ void UI::Render(SDL_Renderer *r)
                         live_fd_state.audio_path = ImGuiFileDialog::Instance()->GetCurrentPath();
                         FileDialogState::save(live_fd_state);
                         
-                        Playback::ExportAudio(audio_file);
+                        MIDIPlayer::ExportAudio(audio_file);
                     }
 
                     ImGuiFileDialog::Instance()->Close();
@@ -2409,7 +2409,7 @@ void UI::Render(SDL_Renderer *r)
 
                                 temp_widget_id = "##Ch" + std::to_string(i);
 
-                                ImGui::BeginDisabled(!Playback::is_paused);
+                                ImGui::BeginDisabled(!MIDIPlayer::is_paused);
                                 if(ImGui::ColorEdit3(temp_widget_id.c_str(), (f32 *)&ui_chcolors[i], ImGuiColorEditFlags_NoInputs))
                                     live_conf.is_custom_ch_colors = true;
                                 ImGui::EndDisabled();
@@ -2634,7 +2634,7 @@ void UI::Render(SDL_Renderer *r)
                             // Apply the change in real-time if the value has changed
                             if(prev_voice_count != live_conf.voice_count)
                             {
-                                Playback::UpdateVoiceCount(live_conf.voice_count);
+                                MIDIPlayer::UpdateVoiceCount(live_conf.voice_count);
                                 prev_voice_count = live_conf.voice_count;
                             }
                         }
@@ -2644,7 +2644,7 @@ void UI::Render(SDL_Renderer *r)
                             if(ImGui::Checkbox("Enabled##someIdIdk", &midi_chunk_limiter))
                             {
                                 live_conf.midi_chunk_limiter = midi_chunk_limiter;
-                                Playback::SetMidiChunkLimit(live_conf.midi_chunk_size, live_conf.midi_chunk_limiter);
+                                MIDIPlayer::SetMidiChunkLimit(live_conf.midi_chunk_size, live_conf.midi_chunk_limiter);
                             }
                             
                             static int prev_midi_chunk_sz = live_conf.voice_count;
@@ -2666,7 +2666,7 @@ void UI::Render(SDL_Renderer *r)
                                     if(prev_midi_chunk_sz != live_conf.midi_chunk_size)
                                     {
                                         //Playback::updateVoiceCount(live_conf.midi_chunk_size);
-                                        Playback::SetMidiChunkLimit(live_conf.midi_chunk_size, live_conf.midi_chunk_limiter);
+                                        MIDIPlayer::SetMidiChunkLimit(live_conf.midi_chunk_size, live_conf.midi_chunk_limiter);
                                         prev_midi_chunk_sz = live_conf.midi_chunk_size;
                                     }
                                 }
@@ -2680,7 +2680,7 @@ void UI::Render(SDL_Renderer *r)
                             if(ImGui::Checkbox("Enabled##DifferentIdNoConflicts", &velocity_filter))
                             {
                                 live_conf.vel_filter = velocity_filter;
-                                Playback::SetNoteVelSkipping(min_velocity, max_velocity, live_conf.vel_filter);
+                                MIDIPlayer::SetNoteVelSkipping(min_velocity, max_velocity, live_conf.vel_filter);
                             }
                             
                             live_conf.vel_filter = velocity_filter;
@@ -2700,13 +2700,13 @@ void UI::Render(SDL_Renderer *r)
                         {
                             Log::debug("Reverb Preset: %d", selected_reverb_preset);
                             live_conf.reverb_preset_idx = selected_reverb_preset;
-                            Playback::SetReverbPreset(selected_reverb_preset);
+                            MIDIPlayer::SetReverbPreset(selected_reverb_preset);
                         }
 
                         if(ImGui::Checkbox("Allow overlapping notes", &overlapping_notes))
                         {
                             live_conf.overlapping_notes = overlapping_notes;
-                            Playback::SetOverlappingNotes(live_conf.overlapping_notes);
+                            MIDIPlayer::SetOverlappingNotes(live_conf.overlapping_notes);
                         }
                         ImGui::EndTabItem();
                     }
@@ -3002,13 +3002,13 @@ void UI::Render(SDL_Renderer *r)
         ImGui::Begin("##overlay_Stats", &overlay_stats_window, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 #endif
         ImGui::Text("FPS: %.1f", io.Framerate);
-        ImGui::Text("Active Voices: %d", Playback::GetActiveVoices());
+        ImGui::Text("Active Voices: %d", MIDIPlayer::GetActiveVoices());
         ImGui::Text("Prerender status: ");
         ImGui::SameLine();
-        if(Playback::IsPrerenderFinished() && Playback::is_midi_loaded)
+        if(MIDIPlayer::IsPrerenderFinished() && MIDIPlayer::is_midi_loaded)
             ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "finished! (Audio ready to export!)");
         else
-            if(Playback::is_midi_loaded)
+            if(MIDIPlayer::is_midi_loaded)
                 ImGui::Text("running...");
             else
                 ImGui::Text("Idle");
@@ -3021,10 +3021,10 @@ void UI::Render(SDL_Renderer *r)
 
     if(ImGui::BeginMainMenuBar())
     {
-        current_midi_pos_sl = Playback::Tplay - 0.1f;
+        current_midi_pos_sl = MIDIPlayer::Tplay - 0.1f;
         
-        float endPos   = static_cast<float>(Playback::GetEndPos());
-        float progress = endPos > 0.0f ? static_cast<float>(Playback::GetPrerenderPos()) / endPos : 0.0f;
+        float endPos   = static_cast<float>(MIDIPlayer::GetEndPos());
+        float progress = endPos > 0.0f ? static_cast<float>(MIDIPlayer::GetPrerenderPos()) / endPos : 0.0f;
         progress      = ImClamp(progress, 0.0f, 1.0f);
         
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 4.0f));
@@ -3053,7 +3053,7 @@ void UI::Render(SDL_Renderer *r)
     
         if(ImGui::SliderFloat("##PlaybackPosition", &current_midi_pos_sl, 0.0f, endPos, "", ImGuiSliderFlags_NoInput))
             if(ImGui::IsItemClicked())
-                Playback::Seek(current_midi_pos_sl);
+                MIDIPlayer::Seek(current_midi_pos_sl);
     
         ImGui::PopStyleColor(5);
         

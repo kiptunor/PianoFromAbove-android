@@ -19,7 +19,7 @@
 
 // #define DEBUG
 
-#include "audio/playback.h"
+#include "audio/MIDIPlayer.h"
 #include "config/config.h"
 #include "config/file_dialog_state.h"
 #include "config/midi_list.h"
@@ -143,9 +143,9 @@ APP_ENTRY(int argc, char *argv[])
     // Required for when the user wants to change the audio device
     //availableAudioDevices = Playback::GetAudioOutputs();
 
-    Playback::Init();
+    MIDIPlayer::Init();
 
-    Playback::LoadEnabledSoundfonts(loaded_soundfont_list);
+    MIDIPlayer::LoadEnabledSoundfonts(loaded_soundfont_list);
 
     // Let the user know if midi or soundfont files are missing
     if(!loaded_config.dont_show_missing_files)

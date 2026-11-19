@@ -4,7 +4,8 @@
 
 #include <SDL3/SDL.h>
 
-#include "audio/playback.h"
+#include "audio/MIDIPlayer.h"
+#include "audio/midi_audio_stream.h"
 #include "config/config.h"
 #include "config/file_dialog_state.h"
 #include "mb_types.h"
@@ -35,7 +36,7 @@ inline f64                            Tscr;
 inline f64                            vis_Tscr;
 inline f64                            smooth_tick_scale = 0.0;
 inline bool                           is_defaultconfig;
-inline bool                           Playback::is_paused;
+inline bool                           MIDIPlayer::is_paused;
 inline std::vector<UI::SoundfontItem> loaded_soundfont_list;
 inline FileDialogState::DirPaths      loaded_file_dialog_state;
 inline FileDialogState::DirPaths      live_fd_state;

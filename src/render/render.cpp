@@ -649,10 +649,10 @@ void Render::DrawNote(NVMidi::u16_t k, const NVnote &n, int pps)
 
     int key = KeyMap[k];
 
-    int y_0 = std::clamp((int)floor(_WinH - (n.Tstart - Playback::Tplay) * pps + 0.5f), 0, _WinH);
-    int y_1 = (n.Tend < Playback::Tplay + vis_Tscr) ? std::clamp((int)floor(_WinH - (n.Tend - Playback::Tplay) * pps + 0.5f), 0, _WinH) : 0;
+    int y_0 = std::clamp((int)floor(_WinH - (n.Tstart - MIDIPlayer::Tplay) * pps + 0.5f), 0, _WinH);
+    int y_1 = (n.Tend < MIDIPlayer::Tplay + vis_Tscr) ? std::clamp((int)floor(_WinH - (n.Tend - MIDIPlayer::Tplay) * pps + 0.5f), 0, _WinH) : 0;
 
-    if(n.Tstart <= Playback::Tplay && Playback::Tplay < n.Tend)
+    if(n.Tstart <= MIDIPlayer::Tplay && MIDIPlayer::Tplay < n.Tend)
     {
         RenderWin->KeyPress[key] = true;
         RenderWin->KeyColor[key] = note_color;
@@ -745,7 +745,7 @@ void Render::DrawBackgroundGrid()
 
 void Render::DrawHorizontalLines()
 {
-    if(!Playback::is_playback_started)
+    if(!MIDIPlayer::is_playback_started)
         return;
 
     us_int iDark = 0, iVeryDark = 0;
@@ -757,7 +757,7 @@ void Render::DrawHorizontalLines()
 
     const int  beatsPerMeasure = 4;
     f64        pps             = (f64)_WinH / vis_Tscr; // pixels per second
-    f64        t_cur           = Playback::Tplay;
+    f64        t_cur           = MIDIPlayer::Tplay;
     f64        t_end           = t_cur + vis_Tscr;
     
     // const int beatsPerMeasure = 4;
