@@ -136,12 +136,12 @@ VisualizerHandler::VisualizerHandler()
 
 
         // Repeatedly call this function to start midi playback until the midi loader thread is finished
-        Playback::PlayerStateUpdate();
+        Playback::UpdateState();
 
 
 
         // Start visualizing only if the synth's midi player is ready
-        if(Playback::IsMidiPlayerActive())
+        if(Playback::IsActive())
         {
             //Log::debug("updating midi vis");
             
@@ -176,13 +176,13 @@ VisualizerHandler::VisualizerHandler()
                     switch(Evt.key.key)
                     {
                     case SDLK_SPACE:
-                        Playback::pause();
+                        Playback::Pause();
                         break;
                     case SDLK_LEFT:
-                        Playback::seek_playback(-Playback::seek_amount);
+                        Playback::Seek_lazy(-Playback::seek_amount);
                         break;
                     case SDLK_RIGHT:
-                        Playback::seek_playback(Playback::seek_amount);
+                        Playback::Seek_lazy(Playback::seek_amount);
                         break;
                     case SDLK_D: // Only for development purposes
                         UI::show_demo_window = true;
@@ -256,8 +256,8 @@ VisualizerHandler::VisualizerHandler()
         SDL_RenderPresent(RenderWin->Ren);
 
         // Only update Tplay if actively playing and not at the end
-        if(!Playback::is_paused && !Playback::playback_ended && Playback::IsMidiPlayerActive())
-            Playback::UpdateMidiPlayerPos();
+        if(!Playback::is_paused && !Playback::playback_ended && Playback::IsActive())
+            Playback::UpdateMidiPos();
     }
 }
 

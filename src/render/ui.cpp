@@ -1476,7 +1476,7 @@ void UI::Render(SDL_Renderer *r)
     f32 sb_col_w = ImGui::GetColumnWidth();
     f32 sb_btn_h = ImGui::GetContentRegionAvail().y;
     if(ImGui::InvisibleButton("<<", ImVec2(sb_col_w, sb_btn_h)))
-        Playback::seek_playback(-Playback::seek_amount);
+        Playback::Seek_lazy(-Playback::seek_amount);
 
     if(ImGui::IsItemActive())
     {
@@ -1492,7 +1492,7 @@ void UI::Render(SDL_Renderer *r)
     f32 ps_col_w = ImGui::GetColumnWidth();
     f32 ps_btn_h = ImGui::GetContentRegionAvail().y;
     if(ImGui::InvisibleButton(Playback::is_paused ? "|>" : "||", ImVec2(ps_col_w, ps_btn_h)))
-        Playback::pause();
+        Playback::Pause();
 
     if(ImGui::IsItemActive())
     {
@@ -1508,7 +1508,7 @@ void UI::Render(SDL_Renderer *r)
     f32 sf_col_w = ImGui::GetColumnWidth();
     f32 sf_btn_h = ImGui::GetContentRegionAvail().y;
     if(ImGui::InvisibleButton(">>", ImVec2(sf_col_w, sf_btn_h)))
-        Playback::seek_playback(Playback::seek_amount);
+        Playback::Seek_lazy(Playback::seek_amount);
 
     if(ImGui::IsItemActive())
     {
@@ -1634,7 +1634,7 @@ void UI::Render(SDL_Renderer *r)
                         FileDialogState::save(live_fd_state);
                         Playback::CloseMidi(); // Close previous MIDI file
                         ImGui::OpenPopup("Loading MIDI...");
-                        Playback::loadMidiFile(midi_file);
+                        Playback::LoadMidiFile(midi_file);
 
                         if(no_midi_duplicates)
                         {
@@ -1668,7 +1668,7 @@ void UI::Render(SDL_Renderer *r)
                     MidiList::last_midi_file = live_midi_list[selected_midi_index];
                     MidiList::save(live_midi_list, MidiList::last_midi_file);
                     ImGui::OpenPopup("Loading MIDI...");
-                    Playback::loadMidiFile(live_midi_list[selected_midi_index]);
+                    Playback::LoadMidiFile(live_midi_list[selected_midi_index]);
                 }
                 ImGui::PopStyleColor();
 
@@ -2634,7 +2634,7 @@ void UI::Render(SDL_Renderer *r)
                             // Apply the change in real-time if the value has changed
                             if(prev_voice_count != live_conf.voice_count)
                             {
-                                Playback::updateVoiceCount(live_conf.voice_count);
+                                Playback::UpdateVoiceCount(live_conf.voice_count);
                                 prev_voice_count = live_conf.voice_count;
                             }
                         }
@@ -3053,7 +3053,7 @@ void UI::Render(SDL_Renderer *r)
     
         if(ImGui::SliderFloat("##PlaybackPosition", &current_midi_pos_sl, 0.0f, endPos, "", ImGuiSliderFlags_NoInput))
             if(ImGui::IsItemClicked())
-                Playback::seek(current_midi_pos_sl);
+                Playback::Seek(current_midi_pos_sl);
     
         ImGui::PopStyleColor(5);
         

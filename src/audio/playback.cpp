@@ -299,7 +299,7 @@ void Playback::ReloadSoundfonts()
         LoadEnabledSoundfonts(live_soundfont_list);
 }
 
-void Playback::updateVoiceCount(int voiceCount)
+void Playback::UpdateVoiceCount(int voiceCount)
 {
     ksr_config_set_max_voices(midi_synth_ctx, voiceCount);
 
@@ -307,7 +307,7 @@ void Playback::updateVoiceCount(int voiceCount)
     live_conf.voice_count = voiceCount;
 }
 
-void Playback::loadMidiFile(const std::string &midi_path)
+void Playback::LoadMidiFile(const std::string &midi_path)
 {
     std::thread midi_loading_thread(LoadMidi, midi_path);
 
@@ -351,7 +351,7 @@ void Playback::CloseMidi()
     is_midi_loaded = false;
 }
 
-void Playback::PlayerStateUpdate()
+void Playback::UpdateState()
 {
     is_midi_stream_creating = is_midi_stream_creating_fn.load();
 
@@ -382,7 +382,7 @@ void Playback::PlayerStateUpdate()
     }
 }
 
-void Playback::seek_playback(f64 seconds)
+void Playback::Seek_lazy(f64 seconds)
 {
     if(!is_midi_loaded)
         return;
@@ -419,7 +419,7 @@ void Playback::seek_playback(f64 seconds)
 }
 
 // prob the one above is kinda obsolete idk
-void Playback::seek(f64 seconds)
+void Playback::Seek(f64 seconds)
 {
     // Seek the prerendered audio.
     ksr_player_seek(midi_synth_ctx, (long)(seconds * 1000.0));
@@ -443,7 +443,7 @@ void Playback::seek(f64 seconds)
     Midi_ctx.update_to(Tplay + Tscr);
 }
 
-void Playback::pause()
+void Playback::Pause()
 {
     if(!is_midi_loaded)
         return;
@@ -561,7 +561,7 @@ void Playback::UpdateEndPosition()
     saved_position = ksr_raw_pos2sec(midi_synth_ctx, current_player_pos);
 }
 
-void Playback::UpdateMidiPlayerPos()
+void Playback::UpdateMidiPos()
 {
     playback_ended = ksr_player_is_ended(midi_synth_ctx);
 
@@ -574,7 +574,7 @@ bool Playback::IsPrerenderFinished()
     return ksr_prerender_is_eos(midi_synth_ctx);
 }
 
-bool Playback::IsMidiPlayerActive()
+bool Playback::IsActive()
 {
     return ksr_player_is_active(midi_synth_ctx);
 }

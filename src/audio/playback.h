@@ -39,8 +39,7 @@ extern NVnoteList Midi_ctx;
 class Playback
 {
   public:
-
-    //static u32       main_stream;
+    // static u32       main_stream;
     static bool      is_playback_started;
     static bool      is_midi_loaded;
     static bool      is_midi_loading;
@@ -53,64 +52,64 @@ class Playback
     static f64       Tplay, Tscr;
     static u64       playback_start_ns;
 
-    static void Init();
-    static void loadMidiFile(const std::string &midi_path);
-    static void CloseMidi();
-    static void LoadDefaultSoundfonts();
-    static bool LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soundfonts);
-    static void ReloadSoundfonts();
-    static void updateVoiceCount(int voiceCount);
-    static void seek_playback(f64 seconds);
-    static void seek(f64 seconds);
-    static void UpdateEndPosition();
-    static void SetReverbPreset(int rv_pr_idx);
-    static void UpdateMidiPlayerPos();
-    static bool IsMidiPlayerActive();
-    static bool IsMIDIEnded();
-    static f64  GetEndPos();
-    static f64  GetPrerenderPos();
-    static bool IsPrerenderFinished();
-    static void pause();
-    static void PlayerStateUpdate();
-    static void Close();
-    static void SetNoteVelSkipping(int low_vel, int high_vel, bool enabled);
-    static void SetMidiChunkLimit(int chunk_limit, bool enabled);
-    static void SetAudioFrameSize(int frame_size);
-    static void SetOverlappingNotes(bool enabled);
-    static void ExportAudio(std::string fname);
-    static int GetActiveVoices();
+    static void      Init();
+    static void      LoadMidiFile(const std::string &midi_path);
+    static void      CloseMidi();
+    static void      LoadDefaultSoundfonts();
+    static bool      LoadEnabledSoundfonts(std::vector<UI::SoundfontItem> enabled_soundfonts);
+    static void      ReloadSoundfonts();
+    static void      UpdateVoiceCount(int voiceCount);
+    static void      Seek_lazy(f64 seconds);
+    static void      Seek(f64 seconds);
+    static void      UpdateEndPosition();
+    static void      SetReverbPreset(int rv_pr_idx);
+    static void      UpdateMidiPos();
+    static bool      IsActive();
+    static bool      IsMIDIEnded();
+    static f64       GetEndPos();
+    static f64       GetPrerenderPos();
+    static bool      IsPrerenderFinished();
+    static void      Pause();
+    static void      UpdateState();
+    static void      Close();
+    static void      SetNoteVelSkipping(int low_vel, int high_vel, bool enabled);
+    static void      SetMidiChunkLimit(int chunk_limit, bool enabled);
+    static void      SetAudioFrameSize(int frame_size);
+    static void      SetOverlappingNotes(bool enabled);
+    static void      ExportAudio(std::string fname);
+    static int       GetActiveVoices();
 };
 
 class MIDIAudioStream
 {
-    public:
-        SDL_AudioSpec config;
-        SDL_AudioStream *stream;
-        SDL_AudioDeviceID *devices;
+  public:
+    SDL_AudioSpec      config;
+    SDL_AudioStream   *stream;
+    SDL_AudioDeviceID *devices;
 
-        typedef struct
-        {
-            int index;
-            int ID;
-            std::string name;
-        }Device;
+    typedef struct
+    {
+        int         index;
+        int         ID;
+        std::string name;
+    } Device;
 
-        SDL_AudioDeviceID logical_audio_dev;
+    SDL_AudioDeviceID logical_audio_dev;
 
-        static void callback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount);
+    static void       callback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount);
 
-        MIDIAudioStream(std::string audioDrvName);
-        ~MIDIAudioStream();
+    MIDIAudioStream(std::string audioDrvName);
+    ~MIDIAudioStream();
 
-        std::vector<std::string> driverList;
-        std::vector<Device> deviceList;
+    std::vector<std::string> driverList;
+    std::vector<Device>      deviceList;
 
-        bool isDiskDriverAvailable; // Todo
-        bool isInitialized;
-        void CreateDriverList();
-        void CreateDeviceList();
-        void SetAudioFilenamePath(std::string audioFName);
-        void SetDevice(int devID_Index);
-        void Close();
+    bool                     isDiskDriverAvailable; // Todo
+    bool                     isInitialized;
+    void                     CreateDriverList();
+    void                     CreateDeviceList();
+    void                     SetAudioFilenamePath(std::string audioFName);
+    void                     SetDevice(int devID_Index);
+    void                     Close();
 };
 #endif
