@@ -51,8 +51,7 @@ class MIDIPlayer
 
 
     public:
-        // static u32       main_stream;
-        Kasaria *midi_synth_ctx = nullptr;
+        Kasaria   *midi_synth_ctx = nullptr;
         bool      is_playback_started;
         bool      is_midi_loaded;
         bool      is_midi_loading;
@@ -63,7 +62,6 @@ class MIDIPlayer
         f64       seek_amount;
         bool      is_paused;
         f64       Tplay, Tscr;
-        //u64       playback_start_ns;
 
         MIDIPlayer();
         ~MIDIPlayer();

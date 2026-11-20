@@ -87,7 +87,6 @@ MIDIAudioStream::MIDIAudioStream(std::string audioDrvName, Kasaria *ksr_ctx) : k
 
 MIDIAudioStream::~MIDIAudioStream()
 {
-    Log::trace("DESTROY AUDIO STREAM");
     if(loaded_config.audio_drv_name != "disk")
     {
         SDL_CloseAudioDevice(logical_audio_dev);

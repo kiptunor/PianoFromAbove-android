@@ -11,13 +11,13 @@
 
 
 #include "../config/midi_list.h"
-#include "midi_audio_stream.h"
 #include "../globals.h"
 #include "../logger.h"
 #include "../nv_midi/list.h"
 #include "../render/note_buffer.h"
-#include "audio_enc.h"
 #include "MIDIPlayer.h"
+#include "audio_enc.h"
+#include "midi_audio_stream.h"
 
 
 
@@ -26,7 +26,7 @@
 
 
 
-//Kasaria *midi_synth_ctx;
+// Kasaria *midi_synth_ctx;
 
 
 
@@ -36,100 +36,33 @@
 
 
 
-/*
-f64               MIDIPlayer::Tplay                   = 0.0;
-bool              MIDIPlayer::is_midi_loaded          = false;
-bool              MIDIPlayer::is_playback_started     = false;
-bool              MIDIPlayer::playback_ended          = false;
-bool              MIDIPlayer::is_midi_loading         = false;
-bool              MIDIPlayer::is_midi_stream_creating = false;
-u64               MIDIPlayer::saved_position          = 0;
-u64               MIDIPlayer::current_player_pos      = 0;
-const f64         MIDIPlayer::seek_amount             = 3.0;
-f64               MIDIPlayer::Tscr;
-std::atomic<bool> is_midi_loaded_fn          = false;
-std::atomic<bool> is_midi_loading_fn         = false;
-std::atomic<bool> is_midi_stream_creating_fn = false;
-std::string       last_midi_path;
-u64               MIDIPlayer::playback_start_ns;
-*/
 
 
-
-
-
-void              MIDIPlayer::Init()
-{
-    midi_synth_ctx = ksr_init(0);
-
-    KasariaConfig synth_cfg;
-
-    synth_cfg =
-    {
-        .amplification           = 100,
-        .voice_limit             = loaded_config.voice_count,
-        .sample_rate             = 48000,
-        .control_rate            = 100,
-        .default_program         = 0,
-        .low_note_velocity       = loaded_config.vel_min,
-        .high_note_velocity      = loaded_config.vel_max,
-        .audio_frame_size        = live_conf.audio_frame_size,
-        .midi_chunk_size         = live_conf.midi_chunk_size,
-        .reverb_preset           = live_conf.reverb_preset_idx,
-        .immediate_panning       = false,
-        .mono_audio              = false,
-        .fast_decay              = true,
-        .antialiasing            = true,
-        .pre_resample            = true,
-        .velocity_skipping       = loaded_config.vel_filter,
-        .skip_initial_silence    = false,
-        .allow_overlapping_notes = live_conf.overlapping_notes,
-        .midi_chunk_limiter      = live_conf.midi_chunk_limiter,
-        .audio_compressor        = true
-    };
-
-    ksr_set_config(midi_synth_ctx, synth_cfg);
-    ksr_print_config(midi_synth_ctx);
-
-    // ksr_init_audio(midi_synth_ctx, INTERNAL_MIDI_PLAYER);
-
-    au_stm = new MIDIAudioStream(loaded_config.audio_drv_name, midi_synth_ctx);
-
-    au_stm->CreateDriverList();
-    au_stm->CreateDeviceList();
-
-    // Any audio device can be set here
-    if(loaded_config.audio_drv_name != "disk")
-        au_stm->SetDevice(loaded_config.audio_device_index);
-
-    // Setting an audio device too early using the "disk" driver can make super large raw audio files
-    // au_stm->SetDriver(loaded_config.audio_device_index);
-}
 
 MIDIPlayer::MIDIPlayer()
 {
-    Log::trace("MIDI PLAYER COBSTRUCTOR CALLED");
-    Tplay                   = 0.0;
-    is_midi_loaded          = false;
-    is_playback_started     = false;
-    playback_ended          = false;
-    is_midi_loading         = false;
-    is_midi_stream_creating = false;
-    saved_position          = 0;
-    current_player_pos      = 0;
-    seek_amount             = 3.0;
-    //Tscr;
+    Tplay                                        = 0.0;
+    is_midi_loaded                               = false;
+    is_playback_started                          = false;
+    playback_ended                               = false;
+    is_midi_loading                              = false;
+    is_midi_stream_creating                      = false;
+    saved_position                               = 0;
+    current_player_pos                           = 0;
+    seek_amount                                  = 3.0;
+    // Tscr;
 
     std::atomic<bool> is_midi_loaded_fn          = false;
     std::atomic<bool> is_midi_loading_fn         = false;
     std::atomic<bool> is_midi_stream_creating_fn = false;
     std::string       last_midi_path;
-    //u64               playback_start_ns;
-    
+    // u64               playback_start_ns;
+
     midi_synth_ctx = ksr_init(0);
 
     KasariaConfig synth_cfg;
 
+    // clang-format off
     synth_cfg =
     {
         .amplification           = 100,
@@ -153,11 +86,10 @@ MIDIPlayer::MIDIPlayer()
         .midi_chunk_limiter      = live_conf.midi_chunk_limiter,
         .audio_compressor        = true
     };
+    // clang-format on
 
     ksr_set_config(midi_synth_ctx, synth_cfg);
-    //ksr_print_config(midi_synth_ctx);
-
-    
+    // ksr_print_config(midi_synth_ctx);
 }
 
 void MIDIPlayer::LoadMidi(const std::string &midi_path)
@@ -569,7 +501,5 @@ void MIDIPlayer::Close()
 
 MIDIPlayer::~MIDIPlayer()
 {
-    Log::trace("MIDI PLAYER DESTRUCTOR CALLED!!!");
     ksr_shutdown(midi_synth_ctx);
-    //delete au_stm;
 }

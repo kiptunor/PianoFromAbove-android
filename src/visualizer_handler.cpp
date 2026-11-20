@@ -58,9 +58,9 @@ void VisualizerHandler::shutdown()
         Log::error("", "SDL_GetError(): %s", sdl_err);
         exit_code = 1;
     }
-    delete RenderWin;
     delete MidiPlayer;
     delete au_stm;
+    delete RenderWin; // This calls SDL_Quit() which always must be the last thing to do
     Log::closeFile();
     exit(exit_code);
 }
