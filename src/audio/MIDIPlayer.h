@@ -5,8 +5,6 @@
 #include <vector>
 #include <atomic>
 
-#include <SDL3/SDL.h>
-
 #include <kasaria.h>
 
 

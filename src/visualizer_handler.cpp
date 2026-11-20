@@ -61,6 +61,12 @@ void VisualizerHandler::shutdown()
     delete MidiPlayer;
     delete au_stm;
     delete RenderWin; // This calls SDL_Quit() which always must be the last thing to do
+
+    // No dangling pointer class
+    MidiPlayer = nullptr;
+    au_stm     = nullptr;
+    RenderWin  = nullptr;
+    
     Log::closeFile();
     exit(exit_code);
 }

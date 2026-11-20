@@ -26,7 +26,7 @@
 
 
 
-// Kasaria *midi_synth_ctx;
+
 
 
 
@@ -41,22 +41,20 @@
 
 MIDIPlayer::MIDIPlayer()
 {
-    Tplay                                        = 0.0;
-    is_midi_loaded                               = false;
-    is_playback_started                          = false;
-    playback_ended                               = false;
-    is_midi_loading                              = false;
-    is_midi_stream_creating                      = false;
-    saved_position                               = 0;
-    current_player_pos                           = 0;
-    seek_amount                                  = 3.0;
-    // Tscr;
+    Tplay                      = 0.0;
+    is_midi_loaded             = false;
+    is_playback_started        = false;
+    playback_ended             = false;
+    is_midi_loading            = false;
+    is_midi_stream_creating    = false;
+    saved_position             = 0;
+    current_player_pos         = 0;
+    seek_amount                = 3.0;
 
-    std::atomic<bool> is_midi_loaded_fn          = false;
-    std::atomic<bool> is_midi_loading_fn         = false;
-    std::atomic<bool> is_midi_stream_creating_fn = false;
-    std::string       last_midi_path;
-    // u64               playback_start_ns;
+    // Atomics
+    is_midi_loaded_fn          = false;
+    is_midi_loading_fn         = false;
+    is_midi_stream_creating_fn = false;
 
     midi_synth_ctx = ksr_init(0);
 
@@ -353,7 +351,7 @@ void MIDIPlayer::Pause()
         ksr_config_set_note_skipping(midi_synth_ctx, live_conf.vel_min, live_conf.vel_max, live_conf.vel_filter);
 
         // And start the SDL audio thread again for midi playback
-        SDL_ResumeAudioStreamDevice(au_stm->stream);
+        au_stm->Start();
 
         Tplay          = 0.0;
         playback_ended = false;
@@ -502,4 +500,5 @@ void MIDIPlayer::Close()
 MIDIPlayer::~MIDIPlayer()
 {
     ksr_shutdown(midi_synth_ctx);
+    midi_synth_ctx = nullptr;
 }
