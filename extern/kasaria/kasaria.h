@@ -74,6 +74,7 @@ typedef struct
     int high_note_velocity;
     int audio_frame_size;
     int midi_chunk_size;
+    int reverb_preset;
     bool immediate_panning;
     bool mono_audio;
     bool fast_decay;
@@ -256,7 +257,7 @@ enum
   KSR_REVERB_PRESET_DUSTYROOM,
   KSR_REVERB_PRESET_CHAPEL,
   KSR_REVERB_PRESET_SMALLWATERROOM,
-  NUM_TIMID_REVERB_PRESETS
+  KSR_REVERB_PRESET_TOTAL_COUNT
 };
 
 
@@ -270,6 +271,12 @@ const char * ksr_get_commit_hash();
 @param disable_logs When set to true, the library will not log any important information
 */
 KSR_API Kasaria *ksr_init(bool disable_logs);
+
+/*
+@brief Get the instance ID value
+@param ksr Kasaria instance
+*/
+KSR_API int ksr_get_instance_id(Kasaria *ksr);
 
 /*
 @brief              Set what log level to avoid

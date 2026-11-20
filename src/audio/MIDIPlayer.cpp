@@ -61,6 +61,7 @@ void              MIDIPlayer::Init()
 {
     midi_synth_ctx = ksr_init(0);
 
+    /*
     ksr_config_set_fast_decay(midi_synth_ctx, true);
     ksr_config_set_antialiasing(midi_synth_ctx, true);
     ksr_config_set_sample_rate(midi_synth_ctx, 48000); // Optional
@@ -75,6 +76,36 @@ void              MIDIPlayer::Init()
 
 
     ksr_config_set_max_voices(midi_synth_ctx, loaded_config.voice_count); // How many voices the synth can use
+    */
+
+    KasariaConfig synth_cfg;
+
+    synth_cfg =
+    {
+        .amplification           = 100,
+        .voice_limit             = loaded_config.voice_count,
+        .sample_rate             = 48000,
+        .control_rate            = 100,
+        .default_program         = 0,
+        .low_note_velocity       = loaded_config.vel_min,
+        .high_note_velocity      = loaded_config.vel_max,
+        .audio_frame_size        = live_conf.audio_frame_size,
+        .midi_chunk_size         = live_conf.midi_chunk_size,
+        .reverb_preset           = live_conf.reverb_preset_idx,
+        .immediate_panning       = false,
+        .mono_audio              = false,
+        .fast_decay              = true,
+        .antialiasing            = true,
+        .pre_resample            = true,
+        .velocity_skipping       = loaded_config.vel_filter,
+        .skip_initial_silence    = false,
+        .allow_overlapping_notes = live_conf.overlapping_notes,
+        .midi_chunk_limiter      = live_conf.midi_chunk_limiter,
+        .audio_compressor        = true
+    };
+
+    ksr_set_config(midi_synth_ctx, synth_cfg);
+    ksr_print_config(midi_synth_ctx);
 
     // ksr_init_audio(midi_synth_ctx, INTERNAL_MIDI_PLAYER);
 

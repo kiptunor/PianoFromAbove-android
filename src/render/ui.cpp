@@ -127,7 +127,7 @@ const char                 *builtin_ui_theme_names[] =
 
 // Ugh umm
 // It's ugly that's not how it should be done lmao
-constexpr std::array<const char*, NUM_TIMID_REVERB_PRESETS> reverbPresetNames =
+constexpr std::array<const char*, KSR_REVERB_PRESET_TOTAL_COUNT> reverbPresetNames =
 {
     "Generic",
     "Padded cell",
