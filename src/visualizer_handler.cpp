@@ -43,7 +43,7 @@ void ToggleFullscreen(SDL_Window *window)
 void VisualizerHandler::shutdown()
 {
     int exit_code = 0;
-    MIDIPlayer::Close();
+    //MidiPlayer->Close();
     Midi_ctx.destroy_all();
 
     const char *sdl_err = SDL_GetError();
@@ -59,6 +59,8 @@ void VisualizerHandler::shutdown()
         exit_code = 1;
     }
     delete RenderWin;
+    delete MidiPlayer;
+    delete au_stm;
     Log::closeFile();
     exit(exit_code);
 }
@@ -104,14 +106,14 @@ VisualizerHandler::VisualizerHandler()
     while(1)
     {
         // Check if playback just ended (and we need to handle that)
-        if(!MIDIPlayer::playback_ended && MIDIPlayer::IsMIDIEnded())
+        if(!MidiPlayer->playback_ended && MidiPlayer->IsMIDIEnded())
         {
-            MIDIPlayer::playback_ended = true;
-            MIDIPlayer::Tplay          = 1.0;  // Add a bit more to fully finish the note visualization
-            MIDIPlayer::is_paused      = true; // Just mark as paused when it ends
+            MidiPlayer->playback_ended = true;
+            MidiPlayer->Tplay          = 1.0;  // Add a bit more to fully finish the note visualization
+            MidiPlayer->is_paused      = true; // Just mark as paused when it ends
 
             // Save the position at the end
-            MIDIPlayer::UpdateEndPosition();
+            MidiPlayer->UpdateEndPosition();
 
             if(loaded_config.audio_drv_name == "disk")
                 au_stm->Close();
@@ -136,21 +138,21 @@ VisualizerHandler::VisualizerHandler()
 
 
         // Repeatedly call this function to start midi playback until the midi loader thread is finished
-        MIDIPlayer::UpdateState();
+        MidiPlayer->UpdateState();
 
 
 
         // Start visualizing only if the synth's midi player is ready
-        if(MIDIPlayer::IsActive())
+        if(MidiPlayer->IsActive())
         {
             //Log::debug("updating midi vis");
             
-            MIDIPlayer::is_playback_started = true;
-            Midi_ctx.update_to(MIDIPlayer::Tplay + Tscr);
-            Midi_ctx.remove_to(MIDIPlayer::Tplay);
+            MidiPlayer->is_playback_started = true;
+            Midi_ctx.update_to(MidiPlayer->Tplay + Tscr);
+            Midi_ctx.remove_to(MidiPlayer->Tplay);
         }
         else
-            MIDIPlayer::is_playback_started = false;
+            MidiPlayer->is_playback_started = false;
 
 
         RenderWin->clear();
@@ -176,13 +178,13 @@ VisualizerHandler::VisualizerHandler()
                     switch(Evt.key.key)
                     {
                     case SDLK_SPACE:
-                        MIDIPlayer::Pause();
+                        MidiPlayer->Pause();
                         break;
                     case SDLK_LEFT:
-                        MIDIPlayer::Seek_lazy(-MIDIPlayer::seek_amount);
+                        MidiPlayer->Seek_lazy(-MidiPlayer->seek_amount);
                         break;
                     case SDLK_RIGHT:
-                        MIDIPlayer::Seek_lazy(MIDIPlayer::seek_amount);
+                        MidiPlayer->Seek_lazy(MidiPlayer->seek_amount);
                         break;
                     case SDLK_D: // Only for development purposes
                         UI::show_demo_window = true;
@@ -222,7 +224,7 @@ VisualizerHandler::VisualizerHandler()
 
         // Always draw notes
 
-        if(MIDIPlayer::is_playback_started) // This simple check makes the FPS to NOT drop after very high NPS
+        if(MidiPlayer->is_playback_started) // This simple check makes the FPS to NOT drop after very high NPS
             for(int i = 0; i != 128; ++i)
             {
                 for(const NVnote &n : Midi_ctx.Note_list[Render::KeyMap[i]])
@@ -256,8 +258,8 @@ VisualizerHandler::VisualizerHandler()
         SDL_RenderPresent(RenderWin->Ren);
 
         // Only update Tplay if actively playing and not at the end
-        if(!MIDIPlayer::is_paused && !MIDIPlayer::playback_ended && MIDIPlayer::IsActive())
-            MIDIPlayer::UpdateMidiPos();
+        if(!MidiPlayer->is_paused && !MidiPlayer->playback_ended && MidiPlayer->IsActive())
+            MidiPlayer->UpdateMidiPos();
     }
 }
 

@@ -143,9 +143,20 @@ APP_ENTRY(int argc, char *argv[])
     // Required for when the user wants to change the audio device
     //availableAudioDevices = Playback::GetAudioOutputs();
 
-    MIDIPlayer::Init();
+    MidiPlayer = new MIDIPlayer();
 
-    MIDIPlayer::LoadEnabledSoundfonts(loaded_soundfont_list);
+    au_stm = new MIDIAudioStream(loaded_config.audio_drv_name, MidiPlayer->midi_synth_ctx);
+
+    au_stm->CreateDriverList();
+    au_stm->CreateDeviceList();
+
+    // Any audio device can be set here
+    if(loaded_config.audio_drv_name != "disk")
+        au_stm->SetDevice(loaded_config.audio_device_index);
+
+    //MIDIPlayer::Init();
+
+    MidiPlayer->LoadEnabledSoundfonts(loaded_soundfont_list);
 
     // Let the user know if midi or soundfont files are missing
     if(!loaded_config.dont_show_missing_files)

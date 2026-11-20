@@ -158,12 +158,12 @@ void NoteBuffer::DrawNotes(Config::configuration settings)
             int key = Render::KeyMap[k];
 
             // Gradient rect (Note fill)
-            int y_0 = std::clamp((int)floor(_WinH - (n.Tstart - MIDIPlayer::Tplay) * pps + 0.5f), 0, _WinH);
+            int y_0 = std::clamp((int)floor(_WinH - (n.Tstart - MidiPlayer->Tplay) * pps + 0.5f), 0, _WinH);
 
             // Dark rect (Note outline)
-            int y_1 = (n.Tend < MIDIPlayer::Tplay + Tscr) ? std::clamp((int)floor(_WinH - (n.Tend - MIDIPlayer::Tplay) * pps + 0.5f), 0, _WinH) : 0;
+            int y_1 = (n.Tend < MidiPlayer->Tplay + Tscr) ? std::clamp((int)floor(_WinH - (n.Tend - MidiPlayer->Tplay) * pps + 0.5f), 0, _WinH) : 0;
 
-            if(n.Tstart <= MIDIPlayer::Tplay && MIDIPlayer::Tplay < n.Tend)
+            if(n.Tstart <= MidiPlayer->Tplay && MidiPlayer->Tplay < n.Tend)
             {
                 RenderWin->KeyPress[key] = true;
                 RenderWin->KeyColor[key] = Render::note_color;

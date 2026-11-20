@@ -87,6 +87,7 @@ MIDIAudioStream::MIDIAudioStream(std::string audioDrvName, Kasaria *ksr_ctx) : k
 
 MIDIAudioStream::~MIDIAudioStream()
 {
+    Log::trace("DESTROY AUDIO STREAM");
     if(loaded_config.audio_drv_name != "disk")
     {
         SDL_CloseAudioDevice(logical_audio_dev);
@@ -101,6 +102,7 @@ void MIDIAudioStream::Start()
 
 void MIDIAudioStream::Close()
 {
+    Log::trace("Close audio stream");
     SDL_Delay(380); // It impacts how much time is left after the midi conversion ended
     SDL_DestroyAudioStream(stream);
     Log::info("Audio Stream Closed");

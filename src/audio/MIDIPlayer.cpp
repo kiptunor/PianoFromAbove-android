@@ -26,7 +26,7 @@
 
 
 
-Kasaria *midi_synth_ctx;
+//Kasaria *midi_synth_ctx;
 
 
 
@@ -36,7 +36,7 @@ Kasaria *midi_synth_ctx;
 
 
 
-
+/*
 f64               MIDIPlayer::Tplay                   = 0.0;
 bool              MIDIPlayer::is_midi_loaded          = false;
 bool              MIDIPlayer::is_playback_started     = false;
@@ -52,6 +52,7 @@ std::atomic<bool> is_midi_loading_fn         = false;
 std::atomic<bool> is_midi_stream_creating_fn = false;
 std::string       last_midi_path;
 u64               MIDIPlayer::playback_start_ns;
+*/
 
 
 
@@ -60,23 +61,6 @@ u64               MIDIPlayer::playback_start_ns;
 void              MIDIPlayer::Init()
 {
     midi_synth_ctx = ksr_init(0);
-
-    /*
-    ksr_config_set_fast_decay(midi_synth_ctx, true);
-    ksr_config_set_antialiasing(midi_synth_ctx, true);
-    ksr_config_set_sample_rate(midi_synth_ctx, 48000); // Optional
-    ksr_config_set_overlapping_notes(midi_synth_ctx, live_conf.overlapping_notes);
-    // ksr_config_set_audio_frame_size(midi_synth_ctx, 96);
-    ksr_config_set_audio_frame_size(midi_synth_ctx, live_conf.audio_frame_size);
-    ksr_config_set_midi_chunk_limit(midi_synth_ctx, live_conf.midi_chunk_size, live_conf.midi_chunk_limiter);
-
-    // Skip notes with velocities in between the low and high specified threasholds
-    // And also enable the filter
-    ksr_config_set_note_skipping(midi_synth_ctx, loaded_config.vel_min, loaded_config.vel_max, loaded_config.vel_filter);
-
-
-    ksr_config_set_max_voices(midi_synth_ctx, loaded_config.voice_count); // How many voices the synth can use
-    */
 
     KasariaConfig synth_cfg;
 
@@ -122,7 +106,61 @@ void              MIDIPlayer::Init()
     // au_stm->SetDriver(loaded_config.audio_device_index);
 }
 
-void LoadMidi(const std::string &midi_path)
+MIDIPlayer::MIDIPlayer()
+{
+    Log::trace("MIDI PLAYER COBSTRUCTOR CALLED");
+    Tplay                   = 0.0;
+    is_midi_loaded          = false;
+    is_playback_started     = false;
+    playback_ended          = false;
+    is_midi_loading         = false;
+    is_midi_stream_creating = false;
+    saved_position          = 0;
+    current_player_pos      = 0;
+    seek_amount             = 3.0;
+    //Tscr;
+
+    std::atomic<bool> is_midi_loaded_fn          = false;
+    std::atomic<bool> is_midi_loading_fn         = false;
+    std::atomic<bool> is_midi_stream_creating_fn = false;
+    std::string       last_midi_path;
+    //u64               playback_start_ns;
+    
+    midi_synth_ctx = ksr_init(0);
+
+    KasariaConfig synth_cfg;
+
+    synth_cfg =
+    {
+        .amplification           = 100,
+        .voice_limit             = loaded_config.voice_count,
+        .sample_rate             = 48000,
+        .control_rate            = 100,
+        .default_program         = 0,
+        .low_note_velocity       = loaded_config.vel_min,
+        .high_note_velocity      = loaded_config.vel_max,
+        .audio_frame_size        = live_conf.audio_frame_size,
+        .midi_chunk_size         = live_conf.midi_chunk_size,
+        .reverb_preset           = live_conf.reverb_preset_idx,
+        .immediate_panning       = false,
+        .mono_audio              = false,
+        .fast_decay              = true,
+        .antialiasing            = true,
+        .pre_resample            = true,
+        .velocity_skipping       = loaded_config.vel_filter,
+        .skip_initial_silence    = false,
+        .allow_overlapping_notes = live_conf.overlapping_notes,
+        .midi_chunk_limiter      = live_conf.midi_chunk_limiter,
+        .audio_compressor        = true
+    };
+
+    ksr_set_config(midi_synth_ctx, synth_cfg);
+    //ksr_print_config(midi_synth_ctx);
+
+    
+}
+
+void MIDIPlayer::LoadMidi(const std::string &midi_path)
 {
     if(!Midi_ctx.start_parse(midi_path.c_str()))
     {
@@ -132,7 +170,7 @@ void LoadMidi(const std::string &midi_path)
         return;
     }
 
-    is_midi_loading_fn.store(true, std::memory_order_release);
+    MIDIPlayer::is_midi_loading_fn.store(true, std::memory_order_release);
 
     // How tf did I missed this for so long ??? :skull:
     if(live_conf.OR)
@@ -227,7 +265,7 @@ void MIDIPlayer::UpdateVoiceCount(int voiceCount)
 
 void MIDIPlayer::LoadMidiFile(const std::string &midi_path)
 {
-    std::thread midi_loading_thread(LoadMidi, midi_path);
+    std::thread midi_loading_thread(&MIDIPlayer::LoadMidi, this, midi_path);
 
 
     if(!std::filesystem::exists(midi_path))
@@ -527,4 +565,11 @@ void MIDIPlayer::Close()
 {
     delete au_stm;
     ksr_shutdown(midi_synth_ctx);
+}
+
+MIDIPlayer::~MIDIPlayer()
+{
+    Log::trace("MIDI PLAYER DESTRUCTOR CALLED!!!");
+    ksr_shutdown(midi_synth_ctx);
+    //delete au_stm;
 }
