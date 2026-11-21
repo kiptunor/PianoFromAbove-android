@@ -10,7 +10,7 @@
 #include "config/file_dialog_state.h"
 #include "mb_types.h"
 #include "render/note_buffer.h"
-#include "render/render.h"
+#include "render/SDLRenderer/SDLRenderer.h"
 
 
 
@@ -29,7 +29,7 @@ inline Config::configuration          loaded_config;
 inline Config::configuration          live_conf;
 inline std::vector<std::string>       live_midi_list;
 inline std::vector<std::string>       loaded_midi_list;
-inline Render                        *RenderWin;
+inline SDLRenderer                   *DefaultRenderer;
 inline MIDIPlayer                    *MidiPlayer;
 inline MIDIAudioStream               *au_stm;
 inline int                            _WinH;

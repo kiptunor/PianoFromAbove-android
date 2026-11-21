@@ -14,6 +14,8 @@ class VisualizerHandler
     VisualizerHandler();
     ~VisualizerHandler();
 
+    void Render();
+
     void setType(Type type);
     static void shutdown();
     Type getType() const;

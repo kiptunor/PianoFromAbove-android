@@ -20,7 +20,7 @@
 #include "../globals.h"
 #include "../logger.h"
 #include "../visualizer_handler.h"
-#include "render.h"
+#include "SDLRenderer/SDLRenderer.h"
 #include "ui.h"
 
 // #include <DixelU/smic.h>
@@ -1406,8 +1406,8 @@ void UI::Setup(int graphics_backend)
 
     // Setup Platform/Renderer backends
     // ImGui_ImplSDL3_InitForSDLRenderer(w, r);
-    ImGui_ImplSDLRenderer3_Init(RenderWin->Ren);
-    ImGui_ImplSDL3_InitForVulkan(RenderWin->Win);
+    ImGui_ImplSDLRenderer3_Init(DefaultRenderer->Ren);
+    ImGui_ImplSDL3_InitForVulkan(DefaultRenderer->Win);
 
     UpdateWidgetValues();
 }
@@ -2279,7 +2279,7 @@ void UI::Render(SDL_Renderer *r)
                         {
                             live_conf.vsync = vsync;
 
-                            if(!SDL_SetRenderVSync(RenderWin->Ren, live_conf.vsync))
+                            if(!SDL_SetRenderVSync(DefaultRenderer->Ren, live_conf.vsync))
                                 Log::error("Failed to set vsync (realtime)");
                         }
 
@@ -2451,7 +2451,7 @@ void UI::Render(SDL_Renderer *r)
                             }
 
                             if(ImGui::Checkbox("Background image", &background_image))
-                                RenderWin->LoadBackgroundImage(live_conf.background_image_path);
+                                DefaultRenderer->LoadBackgroundImage(live_conf.background_image_path);
 
                             live_conf.background_image = background_image;
 
@@ -2479,7 +2479,7 @@ void UI::Render(SDL_Renderer *r)
                                     live_fd_state.bg_image_path     = ImGuiFileDialog::Instance()->GetCurrentPath();
                                     FileDialogState::save(live_fd_state);
 
-                                    RenderWin->LoadBackgroundImage(live_conf.background_image_path);
+                                    DefaultRenderer->LoadBackgroundImage(live_conf.background_image_path);
                                 }
 
                                 ImGuiFileDialog::Instance()->Close();

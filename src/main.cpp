@@ -208,6 +208,15 @@ APP_ENTRY(int argc, char *argv[])
     vis = new VisualizerHandler();
 
 
+    /*
+    - - - - Mainloop - - - -
+    */
+    while(1)
+    {
+        vis->Render();
+    }
+
+
 
     Log::closeFile(); // Not yet needed
     return 0;

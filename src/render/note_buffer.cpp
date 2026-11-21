@@ -7,7 +7,7 @@
 
 #include "../globals.h"
 #include "note_buffer.h"
-#include "render.h"
+#include "SDLRenderer/SDLRenderer.h"
 
 
 
@@ -47,7 +47,7 @@ void NoteBuffer::ClearTrackChannelColors()
 void NoteBuffer::DrawNotes(Config::configuration settings)
 {
     std::map<NVMidi::u16_t, std::vector<const Note *>>           keyBuckets;
-    static std::unordered_map<int, decltype(Render::note_color)> _randomColorCache;
+    static std::unordered_map<int, decltype(SDLRenderer::note_color)> _randomColorCache;
 
 
     for(const auto &q : note_buf)
@@ -73,8 +73,8 @@ void NoteBuffer::DrawNotes(Config::configuration settings)
                 const auto &B      = b->n;
 
                 // White notes first then the black notes after
-                bool        sharpA = Render::IsSharp(a->k);
-                bool        sharpB = Render::IsSharp(b->k);
+                bool        sharpA = SDLRenderer::IsSharp(a->k);
+                bool        sharpB = SDLRenderer::IsSharp(b->k);
                 if(sharpA != sharpB)
                     return !sharpA; // white first
 
@@ -119,11 +119,11 @@ void NoteBuffer::DrawNotes(Config::configuration settings)
             if(!settings.is_custom_ch_colors)
             {
                 if(settings.loop_colors)
-                    Render::note_color = settings.channel_colors[colorIndex % 16];
+                    SDLRenderer::note_color = settings.channel_colors[colorIndex % 16];
                 else
                 {
                     if(colorIndex < 16)
-                        Render::note_color = default_settings.channel_colors[colorIndex];
+                        SDLRenderer::note_color = default_settings.channel_colors[colorIndex];
                     else
                     {
                         // Render::note_color = GenerateRandomColor();
@@ -131,18 +131,18 @@ void NoteBuffer::DrawNotes(Config::configuration settings)
                         auto [it, inserted] = _randomColorCache.try_emplace(colorIndex);
                         if(inserted)
                             it->second = GenerateRandomColor();
-                        Render::note_color = it->second;
+                        SDLRenderer::note_color = it->second;
                     }
                 }
             }
             else
             {
                 if(settings.loop_colors)
-                    Render::note_color = settings.channel_colors[colorIndex % 16];
+                    SDLRenderer::note_color = settings.channel_colors[colorIndex % 16];
                 else
                 {
                     if(colorIndex < 16)
-                        Render::note_color = settings.channel_colors[colorIndex];
+                        SDLRenderer::note_color = settings.channel_colors[colorIndex];
                     else
                     {
                         // Render::note_color = GenerateRandomColor();
@@ -150,12 +150,12 @@ void NoteBuffer::DrawNotes(Config::configuration settings)
                         auto [it, inserted] = _randomColorCache.try_emplace(colorIndex);
                         if(inserted)
                             it->second = GenerateRandomColor();
-                        Render::note_color = it->second;
+                        SDLRenderer::note_color = it->second;
                     }
                 }
             }
 
-            int key = Render::KeyMap[k];
+            int key = SDLRenderer::KeyMap[k];
 
             // Gradient rect (Note fill)
             int y_0 = std::clamp((int)floor(_WinH - (n.Tstart - MidiPlayer->Tplay) * pps + 0.5f), 0, _WinH);
@@ -165,11 +165,11 @@ void NoteBuffer::DrawNotes(Config::configuration settings)
 
             if(n.Tstart <= MidiPlayer->Tplay && MidiPlayer->Tplay < n.Tend)
             {
-                RenderWin->KeyPress[key] = true;
-                RenderWin->KeyColor[key] = Render::note_color;
+                DefaultRenderer->KeyPress[key] = true;
+                DefaultRenderer->KeyColor[key] = SDLRenderer::note_color;
             }
 
-            RenderWin->CreateNote(k, y_0, y_1, Render::note_color);
+            DefaultRenderer->CreateNote(k, y_0, y_1, SDLRenderer::note_color);
         }
     }
 

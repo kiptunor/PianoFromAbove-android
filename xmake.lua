@@ -35,6 +35,7 @@ target("nvi-pfa-ksr")
         "src/config/*.cpp",
         "src/nv_midi/*.cpp",
         "src/render/*.cpp",
+        "src/render/SDLRenderer/*.cpp",
         "src/*.cpp"
     )
 
