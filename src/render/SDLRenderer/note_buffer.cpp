@@ -5,9 +5,9 @@
 
 
 
-#include "../globals.h"
+#include "../../globals.h"
 #include "note_buffer.h"
-#include "SDLRenderer/SDLRenderer.h"
+#include "SDLRenderer.h"
 
 
 

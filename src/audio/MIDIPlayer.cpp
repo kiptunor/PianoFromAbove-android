@@ -14,7 +14,6 @@
 #include "../globals.h"
 #include "../logger.h"
 #include "../nv_midi/list.h"
-#include "../render/note_buffer.h"
 #include "MIDIPlayer.h"
 #include "audio_enc.h"
 #include "midi_audio_stream.h"

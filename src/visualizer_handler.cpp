@@ -6,7 +6,7 @@
 
 
 #include "visualizer_handler.h"
-#include "render/note_buffer.h"
+#include "render/SDLRenderer/note_buffer.h"
 #include "render/SDLRenderer/SDLRenderer.h"
 #include "render/ui.h"
 #include "globals.h"
@@ -42,33 +42,7 @@ void ToggleFullscreen(SDL_Window *window)
 
 void VisualizerHandler::shutdown()
 {
-    int exit_code = 0;
-    //MidiPlayer->Close();
-    Midi_ctx.destroy_all();
 
-    const char *sdl_err = SDL_GetError();
-    if(sdl_err && *sdl_err)
-    {
-        std::ostringstream temp;
-        temp << "Caught last Error: " << sdl_err;
-
-        if(SDLRenderer::isDesktopSession())
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Last SDL Error: ", temp.str().c_str(), nullptr);
-
-        Log::error("", "SDL_GetError(): %s", sdl_err);
-        exit_code = 1;
-    }
-    delete MidiPlayer;
-    delete au_stm;
-    delete DefaultRenderer; // This calls SDL_Quit() which always must be the last thing to do
-
-    // No dangling pointer class
-    MidiPlayer       = nullptr;
-    au_stm           = nullptr;
-    DefaultRenderer  = nullptr;
-    
-    Log::closeFile();
-    exit(exit_code);
 }
 
 
@@ -93,15 +67,38 @@ VisualizerHandler::VisualizerHandler()
     // If not working fallback to the legacy visualizer
     // Then handle the mainloop, logic and GUI display
 
+    keep_running = true;
 
 
-    DefaultRenderer = new SDLRenderer();
+    SDL_Init(SDL_INIT_VIDEO);
+
+    
+    video_driver = SDL_GetCurrentVideoDriver();
+
+
+#ifdef PLATFORM_ANDROID
+    main_win = SDL_CreateWindow("NVi-PFA", 1920, 1080, 0);
+#else
+    main_win = SDL_CreateWindow("NVi-PFA", 1912, 1000, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
+    SDL_SetWindowMinimumSize(main_win, 745, 716);
+#endif
+
+
+// Don't set window position on Wayland as it can throw errors on exit
+#ifndef PLATFORM_ANDROID
+    if(strcmp(video_driver, "wayland") != 0)
+        SDL_SetWindowPosition(main_win, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+#else
+    SDL_SetWindowPosition(main_win, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+#endif
+
+
+
+    // Create graphics rendering
+    DefaultRenderer = new SDLRenderer(main_win); // Only default for now
 
     UI::Setup(1);
 
-
-    // Set initial background color
-    SDL_SetRenderDrawColor(DefaultRenderer->Ren, live_conf.bg_R, live_conf.bg_G, live_conf.bg_B, live_conf.bg_A); // Set initial background color
 
     if(live_conf.background_image)
         DefaultRenderer->LoadBackgroundImage(live_conf.background_image_path);
@@ -202,12 +199,16 @@ void VisualizerHandler::Render()
                         ToggleFullscreen(DefaultRenderer->Win);
                     }
                     break;
+                break;
                 case SDLK_Q:
-                    shutdown();
+                    this->~VisualizerHandler();
                     break;
                 }
             }
         }
+
+        if(Evt.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
+            this->~VisualizerHandler();
 #endif
     }
 
@@ -269,9 +270,47 @@ void VisualizerHandler::Render()
         MidiPlayer->UpdateMidiPos();
 }
 
+bool VisualizerHandler::isDesktopSession()
+{
+    return strcmp(video_driver, "wayland") == 0 || strcmp(video_driver, "x11") == 0;
+}
+
 VisualizerHandler::~VisualizerHandler()
 {
-    // Check first what visualizer is being used and clean up accordingly
+    // Check first what visualizer is being used and clean up accordingly (Todo soon)
 
-    shutdown();
+    keep_running = false;
+
+    int exit_code = 0;
+    //MidiPlayer->Close();
+    Midi_ctx.destroy_all();
+
+    const char *sdl_err = SDL_GetError();
+    if(sdl_err && *sdl_err)
+    {
+        std::ostringstream temp;
+        temp << "Caught last Error: " << sdl_err;
+
+        if(isDesktopSession())
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Last SDL Error: ", temp.str().c_str(), nullptr);
+
+        Log::error("", "SDL_GetError(): %s", sdl_err);
+        exit_code = 1;
+    }
+    delete MidiPlayer;
+    delete au_stm;
+    delete DefaultRenderer; /* Its object deletion needs to be done selectively whether GPU
+                               rendering (SDL_gpu) is used instead
+                            */
+
+    SDL_DestroyWindow(main_win);
+    SDL_Quit();
+
+    // No dangling pointer class
+    MidiPlayer       = nullptr;
+    au_stm           = nullptr;
+    DefaultRenderer  = nullptr;
+    
+    Log::closeFile();
+    exit(exit_code);
 }

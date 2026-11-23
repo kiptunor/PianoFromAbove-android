@@ -10,7 +10,7 @@
 
 #include "../../globals.h"
 #include "../../logger.h"
-#include "../note_buffer.h"
+#include "note_buffer.h"
 #include "SDLRenderer.h"
 
 
@@ -49,13 +49,9 @@ us_int             SDLRenderer::note_color;
 
 static const short GenKeyX[] = { 0, 12, 18, 33, 36, 54, 66, 72, 85, 90, 105, 108 };
 
-const char        *video_driver;
 
 
-bool               SDLRenderer::isDesktopSession()
-{
-    return strcmp(video_driver, "wayland") == 0 || strcmp(video_driver, "x11") == 0;
-}
+
 
 /*
     ▗▄▄▖ ▗▄▖ ▗▖  ▗▖ ▗▄▄▖▗▄▄▄▖▗▄▄▖ ▗▖ ▗▖ ▗▄▄▖▗▄▄▄▖▗▄▖ ▗▄▄▖
@@ -69,40 +65,35 @@ bool               SDLRenderer::isDesktopSession()
    This is where the window creaton takes place
 */
 
-SDLRenderer::SDLRenderer()
+SDLRenderer::SDLRenderer(SDL_Window *window)
 {
-    SDL_Init(SDL_INIT_VIDEO);
-    // IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG); // Things are more simple than last
-    // time
-
-    video_driver = SDL_GetCurrentVideoDriver();
+    // IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG); // Things are more simple than last time
 
     Log::info("", "SDL Version: %d", SDL_GetVersion());
 
-#ifdef PLATFORM_ANDROID
-    Win = SDL_CreateWindow("PFA Android", 1920, 1080, 0);
-#else
-    Win = SDL_CreateWindow("PFA SDL", 1912, 1000, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
-    SDL_SetWindowMinimumSize(Win, 745, 716);
-#endif
 
-    if(Win == nullptr)
+
+    if(window == nullptr)
     {
         Log::trace("The fukin window is not windowing bruh");
-        if(isDesktopSession())
+        //if(isDesktopSession()) // Moved to visualizer_handler and SDL has to know what stuff to do, shouldn't be my job bro
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error!!!!!", "Failed to create window", nullptr);
     }
+    else
+        Win = window;
 
 
     Ren = SDL_CreateRenderer(Win, "gpu");
     if(Ren == nullptr)
     {
         Log::trace("", "GPU Ain't cooerating with us so lets go the good old way XD | SDL_GetError(): %s", SDL_GetError());
-        if(isDesktopSession())
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error!!!!!", "Failed to create render context", nullptr);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error!!!!!", "Failed to create render context", nullptr);
 
         Ren = SDL_CreateRenderer(Win, "opengles2"); // This works well on DRM from tty sessions
     }
+
+    // Set initial background color
+    SDL_SetRenderDrawColor(Ren, live_conf.bg_R, live_conf.bg_G, live_conf.bg_B, live_conf.bg_A); // Set initial background color
 
     // const char *backend = SDL_GetRendererName(Ren);
     // Log::info("", "SDL_GetRendererName(): %s", backend);
@@ -111,13 +102,7 @@ SDLRenderer::SDLRenderer()
     if(!SDL_SetRenderVSync(Ren, live_conf.vsync))
         Log::error("Failed to set vsync: %s", SDL_GetError());
 
-    // Don't set window position on Wayland as it can throw errors on exit
-#ifndef PLATFORM_ANDROID
-    if(strcmp(video_driver, "wayland") != 0)
-        SDL_SetWindowPosition(Win, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-#else
-    SDL_SetWindowPosition(Win, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-#endif
+
     SDL_DisplayID sid = SDL_GetDisplayForWindow(Win);
     mod               = SDL_GetDesktopDisplayMode(sid);
     SDL_SetRenderDrawBlendMode(Ren, SDL_BLENDMODE_BLEND);
@@ -150,8 +135,6 @@ SDLRenderer::~SDLRenderer()
 
     SDL_DestroyTexture(background_img);
     SDL_DestroyRenderer(Ren);
-    SDL_DestroyWindow(Win);
-    SDL_Quit();
 }
 
 /*

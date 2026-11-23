@@ -1,8 +1,8 @@
 #ifndef NOTE_BUFFER_H
 #define NOTE_BUFFER_H
 
-#include "../config/config.h"
-#include "../nv_midi/list.h"
+#include "../../config/config.h"
+#include "../../nv_midi/list.h"
 
 #include <map>
 

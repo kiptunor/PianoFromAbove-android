@@ -35,7 +35,7 @@ class SDLRenderer
     bool                   KeyPress[128];
     us_int                 KeyColor[128];
 
-    SDLRenderer();
+    SDLRenderer(SDL_Window *window);
     ~SDLRenderer();
 
     void        clear();
@@ -47,7 +47,6 @@ class SDLRenderer
     void        HandleResize(int newWidth, int newHeight);
     void        CreateNote(int k, int yb, int ye, us_int c);
     static bool IsSharp(int note);
-    static bool isDesktopSession();
 
   private:
     int BkeyW, BkeyH, WkeyW, WkeyH;

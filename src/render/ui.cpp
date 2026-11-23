@@ -1567,8 +1567,7 @@ void UI::Render(SDL_Renderer *r)
         max_velocity    = live_conf.vel_max;
 
         if(ImGui::Button("Quit"))
-            // Exit();
-            VisualizerHandler::shutdown();
+            delete vis;
 
         if(ImGui::BeginItemTooltip())
         {

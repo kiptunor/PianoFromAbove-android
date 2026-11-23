@@ -5,6 +5,7 @@
 class VisualizerHandler
 {
   public:
+    bool keep_running;
     enum Type
     {
         Legacy = 1, // SDL3 Renderer
@@ -14,12 +15,16 @@ class VisualizerHandler
     VisualizerHandler();
     ~VisualizerHandler();
 
+    bool isDesktopSession();
+
     void Render();
 
     void setType(Type type);
     static void shutdown();
     Type getType() const;
-    
+
+  private:
+      const char        *video_driver;
 };
 
 #endif

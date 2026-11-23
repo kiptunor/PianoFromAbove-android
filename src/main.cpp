@@ -46,7 +46,7 @@
 
 
 NVnoteList         Midi_ctx;
-VisualizerHandler *vis;
+
 
 
 
@@ -204,19 +204,16 @@ APP_ENTRY(int argc, char *argv[])
         }
     }
 
-    /* - - - - Graphics Rendering Setup - - - - */
+    /* - - - - Graphics Rendering Setup + Window creation - - - - */
     vis = new VisualizerHandler();
 
 
     /*
     - - - - Mainloop - - - -
     */
-    while(1)
-    {
+    while(vis->keep_running)
         vis->Render();
-    }
-
-
+    
 
     Log::closeFile(); // Not yet needed
     return 0;
