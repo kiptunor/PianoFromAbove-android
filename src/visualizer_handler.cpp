@@ -102,13 +102,17 @@ VisualizerHandler::VisualizerHandler()
 
     if(live_conf.background_image)
         DefaultRenderer->LoadBackgroundImage(live_conf.background_image_path);
+
+    RenderPFN = &VisualizerHandler::ImplSDL_RenderVisLoop;
+
+    /*
+        Soon
+        Render = &VisualizerHandler::SDL_GPU_RenderVisLoop;
+    */
 }
 
-void VisualizerHandler::Render()
+void VisualizerHandler::ImplSDL_RenderVisLoop()
 {
-    // This will be a pointer function soon
-
-
     // Check if playback just ended (and we need to handle that)
     if(!MidiPlayer->playback_ended && MidiPlayer->IsMIDIEnded())
     {
@@ -268,6 +272,11 @@ void VisualizerHandler::Render()
     // Only update Tplay if actively playing and not at the end
     if(!MidiPlayer->is_paused && !MidiPlayer->playback_ended && MidiPlayer->IsActive())
         MidiPlayer->UpdateMidiPos();
+}
+
+void VisualizerHandler::ImplSDL_GPU_RenderVisLoop()
+{
+    // Todo
 }
 
 bool VisualizerHandler::isDesktopSession()
