@@ -72,6 +72,8 @@ class UI
         int a;
     } RGBAint;
 
+    static int render_mode;
+
     static bool                     main_gui_window;
     static int                      live_note_speed;
     static int                      fps;
@@ -114,6 +116,9 @@ class UI
 
     static bool                     show_demo_window;
 
+    UI(int graphics_mode);
+    ~UI();
+
     static void                     Setup(int graphics_backend);
     static void                     SetMoonlightTheme();
     static void                     SetSilvanaTheme();
@@ -124,7 +129,7 @@ class UI
     static void                     SetCyberpunkTheme();
     static void                     SetBuiltinTheme(int idx);
 
-    static void                     Render(SDL_Renderer *r);
+    static void                     Render();
     static void                     UpdateWidgetValues();
     static ImVec4                   Irgba2ImVec4(int r, int g, int b, int a);
     static ImVec4                   UIntToImVec4(u_int rgb);

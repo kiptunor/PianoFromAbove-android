@@ -21,11 +21,13 @@
 #include "../logger.h"
 #include "../visualizer_handler.h"
 #include "SDLRenderer/SDLRenderer.h"
+#include "SDL_gpu/SDL_gpu_renderer.h"
 #include "ui.h"
 
 // #include <DixelU/smic.h>
 #include <backend_render/imgui_impl_sdl3.h>
 #include <backend_render/imgui_impl_sdlrenderer3.h>
+#include <backend_render/imgui_impl_sdlgpu3.h>
 #include <file_dlg/ImGuiFileDialog.h>
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -124,6 +126,8 @@ const char                 *builtin_ui_theme_names[] =
     "Arctic Horizon",
     "Cyberpunk"
 };
+
+int UI::render_mode = 1;
 
 // Ugh umm
 // It's ugly that's not how it should be done lmao
@@ -248,9 +252,108 @@ constexpr std::array<const char*, KSR_REVERB_PRESET_TOTAL_COUNT> reverbPresetNam
 
 
 
+void SetupIconFonts()
+{
+    static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+    ImFontConfig         icons_config;
+    icons_config.MergeMode            = true;
+    icons_config.PixelSnapH           = true;
+    icons_config.FontDataOwnedByAtlas = false;
+    f32 size                          = FONT_AWESOME_ICON_SIZE;
 
+    icons_config.GlyphMaxAdvanceX     = std::numeric_limits<f32>::max();
+    icons_config.RasterizerMultiply   = 1.0f;
+    icons_config.OversampleH          = 2;
+    icons_config.OversampleV          = 1;
 
+    icons_config.GlyphRanges          = icons_ranges;
 
+    ImGuiIO &io                       = ImGui::GetIO();
+    io.Fonts->AddFontFromMemoryCompressedTTF((void *)fa_solid_900_compressed_data, fa_solid_900_compressed_size, size, &icons_config, icons_ranges);
+}
+
+UI::UI(int graphics_mode)
+{
+    render_mode = graphics_mode;
+    
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    (void)io;
+
+#ifdef PLATFORM_ANDROID
+    io.IniFilename = IMGUI_INI_FILE_PATH;
+    if(!std::filesystem::exists(IMGUI_INI_FILE_PATH))
+        Log::warn("", "Previous UI layout is no longer available. Missing '%s'", IMGUI_INI_FILE_PATH);
+#else
+    std::ostringstream ini_path;
+    ini_path << FileHelpers::config_dir << "/" << IMGUI_INI_FILE_PATH;
+    static std::string temp_str = ini_path.str();
+    io.IniFilename              = temp_str.c_str();
+    if(!std::filesystem::exists(temp_str.c_str()))
+        Log::warn("", "Previous UI layout is no longer available. Missing '%s'", temp_str.c_str());
+#endif
+
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+
+    // Setup ImGui style
+    ImGui::StyleColorsDark();
+
+    builtin_ui_theme_idx = live_conf.builtin_ui_theme_idx;
+
+    if(live_conf.custom_ui_theme)
+        // SetDefaultTheme(); // Setting a nice looking GUI :3
+        // SetSilvanaTheme();
+        ImGui::LoadStyleFrom(live_conf.ui_theme_file_path.c_str());
+
+    if(live_conf.builtin_ui_theme)
+        SetBuiltinTheme(live_conf.builtin_ui_theme_idx);
+
+    // Metrophobic-Regular.ttf
+    // Font suggested by Nerdly
+
+    ImFontConfig ui_font_config;
+    ui_font_config.FontDataOwnedByAtlas = false;
+    io.Fonts->AddFontFromMemoryTTF((void *)metrophobic_regular_ttf, metrophobic_regular_len, UI_FONT_SIZE, &ui_font_config);
+    // io.Fonts->AddFontFromMemoryTTF((void *)metrophobic_regular_ttf, metrophobic_regular_len, 55.0f, &ui_font_config);
+
+    SetupIconFonts();
+
+    // Setup Platform/Renderer backends
+    if(graphics_mode == VisualizerHandler::Legacy)
+    {
+        ImGui_ImplSDLRenderer3_Init(DefaultRenderer->Ren);
+        ImGui_ImplSDL3_InitForVulkan(DefaultRenderer->Win);
+    }
+
+    if(graphics_mode == VisualizerHandler::GPU)
+    {
+        ImGui_ImplSDL3_InitForSDLGPU(main_win);
+        ImGui_ImplSDLGPU3_InitInfo init_info = {};
+        init_info.Device               = SDL_GPURenderer::device;
+        init_info.ColorTargetFormat    = SDL_GetGPUSwapchainTextureFormat(SDL_GPURenderer::device, main_win);
+        init_info.MSAASamples          = SDL_GPU_SAMPLECOUNT_1;                      // Only used in multi-viewports mode.
+        init_info.SwapchainComposition = SDL_GPU_SWAPCHAINCOMPOSITION_SDR;  // Only used in multi-viewports mode.
+        init_info.PresentMode          = SDL_GPU_PRESENTMODE_VSYNC;
+        ImGui_ImplSDLGPU3_Init(&init_info);
+
+    }
+
+    UpdateWidgetValues();
+}
+
+UI::~UI()
+{
+    ImGui_ImplSDL3_Shutdown();
+    if(render_mode == VisualizerHandler::GPU)
+        ImGui_ImplSDLGPU3_Shutdown();
+
+    if(render_mode == VisualizerHandler::Legacy)
+        ImGui_ImplSDLRenderer3_Shutdown();
+    
+    ImGui::DestroyContext();
+}
 
 
 
@@ -1217,26 +1320,6 @@ void AndroidUIRescale()
     style.ColorMarkerSize             = 8.0f;
 }
 
-void SetupIconFonts()
-{
-    static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
-    ImFontConfig         icons_config;
-    icons_config.MergeMode            = true;
-    icons_config.PixelSnapH           = true;
-    icons_config.FontDataOwnedByAtlas = false;
-    f32 size                          = FONT_AWESOME_ICON_SIZE;
-
-    icons_config.GlyphMaxAdvanceX     = std::numeric_limits<f32>::max();
-    icons_config.RasterizerMultiply   = 1.0f;
-    icons_config.OversampleH          = 2;
-    icons_config.OversampleV          = 1;
-
-    icons_config.GlyphRanges          = icons_ranges;
-
-    ImGuiIO &io                       = ImGui::GetIO();
-    io.Fonts->AddFontFromMemoryCompressedTTF((void *)fa_solid_900_compressed_data, fa_solid_900_compressed_size, size, &icons_config, icons_ranges);
-}
-
 // - - - - [End of Internal Functions] - - - -
 
 /*
@@ -1412,9 +1495,14 @@ void UI::Setup(int graphics_backend)
     UpdateWidgetValues();
 }
 
-void UI::Render(SDL_Renderer *r)
+void UI::Render()
 {
-    ImGui_ImplSDLRenderer3_NewFrame();
+    if(render_mode == VisualizerHandler::Legacy)
+        ImGui_ImplSDLRenderer3_NewFrame();
+
+    if(render_mode == VisualizerHandler::GPU)
+        ImGui_ImplSDLGPU3_NewFrame();
+    
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
 
@@ -1567,7 +1655,8 @@ void UI::Render(SDL_Renderer *r)
         max_velocity    = live_conf.vel_max;
 
         if(ImGui::Button("Quit"))
-            delete vis;
+            //delete vis;
+            vis->keep_running = false;
 
         if(ImGui::BeginItemTooltip())
         {
@@ -3061,6 +3150,20 @@ void UI::Render(SDL_Renderer *r)
     }
 
     // Rendering
-    ImGui::Render();
-    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), r);
+    
+    if(render_mode == VisualizerHandler::Legacy)
+    {
+        ImGui::Render();
+        //ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), r);
+    }
+
+    /*
+    if(render_mode == VisualizerHandler::Legacy)
+    {
+        ImDrawData* draw_data = ImGui::GetDrawData();
+        const bool is_minimized = (draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f);
+
+        
+    }
+    */
 }

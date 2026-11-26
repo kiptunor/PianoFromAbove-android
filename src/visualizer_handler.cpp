@@ -92,18 +92,25 @@ VisualizerHandler::VisualizerHandler()
     SDL_SetWindowPosition(main_win, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 #endif
 
+     SDL_ShowWindow(main_win);
+
 
 
     // Create graphics rendering
-    DefaultRenderer = new SDLRenderer(main_win); // Only default for now
+    //DefaultRenderer = new SDLRenderer(main_win); // Only default for now
 
-    UI::Setup(1);
+    GPU_Renderer = new SDL_GPURenderer(main_win);
+
+    //UI::Setup(1);
+    gui = new UI(2);
 
 
-    if(live_conf.background_image)
-        DefaultRenderer->LoadBackgroundImage(live_conf.background_image_path);
+    // if(live_conf.background_image)
+    //     DefaultRenderer->LoadBackgroundImage(live_conf.background_image_path);
 
-    RenderPFN = &VisualizerHandler::ImplSDL_RenderVisLoop;
+    // RenderPFN = &VisualizerHandler::ImplSDL_RenderVisLoop;
+
+    RenderPFN = &VisualizerHandler::ImplSDL_GPU_RenderVisLoop;
 
     /*
         Soon
@@ -248,7 +255,7 @@ void VisualizerHandler::ImplSDL_RenderVisLoop()
 
 
     DefaultRenderer->DrawKeyBoard();  // Render the piano keyboard
-    UI::Render(DefaultRenderer->Ren); // Render the GUI
+    //UI::Render(DefaultRenderer->Ren); // Render the GUI
 
     // Outdated FPS adjustment
     // This also caused noticeable FPS drops on mouse movement across the screen in combination with imgui elements
@@ -276,7 +283,81 @@ void VisualizerHandler::ImplSDL_RenderVisLoop()
 
 void VisualizerHandler::ImplSDL_GPU_RenderVisLoop()
 {
-    // Todo
+    if(!MidiPlayer->playback_ended && MidiPlayer->IsMIDIEnded())
+    {
+        MidiPlayer->playback_ended = true;
+        MidiPlayer->Tplay          = 1.0;  // Add a bit more to fully finish the note visualization
+        MidiPlayer->is_paused      = true; // Just mark as paused when it ends
+
+        // Save the position at the end
+        MidiPlayer->UpdateEndPosition();
+
+        if(loaded_config.audio_drv_name == "disk")
+            au_stm->Close();
+    }
+
+    // Repeatedly call this function to start midi playback until the midi loader thread is finished
+    MidiPlayer->UpdateState();
+    
+
+    while(SDL_PollEvent(&Evt))
+    {
+        frameStart = SDL_GetTicks(); // Get the current time in milliseconds
+        ImGui_ImplSDL3_ProcessEvent(&Evt);
+        if(Evt.type == SDL_EVENT_QUIT)
+            shutdown();
+
+        // if(Evt.type == SDL_EVENT_WINDOW_RESIZED)
+        //     DefaultRenderer->HandleResize(Evt.window.data1, Evt.window.data2);
+
+#ifndef PLATFORM_ANDROID
+        // Allow keyboard input only if the main window is not on display
+        // This avoids playback control interferance when typing into the search boxes
+        if(!UI::main_gui_window)
+        {
+            if(Evt.type == SDL_EVENT_KEY_DOWN)
+            {
+                SDL_Keymod mods = SDL_GetModState();
+                switch(Evt.key.key)
+                {
+                case SDLK_SPACE:
+                    MidiPlayer->Pause();
+                    break;
+                case SDLK_LEFT:
+                    MidiPlayer->Seek_lazy(-MidiPlayer->seek_amount);
+                    break;
+                case SDLK_RIGHT:
+                    MidiPlayer->Seek_lazy(MidiPlayer->seek_amount);
+                    break;
+                case SDLK_D: // Only for development purposes
+                    UI::show_demo_window = true;
+                    break;
+                case SDLK_RETURN:
+                    if(mods & SDL_KMOD_RALT)
+                    {
+                        ToggleFullscreen(DefaultRenderer->Win);
+                    }
+                    break;
+                break;
+                case SDLK_Q:
+                    this->~VisualizerHandler();
+                    break;
+                }
+            }
+        }
+
+        if(Evt.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
+            this->~VisualizerHandler();
+#endif
+    }
+
+    UI::Render();
+
+    GPU_Renderer->Render();
+
+    // Only update Tplay if actively playing and not at the end
+    if(!MidiPlayer->is_paused && !MidiPlayer->playback_ended && MidiPlayer->IsActive())
+        MidiPlayer->UpdateMidiPos();
 }
 
 bool VisualizerHandler::isDesktopSession()
@@ -287,7 +368,6 @@ bool VisualizerHandler::isDesktopSession()
 VisualizerHandler::~VisualizerHandler()
 {
     // Check first what visualizer is being used and clean up accordingly (Todo soon)
-
     keep_running = false;
 
     int exit_code = 0;
@@ -308,9 +388,10 @@ VisualizerHandler::~VisualizerHandler()
     }
     delete MidiPlayer;
     delete au_stm;
-    delete DefaultRenderer; /* Its object deletion needs to be done selectively whether GPU
-                               rendering (SDL_gpu) is used instead
-                            */
+    delete GPU_Renderer;
+    delete gui;
+    
+    //delete DefaultRenderer; // Its object deletion needs to be done selectively whether GPU rendering (SDL_gpu) is used instead
 
     SDL_DestroyWindow(main_win);
     SDL_Quit();
@@ -318,8 +399,10 @@ VisualizerHandler::~VisualizerHandler()
     // No dangling pointer class
     MidiPlayer       = nullptr;
     au_stm           = nullptr;
-    DefaultRenderer  = nullptr;
+    //DefaultRenderer  = nullptr;
+    GPU_Renderer     = nullptr;
+    gui              = nullptr;
     
     Log::closeFile();
-    exit(exit_code);
+    //exit(exit_code);
 }

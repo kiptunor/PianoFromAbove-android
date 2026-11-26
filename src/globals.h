@@ -12,6 +12,7 @@
 #include "visualizer_handler.h"
 #include "render/SDLRenderer/note_buffer.h"
 #include "render/SDLRenderer/SDLRenderer.h"
+#include "render/SDL_gpu/SDL_gpu_renderer.h"
 
 
 
@@ -32,7 +33,9 @@ inline std::vector<std::string>       live_midi_list;
 inline std::vector<std::string>       loaded_midi_list;
 inline VisualizerHandler *vis;
 inline SDLRenderer                   *DefaultRenderer;
+inline SDL_GPURenderer               *GPU_Renderer;
 inline SDL_Window                    *main_win;
+inline UI                            *gui;
 inline MIDIPlayer                    *MidiPlayer;
 inline MIDIAudioStream               *au_stm;
 inline int                            _WinH;

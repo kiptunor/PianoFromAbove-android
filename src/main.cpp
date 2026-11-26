@@ -213,6 +213,10 @@ APP_ENTRY(int argc, char *argv[])
     */
     while(vis->keep_running)
         vis->Render();
+
+    delete vis;
+
+    vis = nullptr;
     
 
     Log::closeFile(); // Not yet needed
