@@ -390,8 +390,8 @@ VisualizerHandler::~VisualizerHandler()
     }
     delete MidiPlayer;
     delete au_stm;
-    delete GPU_Renderer;
     delete gui;
+    delete GPU_Renderer;
     
     //delete DefaultRenderer; // Its object deletion needs to be done selectively whether GPU rendering (SDL_gpu) is used instead
 
