@@ -27,7 +27,7 @@ class VisualizerHandler
     }
 
     void setType(Type type);
-    static void shutdown();
+    //static void shutdown();
     Type getType() const;
 
   private:

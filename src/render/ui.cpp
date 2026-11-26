@@ -329,6 +329,7 @@ UI::UI(int graphics_mode)
 
     if(graphics_mode == VisualizerHandler::GPU)
     {
+        /*
         ImGui_ImplSDL3_InitForSDLGPU(main_win);
         ImGui_ImplSDLGPU3_InitInfo init_info = {};
         init_info.Device               = SDL_GPURenderer::device;
@@ -337,7 +338,15 @@ UI::UI(int graphics_mode)
         init_info.SwapchainComposition = SDL_GPU_SWAPCHAINCOMPOSITION_SDR;  // Only used in multi-viewports mode.
         init_info.PresentMode          = SDL_GPU_PRESENTMODE_VSYNC;
         ImGui_ImplSDLGPU3_Init(&init_info);
-
+        */
+        ImGui_ImplSDL3_InitForSDLGPU(main_win);
+        ImGui_ImplSDLGPU3_InitInfo init_info = {};
+        init_info.Device               = GPU_Renderer->Device();
+        init_info.ColorTargetFormat    = GPU_Renderer->TargetFormat();
+        init_info.MSAASamples          = SDL_GPU_SAMPLECOUNT_1;                      // Only used in multi-viewports mode.
+        init_info.SwapchainComposition = SDL_GPU_SWAPCHAINCOMPOSITION_SDR;  // Only used in multi-viewports mode.
+        init_info.PresentMode          = GPU_Renderer->PresentMode();
+        ImGui_ImplSDLGPU3_Init(&init_info);
     }
 
     UpdateWidgetValues();
@@ -345,12 +354,13 @@ UI::UI(int graphics_mode)
 
 UI::~UI()
 {
-    ImGui_ImplSDL3_Shutdown();
     if(render_mode == VisualizerHandler::GPU)
         ImGui_ImplSDLGPU3_Shutdown();
 
     if(render_mode == VisualizerHandler::Legacy)
         ImGui_ImplSDLRenderer3_Shutdown();
+
+    ImGui_ImplSDL3_Shutdown();
     
     ImGui::DestroyContext();
 }
@@ -1497,13 +1507,14 @@ void UI::Setup(int graphics_backend)
 
 void UI::Render()
 {
+    ImGui_ImplSDL3_NewFrame();
+
     if(render_mode == VisualizerHandler::Legacy)
         ImGui_ImplSDLRenderer3_NewFrame();
 
     if(render_mode == VisualizerHandler::GPU)
         ImGui_ImplSDLGPU3_NewFrame();
     
-    ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
 
     ImGuiIO &io = ImGui::GetIO();
@@ -2367,8 +2378,19 @@ void UI::Render()
                         {
                             live_conf.vsync = vsync;
 
-                            if(!SDL_SetRenderVSync(DefaultRenderer->Ren, live_conf.vsync))
+                            // if(!SDL_SetRenderVSync(DefaultRenderer->Ren, live_conf.vsync))
+                            //     Log::error("Failed to set vsync (realtime)");
+
+                            if(render_mode == VisualizerHandler::GPU)
+                            {
+                                // Defer the swapchain change until before the
+                                // next swapchain texture acquisition.
+                                if(GPU_Renderer)
+                                    GPU_Renderer->RequestVSync(live_conf.vsync);
+                            }
+                            else if(DefaultRenderer && !SDL_SetRenderVSync(DefaultRenderer->Ren, live_conf.vsync))
                                 Log::error("Failed to set vsync (realtime)");
+                            
                         }
 
                         if(ImGui::BeginItemTooltip())

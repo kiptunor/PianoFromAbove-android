@@ -40,10 +40,7 @@ void ToggleFullscreen(SDL_Window *window)
 
 
 
-void VisualizerHandler::shutdown()
-{
 
-}
 
 
 
@@ -177,7 +174,8 @@ void VisualizerHandler::ImplSDL_RenderVisLoop()
         frameStart = SDL_GetTicks(); // Get the current time in milliseconds
         ImGui_ImplSDL3_ProcessEvent(&Evt);
         if(Evt.type == SDL_EVENT_QUIT)
-            shutdown();
+            //shutdown();
+            this->~VisualizerHandler();
 
         if(Evt.type == SDL_EVENT_WINDOW_RESIZED)
             DefaultRenderer->HandleResize(Evt.window.data1, Evt.window.data2);
@@ -305,7 +303,9 @@ void VisualizerHandler::ImplSDL_GPU_RenderVisLoop()
         frameStart = SDL_GetTicks(); // Get the current time in milliseconds
         ImGui_ImplSDL3_ProcessEvent(&Evt);
         if(Evt.type == SDL_EVENT_QUIT)
-            shutdown();
+            //shutdown();
+            //this->~VisualizerHandler();
+            vis->keep_running = false;
 
         // if(Evt.type == SDL_EVENT_WINDOW_RESIZED)
         //     DefaultRenderer->HandleResize(Evt.window.data1, Evt.window.data2);
@@ -347,7 +347,7 @@ void VisualizerHandler::ImplSDL_GPU_RenderVisLoop()
         }
 
         if(Evt.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
-            this->~VisualizerHandler();
+            vis->keep_running = false;
 #endif
     }
 
@@ -362,6 +362,8 @@ void VisualizerHandler::ImplSDL_GPU_RenderVisLoop()
 
 bool VisualizerHandler::isDesktopSession()
 {
+    if(!video_driver)
+        return false;
     return strcmp(video_driver, "wayland") == 0 || strcmp(video_driver, "x11") == 0;
 }
 
