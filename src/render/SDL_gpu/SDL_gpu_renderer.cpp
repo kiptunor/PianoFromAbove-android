@@ -2,6 +2,7 @@
 #include <backend_render/imgui_impl_sdlgpu3.h>
 
 #include "SDL_gpu_renderer.h"
+#include "../../globals.h"
 #include "../../logger.h"
 
 
@@ -43,20 +44,15 @@ SDL_GPURenderer::SDL_GPURenderer(SDL_Window *window)
 
     if(!SDL_SetGPUSwapchainParameters(device, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, mode))
     {
-        Log::error("Failed to set initial GPU present mode: %s", SDL_GetError());
+        Log::error("", "Failed to set initial GPU present mode: %s", SDL_GetError());
         mode = SDL_GPU_PRESENTMODE_VSYNC;
     }
 
+    is_init = true;
 }
 
 SDL_GPURenderer::~SDL_GPURenderer()
 {
-    /*
-    SDL_WaitForGPUIdle(device);
-    SDL_ReleaseWindowFromGPUDevice(device, current_window);
-    SDL_DestroyGPUDevice(device);
-    */
-
     if(device)
     {
         SDL_WaitForGPUIdle(device);
@@ -135,7 +131,7 @@ void SDL_GPURenderer::Render()
         .texture              = swapchainTexture,
         .mip_level            = 0,
         .layer_or_depth_plane = 0,
-        .clear_color          = { 0.1f, 0.2f, 0.4f, 1.0f },
+        .clear_color = SDL_FColor { gui->clear_color.x, gui->clear_color.y, gui->clear_color.z, gui->clear_color.w },
         .load_op              = SDL_GPU_LOADOP_CLEAR,
         .store_op             = SDL_GPU_STOREOP_STORE,
         .cycle                = false
@@ -156,32 +152,4 @@ void SDL_GPURenderer::Render()
     SDL_EndGPURenderPass(render_pass);
     SDL_SubmitGPUCommandBuffer(cmd_buf);
     swapchainTexture = nullptr;
-
-/*
-    SDL_WaitAndAcquireGPUSwapchainTexture(cmd_buf, current_window, &swapchainTexture, NULL, NULL);
-
-    if(swapchainTexture != nullptr && !is_minimized)
-    {
-        ImGui_ImplSDLGPU3_PrepareDrawData(draw_data, cmd_buf);
-        
-        SDL_GPUColorTargetInfo target = {
-            .texture              = swapchainTexture,
-            .mip_level            = 0,
-            .layer_or_depth_plane = 0,
-            .clear_color          = { 0.1f, 0.2f, 0.4f, 1.0f },
-            .load_op              = SDL_GPU_LOADOP_CLEAR,
-            .store_op             = SDL_GPU_STOREOP_STORE,
-            .cycle                = false
-        };
-
-        SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(cmd_buf, &target, 1, nullptr);
-
-        // Render ImGui
-        ImGui_ImplSDLGPU3_RenderDrawData(draw_data, cmd_buf, render_pass);
-
-        SDL_EndGPURenderPass(render_pass);
-    }
-    
-    SDL_SubmitGPUCommandBuffer(cmd_buf);
-    */
 }

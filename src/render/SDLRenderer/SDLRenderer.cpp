@@ -129,10 +129,6 @@ SDLRenderer::SDLRenderer(SDL_Window *window)
 */
 SDLRenderer::~SDLRenderer()
 {
-    ImGui_ImplSDLRenderer3_Shutdown();
-    ImGui_ImplSDL3_Shutdown();
-    ImGui::DestroyContext();
-
     SDL_DestroyTexture(background_img);
     SDL_DestroyRenderer(Ren);
 }

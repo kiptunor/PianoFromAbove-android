@@ -14,14 +14,6 @@
 
 
 
-int       vis_type_num = 0;
-
-SDL_Event Evt;
-u32       frameStart;
-int       frameRate = 60;
-
-
-
 
 
 
@@ -94,25 +86,22 @@ VisualizerHandler::VisualizerHandler()
 
 
     // Create graphics rendering
-    //DefaultRenderer = new SDLRenderer(main_win); // Only default for now
 
+    // Try to initialize the SDL_gpu visualizer first
     GPU_Renderer = new SDL_GPURenderer(main_win);
 
-    //UI::Setup(1);
-    gui = new UI(2);
-
-
-    // if(live_conf.background_image)
-    //     DefaultRenderer->LoadBackgroundImage(live_conf.background_image_path);
-
-    // RenderPFN = &VisualizerHandler::ImplSDL_RenderVisLoop;
-
-    RenderPFN = &VisualizerHandler::ImplSDL_GPU_RenderVisLoop;
-
-    /*
-        Soon
-        Render = &VisualizerHandler::SDL_GPU_RenderVisLoop;
-    */
+    if(!GPU_Renderer->IsInit()) // if it fails
+    {
+        // Fall back to SDL_renderer visualizer (bruh)
+        DefaultRenderer = new SDLRenderer(main_win);
+        gui = new UI(Legacy);
+        RenderPFN = &VisualizerHandler::ImplSDL_RenderVisLoop;
+    }
+    else
+    {
+        gui = new UI(GPU);
+        RenderPFN = &VisualizerHandler::ImplSDL_GPU_RenderVisLoop;
+    }
 }
 
 void VisualizerHandler::ImplSDL_RenderVisLoop()
@@ -132,11 +121,11 @@ void VisualizerHandler::ImplSDL_RenderVisLoop()
     }
 
 
-    frameRate = UI::fps;
+    frameRate = gui->fps;
 
     // Set note size / note speed
     _WinH     = DefaultRenderer->WinH - DefaultRenderer->WinW * 80 / 1000;
-    Tscr      = (double)_WinH / UI::live_note_speed;
+    Tscr      = (double)_WinH / gui->live_note_speed;
 
     
     f64 tick_target = 1.0;
@@ -174,16 +163,18 @@ void VisualizerHandler::ImplSDL_RenderVisLoop()
         frameStart = SDL_GetTicks(); // Get the current time in milliseconds
         ImGui_ImplSDL3_ProcessEvent(&Evt);
         if(Evt.type == SDL_EVENT_QUIT)
-            //shutdown();
-            this->~VisualizerHandler();
+            vis->keep_running = false;
 
         if(Evt.type == SDL_EVENT_WINDOW_RESIZED)
             DefaultRenderer->HandleResize(Evt.window.data1, Evt.window.data2);
 
+        if(Evt.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
+            vis->keep_running = false;
+
 #ifndef PLATFORM_ANDROID
         // Allow keyboard input only if the main window is not on display
         // This avoids playback control interferance when typing into the search boxes
-        if(!UI::main_gui_window)
+        if(!gui->main_gui_window)
         {
             if(Evt.type == SDL_EVENT_KEY_DOWN)
             {
@@ -200,7 +191,7 @@ void VisualizerHandler::ImplSDL_RenderVisLoop()
                     MidiPlayer->Seek_lazy(MidiPlayer->seek_amount);
                     break;
                 case SDLK_D: // Only for development purposes
-                    UI::show_demo_window = true;
+                    gui->show_demo_window = true;
                     break;
                 case SDLK_RETURN:
                     if(mods & SDL_KMOD_RALT)
@@ -210,19 +201,16 @@ void VisualizerHandler::ImplSDL_RenderVisLoop()
                     break;
                 break;
                 case SDLK_Q:
-                    this->~VisualizerHandler();
+                    vis->keep_running = false;
                     break;
                 }
             }
         }
-
-        if(Evt.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
-            this->~VisualizerHandler();
 #endif
     }
 
     // Set the background color again but with live color changes
-    SDL_SetRenderDrawColor(DefaultRenderer->Ren, UI::liveColor.r, UI::liveColor.g, UI::liveColor.b, UI::liveColor.a);
+    SDL_SetRenderDrawColor(DefaultRenderer->Ren, gui->liveColor.r, gui->liveColor.g, gui->liveColor.b, gui->liveColor.a);
 
     // Check whether the background image is enabled
     if(live_conf.background_image)
@@ -246,14 +234,14 @@ void VisualizerHandler::ImplSDL_RenderVisLoop()
         {
             for(const NVnote &n : Midi_ctx.Note_list[SDLRenderer::KeyMap[i]])
                 // RenderWin->DrawNote(i, n, UI::live_note_speed); // Direct drawing
-                note_buf.emplace_back(NoteBuffer::Note { NVMidi::u16_t(i), n, UI::live_note_speed }); // Layered drawing
+                note_buf.emplace_back(NoteBuffer::Note { NVMidi::u16_t(i), n, gui->live_note_speed }); // Layered drawing
             NoteBuffer::DrawNotes(live_conf);  // Available only if no direct note drawing is set
         }
 
 
 
     DefaultRenderer->DrawKeyBoard();  // Render the piano keyboard
-    //UI::Render(DefaultRenderer->Ren); // Render the GUI
+    gui->Render();
 
     // Outdated FPS adjustment
     // This also caused noticeable FPS drops on mouse movement across the screen in combination with imgui elements
@@ -313,7 +301,7 @@ void VisualizerHandler::ImplSDL_GPU_RenderVisLoop()
 #ifndef PLATFORM_ANDROID
         // Allow keyboard input only if the main window is not on display
         // This avoids playback control interferance when typing into the search boxes
-        if(!UI::main_gui_window)
+        if(!gui->main_gui_window)
         {
             if(Evt.type == SDL_EVENT_KEY_DOWN)
             {
@@ -330,7 +318,7 @@ void VisualizerHandler::ImplSDL_GPU_RenderVisLoop()
                     MidiPlayer->Seek_lazy(MidiPlayer->seek_amount);
                     break;
                 case SDLK_D: // Only for development purposes
-                    UI::show_demo_window = true;
+                    gui->show_demo_window = true;
                     break;
                 case SDLK_RETURN:
                     if(mods & SDL_KMOD_RALT)
@@ -351,7 +339,7 @@ void VisualizerHandler::ImplSDL_GPU_RenderVisLoop()
 #endif
     }
 
-    UI::Render();
+    gui->Render();
 
     GPU_Renderer->Render();
 
@@ -391,9 +379,11 @@ VisualizerHandler::~VisualizerHandler()
     delete MidiPlayer;
     delete au_stm;
     delete gui;
-    delete GPU_Renderer;
-    
-    //delete DefaultRenderer; // Its object deletion needs to be done selectively whether GPU rendering (SDL_gpu) is used instead
+
+    if(GPU_Renderer->IsInit())
+        delete GPU_Renderer;
+    else
+        delete DefaultRenderer;
 
     SDL_DestroyWindow(main_win);
     SDL_Quit();
@@ -401,7 +391,7 @@ VisualizerHandler::~VisualizerHandler()
     // No dangling pointer class
     MidiPlayer       = nullptr;
     au_stm           = nullptr;
-    //DefaultRenderer  = nullptr;
+    DefaultRenderer  = nullptr;
     GPU_Renderer     = nullptr;
     gui              = nullptr;
     

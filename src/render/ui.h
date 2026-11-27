@@ -8,6 +8,7 @@
 #include <imgui.h>
 
 #include "../mb_types.h"
+#include "../audio/midi_audio_stream.h"
 
 
 
@@ -47,13 +48,7 @@
 
 
 
-inline std::vector<std::string>   checked_soundfonts;
-inline std::vector<std::string>   image_files;
-inline std::vector<std::string>   all_image_files;
-inline std::vector<SDL_Texture *> image_textures;
 
-us_int                            ImVec4ToUInt(const ImVec4 &color);
-ImVec4                            UIntToImVec4(us_int rgb);
 
 class UI
 {
@@ -74,68 +69,96 @@ class UI
 
     static int render_mode;
 
-    static bool                     main_gui_window;
-    static int                      live_note_speed;
-    static int                      fps;
-    static int                      selected_midi_index;
-    static int                      selected_reverb_preset;
-    static int                      min_velocity;
-    static int                      max_velocity;
-    static int                      current_audio_dev;
-    static int                      current_audio_drv;
-    static int                      midi_chunk_size;
-    static int                      audio_frame_size;
-    static f32                      current_midi_pos_sl;
-    static bool                     velocity_filter;
-    static bool                     loop_colors;
-    static bool                     overlap_remover;
-    static bool                     use_bg_image;
-    static bool                     show_full_path_lost_midis;
-    static bool                     show_full_path_lost_soundfonts;
-    static bool                     no_midi_duplicates;
-    static bool                     vertical_lines;
-    static bool                     meas_lines;
-    static bool                     no_soundfont_duplicates;
-    static bool                     background_image;
-    static bool                     internal_logging;
-    static bool                     log_to_file;
-    static bool                     vsync;
-    static bool                     overlapping_notes;
-    static bool                     midi_chunk_limiter;
-    static bool                     use_default_media_paths;
-    static bool                     ui_theming;
-    static bool                     overlay_stats_window;
-    static ImVec4                   ui_chcolors[16];
-    static ImVec4                   clear_color;
-    static RGBAint                  liveColor;
-    static std::string              last_midi_path;
-    static std::string              last_sf_path;
-    static std::string              last_midi_file;
-    static std::vector<std::string> soundfont_paths;
-    static std::vector<std::string> prev_images;
+    std::vector<UI::SoundfontItem> live_soundfont_list;
 
-    static bool                     show_demo_window;
+    bool                     main_gui_window;
+    int                      live_note_speed;
+    int                      fps;
+    int                      selected_midi_index;
+    int                      selected_reverb_preset;
+    int                      min_velocity;
+    int                      max_velocity;
+    int                      current_audio_dev;
+    int                      current_audio_drv;
+    int                      midi_chunk_size;
+    int                      audio_frame_size;
+    f32                      current_midi_pos_sl;
+    bool                     velocity_filter;
+    bool                     loop_colors;
+    bool                     overlap_remover;
+    bool                     use_bg_image;
+    bool                     show_full_path_lost_midis;
+    bool                     show_full_path_lost_soundfonts;
+    bool                     no_midi_duplicates;
+    bool                     vertical_lines;
+    bool                     meas_lines;
+    bool                     no_soundfont_duplicates;
+    bool                     background_image;
+    bool                     internal_logging;
+    bool                     log_to_file;
+    bool                     vsync;
+    bool                     overlapping_notes;
+    bool                     midi_chunk_limiter;
+    bool                     use_default_media_paths;
+    bool                     ui_theming;
+    bool                     overlay_stats_window;
+    ImVec4                   ui_chcolors[16];
+    ImVec4                   clear_color;
+    RGBAint                  liveColor;
+    std::string              last_midi_path;
+    std::string              last_sf_path;
+    std::string              last_midi_file;
+    std::vector<std::string> soundfont_paths;
+    std::vector<std::string> prev_images;
+
+    bool                     show_demo_window;
 
     UI(int graphics_mode);
     ~UI();
 
-    static void                     Setup(int graphics_backend);
-    static void                     SetMoonlightTheme();
-    static void                     SetSilvanaTheme();
-    // Sloth Player's themes
-    static void                     SetNeonAbyssTheme();
-    static void                     SetCrimsonAzureTheme();
-    static void                     SetArcticHorizonTheme();
-    static void                     SetCyberpunkTheme();
-    static void                     SetBuiltinTheme(int idx);
+    //static void                     Setup(int graphics_backend);
+    
 
-    static void                     Render();
-    static void                     UpdateWidgetValues();
-    static ImVec4                   Irgba2ImVec4(int r, int g, int b, int a);
-    static ImVec4                   UIntToImVec4(u_int rgb);
+    void Render();
+    void UpdateWidgetValues();
+    static ImVec4 Irgba2ImVec4(int r, int g, int b, int a);
+    static ImVec4 UIntToImVec4(u_int rgb);
+
+  private:
+      std::vector<std::string>   checked_soundfonts;
+      std::vector<std::string>   image_files;
+      std::vector<std::string>   all_image_files;
+      std::vector<SDL_Texture *> image_textures;
+
+      us_int ImVec4ToUInt(const ImVec4 &color);
+
+      void SetupIconFonts();
+      std::string FilenameOnly(const std::string &path);
+      bool searchDuplicatedMidiItem(const std::vector<std::string> &items, const std::string &item);
+      bool searchDuplicatedSoundfontItem(const std::vector<UI::SoundfontItem> &items, const std::string &item);
+      void RenderMidiList(const std::vector<std::string> &items, int &selectedIndex, std::string find_item);
+      std::vector<std::string> GetCheckedSoundfonts(const std::vector<UI::SoundfontItem> &items);
+      void RenderSoundfontsPathsList(const std::vector<std::string> &items, int &selectedIndex);
+      void moveSoundfont(int index, int direction);
+
+      void ConstrainWindowMove(const char *windowName);
+      void AndroidUIRescale();
+      
+      void ShowAudioDeviceList(const std::vector<MIDIAudioStream::Device> &audioDevices);
+      void ShowAudioDriverList(const std::vector<std::string> &audioDrivers);
+      void RenderSoundfontList(std::vector<UI::SoundfontItem> &items, std::string find_item);
+
+      void                     SetMoonlightTheme();
+      void                     SetSilvanaTheme();
+      // Sloth Player's themes
+      void                     SetNeonAbyssTheme();
+      void                     SetCrimsonAzureTheme();
+      void                     SetArcticHorizonTheme();
+      void                     SetCyberpunkTheme();
+      void                     SetBuiltinTheme(int idx);
 };
 
-inline std::vector<UI::SoundfontItem> live_soundfont_list;
+//inline std::vector<UI::SoundfontItem> live_soundfont_list;
 
 //void                                  Exit();
 #endif

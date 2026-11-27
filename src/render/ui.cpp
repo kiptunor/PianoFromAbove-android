@@ -76,45 +76,7 @@ bool                        is_midi_info        = false;
 // single_midi_info_collector *smic_ptr            = nullptr;
 f32                         android_scale;
 
-// UI/Widget variables
-bool                        UI::show_demo_window    = false;
-bool                        UI::main_gui_window     = false;
-int                         UI::live_note_speed     = 6000;
-int                         UI::selected_midi_index = 0;
-bool                        UI::velocity_filter     = true;
-bool                        UI::loop_colors         = false;
-bool                        UI::overlap_remover     = true;
-bool                        UI::use_bg_image        = false;
-bool                        UI::no_midi_duplicates;
-bool                        UI::no_soundfont_duplicates;
-bool                        UI::vsync;
-bool                        UI::internal_logging;
-bool                        UI::log_to_file;
-int                         UI::fps;
-bool                        UI::vertical_lines;
-bool                        UI::meas_lines;
-bool                        UI::use_default_media_paths = true;
-bool                        UI::background_image;
-bool                        UI::show_full_path_lost_midis      = false;
-bool                        UI::show_full_path_lost_soundfonts = false;
-bool                        UI::ui_theming                     = false;
-bool                        UI::overlapping_notes;
-bool                        UI::midi_chunk_limiter;
-bool                        UI::overlay_stats_window;
-int                         UI::min_velocity;
-int                         UI::max_velocity;
-f32                         UI::current_midi_pos_sl;
-std::string                 UI::last_midi_path;
-std::string                 UI::last_midi_file;
-std::string                 UI::last_sf_path;
-ImVec4                      UI::clear_color;
-UI::RGBAint                 UI::liveColor;
-ImVec4                      UI::ui_chcolors[16];
-int                         UI::current_audio_dev;
-int                         UI::current_audio_drv;
-int                         UI::selected_reverb_preset = 0;
-std::vector<std::string>    UI::soundfont_paths;
-std::vector<std::string>    UI::prev_images;
+
 static int                  builtin_ui_theme_idx = 0;
 // clang-format off
 const char                 *builtin_ui_theme_names[] =
@@ -252,7 +214,7 @@ constexpr std::array<const char*, KSR_REVERB_PRESET_TOTAL_COUNT> reverbPresetNam
 
 
 
-void SetupIconFonts()
+void UI::SetupIconFonts()
 {
     static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
     ImFontConfig         icons_config;
@@ -329,25 +291,58 @@ UI::UI(int graphics_mode)
 
     if(graphics_mode == VisualizerHandler::GPU)
     {
-        /*
-        ImGui_ImplSDL3_InitForSDLGPU(main_win);
-        ImGui_ImplSDLGPU3_InitInfo init_info = {};
-        init_info.Device               = SDL_GPURenderer::device;
-        init_info.ColorTargetFormat    = SDL_GetGPUSwapchainTextureFormat(SDL_GPURenderer::device, main_win);
-        init_info.MSAASamples          = SDL_GPU_SAMPLECOUNT_1;                      // Only used in multi-viewports mode.
-        init_info.SwapchainComposition = SDL_GPU_SWAPCHAINCOMPOSITION_SDR;  // Only used in multi-viewports mode.
-        init_info.PresentMode          = SDL_GPU_PRESENTMODE_VSYNC;
-        ImGui_ImplSDLGPU3_Init(&init_info);
-        */
         ImGui_ImplSDL3_InitForSDLGPU(main_win);
         ImGui_ImplSDLGPU3_InitInfo init_info = {};
         init_info.Device               = GPU_Renderer->Device();
         init_info.ColorTargetFormat    = GPU_Renderer->TargetFormat();
-        init_info.MSAASamples          = SDL_GPU_SAMPLECOUNT_1;                      // Only used in multi-viewports mode.
+        init_info.MSAASamples          = SDL_GPU_SAMPLECOUNT_1;             // Only used in multi-viewports mode.
         init_info.SwapchainComposition = SDL_GPU_SWAPCHAINCOMPOSITION_SDR;  // Only used in multi-viewports mode.
         init_info.PresentMode          = GPU_Renderer->PresentMode();
         ImGui_ImplSDLGPU3_Init(&init_info);
     }
+
+    // UI/Widget variables
+    show_demo_window               = false;
+    main_gui_window                = false;
+    live_note_speed                = 6000;
+    selected_midi_index            = 0;
+    velocity_filter                = true;
+    loop_colors                    = false;
+    overlap_remover                = true;
+    use_bg_image                   = false;
+    use_default_media_paths        = true;
+    show_full_path_lost_midis      = false;
+    show_full_path_lost_soundfonts = false;
+    ui_theming                     = false;
+    selected_reverb_preset = 0;
+    // Unset for now
+    /*
+    no_midi_duplicates;
+    no_soundfont_duplicates;
+    vsync;
+    internal_logging;
+    log_to_file;
+    fps;
+    vertical_lines;
+    meas_lines;
+    background_image;
+    overlapping_notes;
+    midi_chunk_limiter;
+    overlay_stats_window;
+    min_velocity;
+    max_velocity;
+    current_midi_pos_sl;
+    last_midi_path;
+    last_midi_file;
+    last_sf_path;
+    clear_color;
+    liveColor;
+    ui_chcolors[16];
+    current_audio_dev;
+    current_audio_drv;
+    soundfont_paths;
+    prev_images;
+    */
 
     UpdateWidgetValues();
 }
@@ -989,7 +984,7 @@ void UI::SetNeonAbyssTheme()
 // And I can relate to such a problem
 
 // Filter only the filenames before showing them on the midi and soundfont lists or it will cause a godamn stupid chaos
-std::string FilenameOnly(const std::string &path)
+std::string UI::FilenameOnly(const std::string &path)
 {
     size_t slash = path.find_last_of("/\\");
     return (slash == std::string::npos) ? path : path.substr(slash + 1);
@@ -1005,7 +1000,7 @@ UI::RGBAint Frgba2Irgba(ImVec4 &col)
     return res;
 }
 
-bool searchDuplicatedMidiItem(const std::vector<std::string> &items, const std::string &item)
+bool UI::searchDuplicatedMidiItem(const std::vector<std::string> &items, const std::string &item)
 {
     for(const auto &i : items)
         if(i == item)
@@ -1013,7 +1008,7 @@ bool searchDuplicatedMidiItem(const std::vector<std::string> &items, const std::
     return false;
 }
 
-bool searchDuplicatedSoundfontItem(const std::vector<UI::SoundfontItem> &items, const std::string &item)
+bool UI::searchDuplicatedSoundfontItem(const std::vector<UI::SoundfontItem> &items, const std::string &item)
 {
     for(size_t i = 0; i < items.size(); ++i)
         if(items[i].label == item)
@@ -1024,7 +1019,7 @@ bool searchDuplicatedSoundfontItem(const std::vector<UI::SoundfontItem> &items, 
     return false;
 }
 
-void RenderMidiList(const std::vector<std::string> &items, int &selectedIndex, std::string find_item)
+void UI::RenderMidiList(const std::vector<std::string> &items, int &selectedIndex, std::string find_item)
 {
     ImGui::BeginChild("##midils", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
 
@@ -1053,7 +1048,7 @@ void RenderMidiList(const std::vector<std::string> &items, int &selectedIndex, s
     ImGui::EndChild();
 }
 
-std::vector<std::string> GetCheckedSoundfonts(const std::vector<UI::SoundfontItem> &items)
+std::vector<std::string> UI::GetCheckedSoundfonts(const std::vector<UI::SoundfontItem> &items)
 {
     std::vector<std::string> checkedItems;
 
@@ -1064,7 +1059,7 @@ std::vector<std::string> GetCheckedSoundfonts(const std::vector<UI::SoundfontIte
     return checkedItems;
 }
 
-void RenderSoundfontList(std::vector<UI::SoundfontItem> &items, std::string find_item)
+void UI::RenderSoundfontList(std::vector<UI::SoundfontItem> &items, std::string find_item)
 {
     ImGui::BeginChild("##sfls", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
 
@@ -1130,7 +1125,7 @@ void RenderSoundfontList(std::vector<UI::SoundfontItem> &items, std::string find
     }
 }
 
-void RenderSoundfontsPathsList(const std::vector<std::string> &items, int &selectedIndex)
+void UI::RenderSoundfontsPathsList(const std::vector<std::string> &items, int &selectedIndex)
 {
     ImGui::BeginChild("##soundfontspathls", ImVec2(0, 230), true, ImGuiWindowFlags_HorizontalScrollbar);
 
@@ -1149,7 +1144,7 @@ void RenderSoundfontsPathsList(const std::vector<std::string> &items, int &selec
     ImGui::EndChild();
 }
 
-void ShowAudioDeviceList(const std::vector<MIDIAudioStream::Device> &audioDevices)
+void UI::ShowAudioDeviceList(const std::vector<MIDIAudioStream::Device> &audioDevices)
 {
     std::vector<const char *> deviceNames;
     for(const auto &device : audioDevices)
@@ -1158,13 +1153,13 @@ void ShowAudioDeviceList(const std::vector<MIDIAudioStream::Device> &audioDevice
     // Ensure current_audio_dev is valid
     if(deviceNames.empty())
     {
-        UI::current_audio_dev = 0; // Reset to 0 if there are no devices
+        current_audio_dev = 0; // Reset to 0 if there are no devices
         allow_audio_dev_ssave = false;
     }
-    else if(UI::current_audio_dev >= (int)deviceNames.size())
+    else if(current_audio_dev >= (int)deviceNames.size())
     {
         allow_audio_dev_ssave = true;
-        UI::current_audio_dev = 0; // Reset to the first device if the index is out of bounds
+        current_audio_dev = 0; // Reset to the first device if the index is out of bounds
     }
 
     // Display the combo box
@@ -1182,11 +1177,11 @@ void ShowAudioDeviceList(const std::vector<MIDIAudioStream::Device> &audioDevice
             for(size_t i = 0; i < deviceNames.size(); i++)
             {
                 // Check if this item is selected
-                bool isSelected = (UI::current_audio_dev == (int)i);
+                bool isSelected = (current_audio_dev == (int)i);
 
                 // Add the item to the combo box
                 if(ImGui::Selectable(deviceNames[i], isSelected))
-                    UI::current_audio_dev = i; // Update the current index if the user selects this item
+                    current_audio_dev = i; // Update the current index if the user selects this item
 
                 // Set the initial focus when opening the combo box
                 if(isSelected)
@@ -1197,36 +1192,36 @@ void ShowAudioDeviceList(const std::vector<MIDIAudioStream::Device> &audioDevice
     }
 }
 
-void ShowAudioDriverList(const std::vector<std::string> &audioDrivers)
+void UI::ShowAudioDriverList(const std::vector<std::string> &audioDrivers)
 {
     static bool initialized = false;
     if(!initialized)
     {
         auto it = std::find(audioDrivers.begin(), audioDrivers.end(), loaded_config.audio_drv_name);
-        UI::current_audio_drv = (it != audioDrivers.end()) ? static_cast<int>(std::distance(audioDrivers.begin(), it)) : 0;
+        current_audio_drv = (it != audioDrivers.end()) ? static_cast<int>(std::distance(audioDrivers.begin(), it)) : 0;
         initialized = true;
     }
 
     if(audioDrivers.empty())
     {
-        UI::current_audio_drv = 0;
+        current_audio_drv = 0;
         allow_audio_dev_ssave = false;
         ImGui::BeginCombo("Audio Drivers *", "No drivers available");
         ImGui::EndCombo();
         return;
     }
 
-    if(UI::current_audio_drv < 0 || UI::current_audio_drv >= static_cast<int>(audioDrivers.size()))
-        UI::current_audio_drv = 0;
+    if(current_audio_drv < 0 || current_audio_drv >= static_cast<int>(audioDrivers.size()))
+        current_audio_drv = 0;
 
-    if(ImGui::BeginCombo("Audio Drivers *", audioDrivers[UI::current_audio_drv].c_str()))
+    if(ImGui::BeginCombo("Audio Drivers *", audioDrivers[current_audio_drv].c_str()))
     {
         for(size_t i = 0; i < audioDrivers.size(); i++)
         {
-            bool isSelected = UI::current_audio_drv == static_cast<int>(i);
+            bool isSelected = current_audio_drv == static_cast<int>(i);
             if(ImGui::Selectable(audioDrivers[i].c_str(), isSelected))
             {
-                UI::current_audio_drv = static_cast<int>(i);
+                current_audio_drv = static_cast<int>(i);
                 live_conf.audio_drv_name = audioDrivers[i];
             }
             if(isSelected) ImGui::SetItemDefaultFocus();
@@ -1235,7 +1230,7 @@ void ShowAudioDriverList(const std::vector<std::string> &audioDrivers)
     }
 }
 
-us_int ImVec4ToUInt(const ImVec4 &color)
+us_int UI::ImVec4ToUInt(const ImVec4 &color)
 {
     us_int r = static_cast<us_int>(color.x * 255.0f);
     us_int g = static_cast<us_int>(color.y * 255.0f);
@@ -1243,7 +1238,7 @@ us_int ImVec4ToUInt(const ImVec4 &color)
     return (r << 16) | (g << 8) | b;
 }
 
-void moveSoundfont(int index, int direction)
+void UI::moveSoundfont(int index, int direction)
 {
     int new_index = index + direction;
     if(index < 0 || index >= (int)live_soundfont_list.size())
@@ -1254,7 +1249,7 @@ void moveSoundfont(int index, int direction)
     std::swap(live_soundfont_list[index], live_soundfont_list[new_index]);
 }
 
-void ConstrainWindowMove(const char *windowName)
+void UI::ConstrainWindowMove(const char *windowName)
 {
     ImGuiContext &g   = *GImGui;
 
@@ -1290,7 +1285,7 @@ void ConstrainWindowMove(const char *windowName)
     }
 }
 
-void AndroidUIRescale()
+void UI::AndroidUIRescale()
 {
     const float base_font_size        = UI_FONT_SIZE;
     float       scale                 = ImGui::GetFontSize() / base_font_size;
@@ -1387,12 +1382,12 @@ ImVec4 UI::UIntToImVec4(us_int rgb)
 
 void UI::UpdateWidgetValues()
 {
-    UI::clear_color = UI::Irgba2ImVec4(live_conf.bg_R, live_conf.bg_G, live_conf.bg_B, live_conf.bg_A);
+    clear_color = UI::Irgba2ImVec4(live_conf.bg_R, live_conf.bg_G, live_conf.bg_B, live_conf.bg_A);
 
-    UI::liveColor.r = live_conf.bg_R;
-    UI::liveColor.g = live_conf.bg_G;
-    UI::liveColor.b = live_conf.bg_B;
-    UI::liveColor.a = live_conf.bg_A;
+    liveColor.r = live_conf.bg_R;
+    liveColor.g = live_conf.bg_G;
+    liveColor.b = live_conf.bg_B;
+    liveColor.a = live_conf.bg_A;
 
     if(std::filesystem::exists(live_conf.last_ccol_file_path))
     {
@@ -1420,89 +1415,32 @@ void UI::UpdateWidgetValues()
     }
 
 
-    UI::current_audio_dev       = live_conf.audio_device_index;
-    UI::loop_colors             = live_conf.loop_colors;
-    UI::overlap_remover         = live_conf.OR;
-    UI::velocity_filter         = live_conf.vel_filter;
-    UI::live_note_speed         = live_conf.note_speed;
-    UI::min_velocity            = live_conf.vel_min;
-    UI::max_velocity            = live_conf.vel_max;
-    UI::last_midi_path          = live_fd_state.midi_path;
-    UI::last_midi_file          = MidiList::last_midi_file;
-    UI::vsync                   = live_conf.vsync;
-    UI::internal_logging        = live_conf.internal_log_buffer;
-    UI::log_to_file             = live_conf.log_to_file;
-    UI::fps                     = live_conf.fps;
-    UI::soundfont_paths         = live_conf.extra_sf_paths;
-    UI::last_sf_path            = live_fd_state.soundfont_path;
-    UI::no_midi_duplicates      = live_conf.no_midi_duplicates;
-    UI::vertical_lines          = live_conf.draw_vertical_lines;
-    UI::meas_lines              = live_conf.draw_measure_lines;
-    UI::no_soundfont_duplicates = live_conf.no_soundfont_duplicates;
-    UI::background_image        = live_conf.background_image;
-    UI::ui_theming              = live_conf.custom_ui_theme;
-    UI::overlapping_notes       = live_conf.overlapping_notes;
-    UI::midi_chunk_limiter      = live_conf.midi_chunk_limiter;
-    UI::overlay_stats_window    = live_conf.overlay_stats;
-    UI::selected_reverb_preset  = live_conf.reverb_preset_idx;
-    live_soundfont_list         = loaded_soundfont_list;
-}
-
-void UI::Setup(int graphics_backend)
-{
-    // Setup ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    (void)io;
-
-#ifdef PLATFORM_ANDROID
-    io.IniFilename = IMGUI_INI_FILE_PATH;
-    if(!std::filesystem::exists(IMGUI_INI_FILE_PATH))
-        Log::warn("", "Previous UI layout is no longer available. Missing '%s'", IMGUI_INI_FILE_PATH);
-#else
-    std::ostringstream ini_path;
-    ini_path << FileHelpers::config_dir << "/" << IMGUI_INI_FILE_PATH;
-    static std::string temp_str = ini_path.str();
-    io.IniFilename              = temp_str.c_str();
-    if(!std::filesystem::exists(temp_str.c_str()))
-        Log::warn("", "Previous UI layout is no longer available. Missing '%s'", temp_str.c_str());
-#endif
-
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-
-    // Setup ImGui style
-    ImGui::StyleColorsDark();
-
-    builtin_ui_theme_idx = live_conf.builtin_ui_theme_idx;
-
-    if(live_conf.custom_ui_theme)
-        // SetDefaultTheme(); // Setting a nice looking GUI :3
-        // SetSilvanaTheme();
-        ImGui::LoadStyleFrom(live_conf.ui_theme_file_path.c_str());
-
-    if(live_conf.builtin_ui_theme)
-        SetBuiltinTheme(live_conf.builtin_ui_theme_idx);
-
-
-
-    // Metrophobic-Regular.ttf
-    // Font suggested by Nerdly
-
-    ImFontConfig ui_font_config;
-    ui_font_config.FontDataOwnedByAtlas = false;
-    io.Fonts->AddFontFromMemoryTTF((void *)metrophobic_regular_ttf, metrophobic_regular_len, UI_FONT_SIZE, &ui_font_config);
-    // io.Fonts->AddFontFromMemoryTTF((void *)metrophobic_regular_ttf, metrophobic_regular_len, 55.0f, &ui_font_config);
-
-    SetupIconFonts();
-
-    // Setup Platform/Renderer backends
-    // ImGui_ImplSDL3_InitForSDLRenderer(w, r);
-    ImGui_ImplSDLRenderer3_Init(DefaultRenderer->Ren);
-    ImGui_ImplSDL3_InitForVulkan(DefaultRenderer->Win);
-
-    UpdateWidgetValues();
+    current_audio_dev       = live_conf.audio_device_index;
+    loop_colors             = live_conf.loop_colors;
+    overlap_remover         = live_conf.OR;
+    velocity_filter         = live_conf.vel_filter;
+    live_note_speed         = live_conf.note_speed;
+    min_velocity            = live_conf.vel_min;
+    max_velocity            = live_conf.vel_max;
+    last_midi_path          = live_fd_state.midi_path;
+    last_midi_file          = MidiList::last_midi_file;
+    vsync                   = live_conf.vsync;
+    internal_logging        = live_conf.internal_log_buffer;
+    log_to_file             = live_conf.log_to_file;
+    fps                     = live_conf.fps;
+    soundfont_paths         = live_conf.extra_sf_paths;
+    last_sf_path            = live_fd_state.soundfont_path;
+    no_midi_duplicates      = live_conf.no_midi_duplicates;
+    vertical_lines          = live_conf.draw_vertical_lines;
+    meas_lines              = live_conf.draw_measure_lines;
+    no_soundfont_duplicates = live_conf.no_soundfont_duplicates;
+    background_image        = live_conf.background_image;
+    ui_theming              = live_conf.custom_ui_theme;
+    overlapping_notes       = live_conf.overlapping_notes;
+    midi_chunk_limiter      = live_conf.midi_chunk_limiter;
+    overlay_stats_window    = live_conf.overlay_stats;
+    selected_reverb_preset  = live_conf.reverb_preset_idx;
+    live_soundfont_list     = loaded_soundfont_list;
 }
 
 void UI::Render()
@@ -3176,16 +3114,6 @@ void UI::Render()
     if(render_mode == VisualizerHandler::Legacy)
     {
         ImGui::Render();
-        //ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), r);
+        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), DefaultRenderer->Ren);
     }
-
-    /*
-    if(render_mode == VisualizerHandler::Legacy)
-    {
-        ImDrawData* draw_data = ImGui::GetDrawData();
-        const bool is_minimized = (draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f);
-
-        
-    }
-    */
 }

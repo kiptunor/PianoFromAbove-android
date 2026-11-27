@@ -1,6 +1,9 @@
 #ifndef VISUALIZER_ENTRY_H
 #define VISUALIZER_ENTRY_H
 
+#include <SDL3/SDL.h>
+#include "mb_types.h"
+
 
 class VisualizerHandler
 {
@@ -31,6 +34,12 @@ class VisualizerHandler
     Type getType() const;
 
   private:
+      int       vis_type_num = 0;
+      
+      SDL_Event Evt;
+      u32       frameStart;
+      int       frameRate = 60;
+      
       void ImplSDL_RenderVisLoop();
       void ImplSDL_GPU_RenderVisLoop();
       const char        *video_driver;

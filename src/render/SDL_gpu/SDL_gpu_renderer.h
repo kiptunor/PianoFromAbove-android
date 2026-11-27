@@ -14,7 +14,8 @@ class SDL_GPURenderer
         SDL_GPURenderer(SDL_Window *window);
         ~SDL_GPURenderer();
 
-        bool IsInitialized() const { return device != nullptr; }
+        bool IsInit() { return is_init; };
+
         SDL_GPUDevice *Device() const { return device; }
         SDL_GPUTextureFormat TargetFormat() const { return target_format; }
         SDL_GPUPresentMode PresentMode() const { return present_mode; }
@@ -26,10 +27,10 @@ class SDL_GPURenderer
         void Render();
 
     private:
-        
-        SDL_Window *current_window;
-        SDL_GPUTextureFormat   target_format   = SDL_GPU_TEXTUREFORMAT_INVALID;
-        SDL_GPUPresentMode     present_mode    = SDL_GPU_PRESENTMODE_VSYNC;
+        bool is_init = false;
+        SDL_Window            *current_window;
+        SDL_GPUTextureFormat   target_format        = SDL_GPU_TEXTUREFORMAT_INVALID;
+        SDL_GPUPresentMode     present_mode         = SDL_GPU_PRESENTMODE_VSYNC;
         SDL_GPUPresentMode     pending_present_mode = SDL_GPU_PRESENTMODE_VSYNC;
 };
 #endif

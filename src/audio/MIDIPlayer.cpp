@@ -174,14 +174,14 @@ void MIDIPlayer::ReloadSoundfonts()
         Log::debug("Stop player");
 
         // Load the new soundfonts
-        LoadEnabledSoundfonts(live_soundfont_list);
+        LoadEnabledSoundfonts(gui->live_soundfont_list);
 
         // Then unpause the synth's internal midi player
         ksr_player_pause(midi_synth_ctx);
         is_paused = false; // And the midi visualizer too
     }
     else // If the midi player is not active load the soundfonts as normal
-        LoadEnabledSoundfonts(live_soundfont_list);
+        LoadEnabledSoundfonts(gui->live_soundfont_list);
 }
 
 void MIDIPlayer::UpdateVoiceCount(int voiceCount)
