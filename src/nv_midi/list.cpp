@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <cmath>
 #include <array>
+#include <vector>
 
 #include "../logger.h"
 
@@ -283,107 +284,179 @@ void NVnoteList::remove_to(f64 T)
 void NVnoteList::collect_all_notes(std::vector<GpuNote>& out)
 {
     out.clear();
+    out.reserve(1 << 20);
 
     // Reset parser/sequencer/tempo state to the beginning of the MIDI.
     list_seek(0.0);
 
-    // One open-note stack per MIDI track, per key.
-    std::vector<std::array<std::stack<size_t>, 128>> open(MIDI_File.tracks);
+    const u32 NONE = 0xFFFFFFFFu;
+    const size_t slotCount = static_cast<size_t>(MIDI_File.tracks) * 128u;
+    std::vector<u32> openSlot(slotCount, NONE);
+    std::unordered_map<u32, std::vector<u32>> openOverflow;
+
+    std::vector<f64> startTimes;
+    startTimes.reserve(1 << 20);
 
     // Stable track/channel -> color index mapping, same idea as NoteBuffer.
-    std::unordered_map<uint32_t, uint16_t> colorMap;
-    uint16_t nextColor = 0;
-    auto colorIndexFor = [&](uint16_t track, uint8_t chn) -> uint8_t {
-        uint32_t k = (uint32_t(track) << 8) | uint32_t(chn);
+    std::unordered_map<u32, u16> colorMap;
+    u16 nextColor = 0;
+    auto colorIndexFor = [&](u16 track, u8 chn) -> u8
+    {
+        u32 k = (u32(track) << 8) | u32(chn);
         auto [it, inserted] = colorMap.emplace(k, nextColor);
-        if (inserted) {
+
+        if(inserted)
             ++nextColor;
-        }
-        // Keep it in uint8_t; clamp/wrap as your renderer expects.
-        return static_cast<uint8_t>(it->second % 256u);
+
+        return static_cast<u8>(it->second % 256u);
     };
 
-    auto finalize = [&](size_t idx, f64 endT) {
-        float start = out[idx].start;
-        float end   = static_cast<float>(endT);
-        float len   = end - start;
-        if (!std::isfinite(len) || len < 0.001f) len = 0.001f;
-        out[idx].length = len;
+    auto finalize = [&](u32 idx, f64 endT)
+    {
+        if(idx >= out.size() || idx >= startTimes.size())
+            return;
+
+        const f64 startD = startTimes[idx];
+        f64 lenD = endT - startD;
+
+        if(!std::isfinite(lenD) || lenD <= 0.0)
+            lenD = 0.0001;
+
+        out[idx].length = static_cast<f32>(lenD);
     };
 
     // Walk all sequencer events until EOF.
-    while (Evt_sequencer.event().track < MIDI_File.tracks)
+    while(Evt_sequencer.event().track < MIDI_File.tracks)
     {
         const NVseq_event &Evt = Evt_sequencer.event();
         Tread  += dT * static_cast<f64>(Evt.abstick - abstick);
         abstick = Evt.abstick;
 
-        switch (Evt.type)
+        switch(Evt.type)
         {
-        case NV_METYPE::META:
-            if (Evt.num == 0x51u) // tempo change
-            {
-                NVMidi::u32_t speed = Evt.data[0];
-                speed = (speed << 8) | Evt.data[1];
-                speed = (speed << 8) | Evt.data[2];
-                dT = 0.000001 * static_cast<f64>(speed) / MIDI_File.ppnq;
-                TempoEvents.push_back({Evt.abstick, Tread, static_cast<f64>(speed)});
-            }
-            break;
+            case NV_METYPE::META:
+                if(Evt.num == 0x51u) // tempo change
+                {
+                    NVMidi::u32_t speed = Evt.data[0];
+                    speed = (speed << 8) | Evt.data[1];
+                    speed = (speed << 8) | Evt.data[2];
+                    dT = 0.000001 * static_cast<f64>(speed) / MIDI_File.ppnq;
+                    TempoEvents.push_back({Evt.abstick, Tread, static_cast<f64>(speed)});
+                }
+                break;
 
-        case NV_METYPE::NOTE_ON:
-            if (Evt.value > 0)
-            {
-                GpuNote gn{};
-                gn.start      = static_cast<float>(Tread);
-                gn.length     = 0.0f; // finalized on note-off/end
-                gn.key        = static_cast<uint8_t>(Evt.num);
-                gn.colorIndexFlags = static_cast<uint32_t>(colorIndexFor(Evt.track, Evt.chan));
+            case NV_METYPE::NOTE_ON:
+                if(Evt.value > 0)
+                {
+                    if(Evt.num >= 128u || Evt.track >= MIDI_File.tracks)
+                        break;
 
-                open[Evt.track][Evt.num].push(out.size());
-                out.push_back(gn);
+                    const u32 slot = static_cast<u32>(Evt.track) * 128u + static_cast<u32>(Evt.num);
+                    const u32 idx  = static_cast<u32>(out.size());
+                    const u8 colorIdx = colorIndexFor(Evt.track, Evt.chan);
+
+                    GpuNote gn{};
+                    gn.start           = static_cast<f32>(Tread);
+                    gn.length          = 0.0f; // finalized on note-off/end
+                    gn.key             = static_cast<u32>(Evt.num);
+                    gn.colorIndexFlags = (static_cast<u32>(Evt.track) << 8) | static_cast<u32>(colorIdx);
+
+                    if(openSlot[slot] != NONE)
+                        openOverflow[slot].push_back(openSlot[slot]);
+
+                    openSlot[slot] = idx;
+                    startTimes.push_back(Tread);
+                    out.push_back(gn);
+                    break;
+                }
+                // velocity 0 == note-off, fall through
+                [[fallthrough]];
+
+            case NV_METYPE::NOTE_OFF:
+            {
+                if(Evt.num >= 128u || Evt.track >= MIDI_File.tracks)
+                    break;
+
+                const u32 slot = static_cast<u32>(Evt.track) * 128u + static_cast<u32>(Evt.num);
+                if(openSlot[slot] != NONE)
+                {
+                    finalize(openSlot[slot], Tread);
+                    auto it = openOverflow.find(slot);
+                    if(it != openOverflow.end() && !it->second.empty())
+                    {
+                        openSlot[slot] = it->second.back();
+                        it->second.pop_back();
+                        if(it->second.empty())
+                            openOverflow.erase(it);
+                    }
+                    else
+                        openSlot[slot] = NONE;
+                    
+                }
                 break;
             }
-            // velocity 0 == note-off, fall through
-            [[fallthrough]];
 
-        case NV_METYPE::NOTE_OFF:
-        {
-            auto &stk = open[Evt.track][Evt.num];
-            if (!stk.empty())
-            {
-                size_t idx = stk.top();
-                stk.pop();
-                finalize(idx, Tread);
-            }
-            break;
-        }
-
-        default:
-            break;
+            default:
+                break;
         }
 
         Evt_sequencer.seq_next(MIDI_File);
     }
 
     // Finalize notes that never received a note-off.
-    for (auto &trk : open)
+    for(size_t slot = 0; slot < slotCount; ++slot)
     {
-        for (int k = 0; k < 128; ++k)
+        auto it = openOverflow.find(static_cast<u32>(slot));
+        if(it != openOverflow.end())
         {
-            auto &stk = trk[k];
-            while (!stk.empty())
-            {
-                size_t idx = stk.top();
-                stk.pop();
+            for(u32 idx : it->second)
                 finalize(idx, Tread);
-            }
+
+            openOverflow.erase(it);
+        }
+
+        if(openSlot[slot] != NONE)
+        {
+            finalize(openSlot[slot], Tread);
+            openSlot[slot] = NONE;
         }
     }
 
-    if (TempoEvents.size() > TempoCache.size())
+    // startTimes no longer needed after finalization
+    std::vector<f64>().swap(startTimes);
+
+    if(TempoEvents.size() > TempoCache.size())
         build_tempo_cache();
 
-    // Optional: shrink CPU memory before handing off to GPU upload.
-    out.shrink_to_fit();
+    // Match SDLRenderer/note_buffer.cpp layering:
+    // bucket by key in ascending key order, then within key:
+    // white first/black after, longer duration first (underneath),
+    // lower track first, earlier start on top.
+    std::stable_sort(out.begin(), out.end(), [](const GpuNote& a, const GpuNote& b)
+    {
+        auto isSharp = [](u32 k)
+        {
+            int n = static_cast<int>(k % 12);
+            return n == 1 || n == 3 || n == 6 || n == 8 || n == 10;
+        };
+        bool sharpA = isSharp(a.key);
+        bool sharpB = isSharp(b.key);
+        
+        if(sharpA != sharpB)
+            return !sharpA; // white first
+
+        if(a.start != b.start)
+            return a.start < b.start;
+
+        if(a.length != b.length)
+            return a.length > b.length; // longer underneath
+
+        u32 trackA = a.colorIndexFlags >> 8;
+        u32 trackB = b.colorIndexFlags >> 8;
+        
+        if(trackA != trackB)
+            return trackA < trackB;
+
+        return a.key < b.key;
+    });
 }

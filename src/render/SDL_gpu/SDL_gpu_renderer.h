@@ -33,7 +33,7 @@ class SDL_GPURenderer
         void SetPendingNotes(std::vector<GpuNote>&& notes); // load thread
         void ConsumePendingNotes();
         void PushNotes(std::vector<GpuNote>&& notes);
-        void EnsureKeyGeom(Uint32 winW, Uint32 winH);
+        void EnsureKeyGeom(u32 winW, u32 winH);
         void Render();
 
     private:
@@ -52,5 +52,22 @@ class SDL_GPURenderer
         std::mutex m_pendingNotesMutex;
         std::vector<GpuNote> m_pendingNotes;
         bool m_hasPendingNotes = false;
+        u32 m_noteTransferCapacityBytes             = 0;
+        std::vector<GpuNote> m_visibleScratch;
+        std::vector<u32> m_visibleIdxScratch;
+        std::vector<u32> m_startSortedIdx;
+        f32 m_maxNoteLength                         = 0.0f;
+
+        f32 m_longNoteThresh                        = 10.0f;
+        std::vector<u32> m_longNoteIdx;
+
+        size_t m_sweepLo = 0;
+        f32 m_lastTplay = -1.0f;
+
+        
+        u32 m_whiteNoteCount                        = 0;
+        std::vector<f32> m_noteStarts;
+        std::vector<GpuNote> m_notes;               // CPU copy for visible-range upload
+                
 };
 #endif

@@ -246,6 +246,10 @@ void MIDIPlayer::CloseMidi()
 
     // Clear previous channel / track colors
     NoteBuffer::ClearTrackChannelColors();
+
+    if(GPU_Renderer)
+        GPU_Renderer->SetPendingNotes({});
+    
     is_midi_loaded = false;
 }
 

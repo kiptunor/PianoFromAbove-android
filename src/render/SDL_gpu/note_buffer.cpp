@@ -9,12 +9,12 @@
 
 
 
-static inline uint64_t TrackChanKey(uint16_t track, uint8_t chn)
+static inline u64 TrackChanKey(u16 track, u8 chn)
 {
     return (uint64_t(track) << 8) | chn;
 }
 
-uint16_t GpuNoteBuffer::ColorIndexFor(const NVnote& n, std::unordered_map<uint64_t,uint16_t>& map, uint16_t& next)
+uint16_t GpuNoteBuffer::ColorIndexFor(const NVnote& n, std::unordered_map<u64, u16>& map, u16& next)
 {
     uint64_t k = TrackChanKey(n.track, n.chn);
     auto [it, inserted] = map.emplace(k, next);
@@ -73,7 +73,7 @@ void GpuNoteBuffer::Upload(SDL_GPUDevice* device)
     if(notes.empty())
         return;
 
-    Uint32 size = Uint32(notes.size() * sizeof(GpuNote));
+    u32 size = u32(notes.size() * sizeof(GpuNote));
     SDL_GPUBufferCreateInfo bci{};
     bci.usage  = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ; // vertex shader reads
     bci.size   = size;
@@ -118,10 +118,4 @@ void GpuNoteBuffer::Destroy(SDL_GPUDevice* device)
     }
 
     capacityBytes = 0;
-    // noteCount/capacity members as you have them:
-    // m_noteCount = 0;
-
-    // Optional: free CPU-side copy if you don't need to re-upload.
-    // notes.clear();
-    // notes.shrink_to_fit();
 }
