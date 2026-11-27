@@ -106,6 +106,19 @@ void MIDIPlayer::LoadMidi(const std::string &midi_path)
         Midi_ctx.OR();
 
 
+    std::vector<GpuNote> gpuNotes;
+    Midi_ctx.collect_all_notes(gpuNotes);
+    
+    // collect_all_notes leaves sequencer at EOF. Reset for live playback.
+    Midi_ctx.list_seek(0.0);
+    
+    for(int i = 0; i < 128; ++i)
+        Midi_ctx.Note_list[i].clear();
+    
+    // Hand gpuNotes to renderer/GPU upload.
+    GPU_Renderer->SetPendingNotes(std::move(gpuNotes));
+
+
     // - - - - [Create new MIDI stream] - - - -
 
 

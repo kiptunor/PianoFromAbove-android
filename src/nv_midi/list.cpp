@@ -1,4 +1,7 @@
 #include <algorithm>
+#include <unordered_map>
+#include <cmath>
+#include <array>
 
 #include "../logger.h"
 
@@ -275,4 +278,113 @@ void NVnoteList::remove_to(f64 T)
             p->Tend < T ? (p = Note_list[i].erase(p)) : p++;
         }
     }
+}
+
+void NVnoteList::collect_all_notes(std::vector<GpuNote>& out)
+{
+    out.clear();
+
+    // Reset parser/sequencer/tempo state to the beginning of the MIDI.
+    list_seek(0.0);
+
+    // One open-note stack per MIDI track, per key.
+    std::vector<std::array<std::stack<size_t>, 128>> open(MIDI_File.tracks);
+
+    // Stable track/channel -> color index mapping, same idea as NoteBuffer.
+    std::unordered_map<uint32_t, uint16_t> colorMap;
+    uint16_t nextColor = 0;
+    auto colorIndexFor = [&](uint16_t track, uint8_t chn) -> uint8_t {
+        uint32_t k = (uint32_t(track) << 8) | uint32_t(chn);
+        auto [it, inserted] = colorMap.emplace(k, nextColor);
+        if (inserted) {
+            ++nextColor;
+        }
+        // Keep it in uint8_t; clamp/wrap as your renderer expects.
+        return static_cast<uint8_t>(it->second % 256u);
+    };
+
+    auto finalize = [&](size_t idx, f64 endT) {
+        float start = out[idx].start;
+        float end   = static_cast<float>(endT);
+        float len   = end - start;
+        if (!std::isfinite(len) || len < 0.001f) len = 0.001f;
+        out[idx].length = len;
+    };
+
+    // Walk all sequencer events until EOF.
+    while (Evt_sequencer.event().track < MIDI_File.tracks)
+    {
+        const NVseq_event &Evt = Evt_sequencer.event();
+        Tread  += dT * static_cast<f64>(Evt.abstick - abstick);
+        abstick = Evt.abstick;
+
+        switch (Evt.type)
+        {
+        case NV_METYPE::META:
+            if (Evt.num == 0x51u) // tempo change
+            {
+                NVMidi::u32_t speed = Evt.data[0];
+                speed = (speed << 8) | Evt.data[1];
+                speed = (speed << 8) | Evt.data[2];
+                dT = 0.000001 * static_cast<f64>(speed) / MIDI_File.ppnq;
+                TempoEvents.push_back({Evt.abstick, Tread, static_cast<f64>(speed)});
+            }
+            break;
+
+        case NV_METYPE::NOTE_ON:
+            if (Evt.value > 0)
+            {
+                GpuNote gn{};
+                gn.start      = static_cast<float>(Tread);
+                gn.length     = 0.0f; // finalized on note-off/end
+                gn.key        = static_cast<uint8_t>(Evt.num);
+                gn.colorIndex = colorIndexFor(Evt.track, Evt.chan);
+                gn.flags      = 0;
+
+                open[Evt.track][Evt.num].push(out.size());
+                out.push_back(gn);
+                break;
+            }
+            // velocity 0 == note-off, fall through
+            [[fallthrough]];
+
+        case NV_METYPE::NOTE_OFF:
+        {
+            auto &stk = open[Evt.track][Evt.num];
+            if (!stk.empty())
+            {
+                size_t idx = stk.top();
+                stk.pop();
+                finalize(idx, Tread);
+            }
+            break;
+        }
+
+        default:
+            break;
+        }
+
+        Evt_sequencer.seq_next(MIDI_File);
+    }
+
+    // Finalize notes that never received a note-off.
+    for (auto &trk : open)
+    {
+        for (int k = 0; k < 128; ++k)
+        {
+            auto &stk = trk[k];
+            while (!stk.empty())
+            {
+                size_t idx = stk.top();
+                stk.pop();
+                finalize(idx, Tread);
+            }
+        }
+    }
+
+    if (TempoEvents.size() > TempoCache.size())
+        build_tempo_cache();
+
+    // Optional: shrink CPU memory before handing off to GPU upload.
+    out.shrink_to_fit();
 }

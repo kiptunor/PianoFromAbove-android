@@ -342,6 +342,7 @@ void VisualizerHandler::ImplSDL_GPU_RenderVisLoop()
     gui->Render();
 
     GPU_Renderer->Render();
+    GPU_Renderer->ConsumePendingNotes();
 
     // Only update Tplay if actively playing and not at the end
     if(!MidiPlayer->is_paused && !MidiPlayer->playback_ended && MidiPlayer->IsActive())

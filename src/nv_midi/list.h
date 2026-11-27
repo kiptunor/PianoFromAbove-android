@@ -5,6 +5,7 @@
 
 
 #include "../mb_types.h"
+#include "../render/SDL_gpu/note_structs.h"
 #include "seq.h"
 
 #include <vector>
@@ -68,6 +69,7 @@ class NVnoteList /* ===== Note queue class ===== */
     f64            tickToSeconds(uint64_t tick) const;
     u64          secondsToTick(double seconds) const;
     f64               get_tempo_at_tick(uint64_t tick) const;
+    void collect_all_notes(std::vector<GpuNote>& out);
 
     /* Close component */
     void              destroy_all();
