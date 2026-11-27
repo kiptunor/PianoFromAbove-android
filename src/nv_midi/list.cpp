@@ -338,8 +338,7 @@ void NVnoteList::collect_all_notes(std::vector<GpuNote>& out)
                 gn.start      = static_cast<float>(Tread);
                 gn.length     = 0.0f; // finalized on note-off/end
                 gn.key        = static_cast<uint8_t>(Evt.num);
-                gn.colorIndex = colorIndexFor(Evt.track, Evt.chan);
-                gn.flags      = 0;
+                gn.colorIndexFlags = static_cast<uint32_t>(colorIndexFor(Evt.track, Evt.chan));
 
                 open[Evt.track][Evt.num].push(out.size());
                 out.push_back(gn);

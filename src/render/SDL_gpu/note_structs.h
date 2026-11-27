@@ -10,14 +10,13 @@
 
 #pragma pack(push, 1)
 struct GpuNote {
-    f32 start;      // seconds
-    f32 length;     // seconds, max(Tend-Tstart, epsilon)
-    u8  key;        // 0..127
-    u8  colorIndex; // index into GPU color table (track/channel palette)
-    u16 flags;      // bit0=sharp(optional), rest reserved/padding
+    f32 start;            // seconds
+    f32 length;           // seconds, max(Tend-Tstart, epsilon)
+    u32 key;              // 0..127
+    u32 colorIndexFlags;  // low 8 bits = color index, rest reserved
 };
 #pragma pack(pop)
-static_assert(sizeof(GpuNote) == 12);
+static_assert(sizeof(GpuNote) == 16);
 
 struct GpuColor
 {

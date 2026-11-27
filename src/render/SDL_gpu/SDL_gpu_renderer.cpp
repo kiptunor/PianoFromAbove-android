@@ -6,6 +6,7 @@
 #include "shaders/note_vs.h"
 #include "../../globals.h"
 #include "../../logger.h"
+#include "../ui.h"
 
 
 SDL_GPUDevice* SDL_GPURenderer::device = nullptr;
@@ -51,8 +52,14 @@ SDL_GPURenderer::SDL_GPURenderer(SDL_Window *window)
     }
 
     SDL_GPUGraphicsPipelineCreateInfo pci{};
-    pci.vertex_shader   = LoadShaderRaw(device, note_vs_raw, note_vs_raw_len, SDL_GPU_SHADERSTAGE_VERTEX, "NoteVS");   // entrypoint "NoteVS"
-    pci.fragment_shader = LoadShaderRaw(device, note_fs_raw, note_fs_raw_len, SDL_GPU_SHADERSTAGE_FRAGMENT, "NoteFS"); // entrypoint "NoteFS"
+    // NoteVS uses 2 storage buffers (Notes, KeyGeom) and 1 uniform buffer.
+    pci.vertex_shader = LoadShaderRaw(device, note_vs_raw, note_vs_raw_len,
+                                      SDL_GPU_SHADERSTAGE_VERTEX, "NoteVS",
+                                      0, 2, 1);
+    // NoteFS currently only uses interpolated inputs.
+    pci.fragment_shader = LoadShaderRaw(device, note_fs_raw, note_fs_raw_len,
+                                        SDL_GPU_SHADERSTAGE_FRAGMENT, "NoteFS",
+                                        0, 0, 0);
     pci.primitive_type  = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
     
     // No traditional vertex input if using storage buffer + SV_VertexID/SV_InstanceID.
@@ -87,17 +94,37 @@ SDL_GPURenderer::~SDL_GPURenderer()
     {
         SDL_WaitForGPUIdle(device);
 
+        if(m_noteBuffer)
+        {
+            SDL_ReleaseGPUBuffer(device, m_noteBuffer);
+            m_noteBuffer = nullptr;
+        }
+
+        if(m_noteTransfer)
+        {
+            SDL_ReleaseGPUTransferBuffer(device, m_noteTransfer);
+            m_noteTransfer = nullptr;
+        }
+
+        if(m_keyGeomBuffer)
+        {
+            SDL_ReleaseGPUBuffer(device, m_keyGeomBuffer);
+            m_keyGeomBuffer = nullptr;
+        }
+
+        if(notePipeline)
+        {
+            SDL_ReleaseGPUGraphicsPipeline(device, notePipeline);
+            notePipeline = nullptr;
+        }
+
         if(current_window)
-            SDL_ReleaseWindowFromGPUDevice(device,current_window);
-        
+            SDL_ReleaseWindowFromGPUDevice(device, current_window);
 
         SDL_DestroyGPUDevice(device);
         device = nullptr;
     }
 
-    SDL_ReleaseGPUGraphicsPipeline(device, notePipeline);
-    notePipeline = nullptr;
-    
     current_window   = nullptr;
     swapchainTexture = nullptr;
     target_format    = SDL_GPU_TEXTUREFORMAT_INVALID;
@@ -130,6 +157,100 @@ void SDL_GPURenderer::ApplyPendingPresentMode()
     present_mode = pending_present_mode;
 }
 
+void SDL_GPURenderer::EnsureKeyGeom(Uint32 winW, Uint32 /*winH*/)
+{
+    static const short GenKeyX[] = { 0, 12, 18, 33, 36, 54, 66, 72, 85, 90, 105, 108 };
+    static const us_char KeyMap[128] = {
+        0,2,4,5,7,9,11,12,14,16,17,19,21,23,24,26,
+        28,29,31,33,35,36,38,40,41,43,45,47,48,50,52,53,
+        55,57,59,60,62,64,65,67,69,71,72,74,76,77,79,81,
+        83,84,86,88,89,91,93,95,96,98,100,101,103,105,107,108,
+        110,112,113,115,117,119,120,122,124,125,127,1,3,6,8,10,
+        13,15,18,20,22,25,27,30,32,34,37,39,42,44,46,49,
+        51,54,56,58,61,63,66,68,70,73,75,78,80,82,85,87,
+        90,92,94,97,99,102,104,106,109,111,114,116,118,121,123,126,
+    };
+    const float SharpRatio = 0.65f;
+
+    int KeyX[128];
+    int KeyWidth[128];
+    for (int i = 0; i < 128; i++)
+        KeyX[i] = (i / 12 * 126 + GenKeyX[i % 12]) * (int)winW / 1350;
+    for (int i = 0; i < 127; i++) {
+        int val;
+        switch (i % 12) {
+        case 1: case 3: case 6: case 8: case 10: val = (int)winW * 9 / 1350; break;
+        case 4: case 11: val = KeyX[i + 1] - KeyX[i]; break;
+        default: val = KeyX[i + 2] - KeyX[i]; break;
+        }
+        KeyWidth[i] = val;
+    }
+    KeyWidth[127] = (int)winW - KeyX[127];
+
+    // Build geometry indexed by MIDI key number (n.key / NVnote.key).
+    struct KeyGeom { float x, w, isSharp, pad; };
+    KeyGeom geom[128]{};
+
+    for (int displayIdx = 0; displayIdx < 128; ++displayIdx) {
+        int midiKey = KeyMap[displayIdx]; // chromatic key index used by KeyX
+        // In this codebase, NVnote.key is the MIDI note number and is used as
+        // KeyMap[displayIdx] in rendering; but the note buffer stores n.key.
+        // We need to index by n.key. Build both: by midiKey and also by displayIdx
+        // if needed. The safest is to fill by actual MIDI key value.
+    }
+    // Build by MIDI key number. Invert KeyMap: displayIdx -> midiKey.
+    for (int displayIdx = 0; displayIdx < 128; ++displayIdx) {
+        int midiKey = KeyMap[displayIdx];
+        int j = midiKey;
+        float x = (float)KeyX[j];
+        float w;
+        bool sharp = (j % 12 == 1 || j % 12 == 3 || j % 12 == 6 || j % 12 == 8 || j % 12 == 10);
+        if (sharp) {
+            float fNudge = 0.2f;
+            int n = j % 12;
+            if (n == 1 || n == 6) fNudge = 0.203f;
+            else if (n == 3 || n == 10) fNudge = 0.297f;
+            else if (n == 8) fNudge = 0.278f;
+            x -= (float)KeyWidth[0] * (SharpRatio / 2.0f - fNudge);
+            w = (float)KeyWidth[0] * SharpRatio;
+        } else {
+            w = (float)KeyWidth[j];
+        }
+        if (midiKey >= 0 && midiKey < 128) {
+            geom[midiKey].x = x;
+            geom[midiKey].w = w;
+            geom[midiKey].isSharp = sharp ? 1.0f : 0.0f;
+            geom[midiKey].pad = 0.0f;
+        }
+    }
+
+    Uint32 size = sizeof(geom);
+    if (!m_keyGeomBuffer) {
+        SDL_GPUBufferCreateInfo bci{};
+        bci.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ;
+        bci.size = size;
+        m_keyGeomBuffer = SDL_CreateGPUBuffer(device, &bci);
+        m_keyGeomCapacityBytes = size;
+    }
+
+    SDL_GPUTransferBufferCreateInfo tci{};
+    tci.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+    tci.size = size;
+    SDL_GPUTransferBuffer* tbuf = SDL_CreateGPUTransferBuffer(device, &tci);
+    void* mapped = SDL_MapGPUTransferBuffer(device, tbuf, false);
+    SDL_memcpy(mapped, geom, size);
+    SDL_UnmapGPUTransferBuffer(device, tbuf);
+
+    SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(device);
+    SDL_GPUCopyPass* copy = SDL_BeginGPUCopyPass(cmd);
+    SDL_GPUTransferBufferLocation src{ tbuf, 0 };
+    SDL_GPUBufferRegion dst{ m_keyGeomBuffer, 0, size };
+    SDL_UploadToGPUBuffer(copy, &src, &dst, false);
+    SDL_EndGPUCopyPass(copy);
+    SDL_SubmitGPUCommandBuffer(cmd);
+    SDL_ReleaseGPUTransferBuffer(device, tbuf);
+}
+
 void SDL_GPURenderer::Render()
 {
     ImGui::Render();
@@ -158,6 +279,9 @@ void SDL_GPURenderer::Render()
 
     swapchainTexture = target;
 
+    ConsumePendingNotes();
+    EnsureKeyGeom(width, height);
+
     ImGui_ImplSDLGPU3_PrepareDrawData(draw_data, cmd_buf);
 
     SDL_GPUColorTargetInfo target_info = {
@@ -180,6 +304,37 @@ void SDL_GPURenderer::Render()
         return;
     }
 
+    // Draw notes before UI.
+    if (notePipeline && m_noteBuffer && m_noteCount > 0 && m_keyGeomBuffer && MidiPlayer)
+    {
+        const f32 tscr = static_cast<f32>(vis_Tscr);
+                if (tscr > 0.0f) {
+                    NoteUniforms u{};
+                    u.tplay = static_cast<f32>(MidiPlayer->Tplay);
+                    u.tscr  = tscr;
+                    u.winW  = static_cast<f32>(width);
+                    u.winH  = static_cast<f32>(height);
+                    u.pps   = static_cast<f32>(height) / tscr; // pixels per second, matches SDLRenderer
+                    u.kbHeight = (float)width * 82.0f / 1000.0f;
+                    u.pad0 = 0.0f;
+                    u.pad1 = 0.0f;
+                    for (int i = 0; i < 16; ++i) {
+                        unsigned int c = live_conf.channel_colors[i];
+                        float r = ((c >> 16) & 0xFF) / 255.0f;
+                        float g = ((c >> 8) & 0xFF) / 255.0f;
+                        float b = (c & 0xFF) / 255.0f;
+                        u.colors[i] = {r, g, b, 1.0f};
+                    }
+        
+                    SDL_PushGPUVertexUniformData(cmd_buf, 0, &u, sizeof(u));
+        
+                    SDL_BindGPUGraphicsPipeline(render_pass, notePipeline);
+                    SDL_GPUBuffer* storageBufs[2] = { m_noteBuffer, m_keyGeomBuffer };
+                    SDL_BindGPUVertexStorageBuffers(render_pass, 0, storageBufs, 2);
+                    SDL_DrawGPUPrimitives(render_pass, 6, m_noteCount, 0, 0);
+                }
+    }
+
     ImGui_ImplSDLGPU3_RenderDrawData(draw_data, cmd_buf, render_pass);
 
     SDL_EndGPURenderPass(render_pass);
@@ -194,8 +349,24 @@ SDL_GPUShader* SDL_GPURenderer::LoadShaderRaw(SDL_GPUDevice* dev, const void* co
     ci.code_size           = codeSize;
     ci.entrypoint          = entrypoint; // custom name
     ci.stage               = stage;
-    ci.format              = SDL_GetGPUShaderFormats(dev); // pick one you shipped
-    // Better: select exactly one format you have bytecode for.
+
+    // ci.format must be the single format of the provided bytecode, not a bitmask.
+    // These embedded shaders are SPIR-V.
+    SDL_GPUShaderFormat supported = SDL_GetGPUShaderFormats(dev);
+    if (supported & SDL_GPU_SHADERFORMAT_SPIRV)
+        ci.format = SDL_GPU_SHADERFORMAT_SPIRV;
+    else if (supported & SDL_GPU_SHADERFORMAT_DXIL)
+        ci.format = SDL_GPU_SHADERFORMAT_DXIL;
+    else if (supported & SDL_GPU_SHADERFORMAT_MSL)
+        ci.format = SDL_GPU_SHADERFORMAT_MSL;
+    else if (supported & SDL_GPU_SHADERFORMAT_METALLIB)
+        ci.format = SDL_GPU_SHADERFORMAT_METALLIB;
+    else
+    {
+        SDL_Log("No supported shader format for embedded shader");
+        return nullptr;
+    }
+
     ci.num_samplers        = numSamplers;
     ci.num_storage_buffers = numStorageBuffers;
     ci.num_uniform_buffers = numUniformBuffers;

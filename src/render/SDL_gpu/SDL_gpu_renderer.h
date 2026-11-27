@@ -33,6 +33,7 @@ class SDL_GPURenderer
         void SetPendingNotes(std::vector<GpuNote>&& notes); // load thread
         void ConsumePendingNotes();
         void PushNotes(std::vector<GpuNote>&& notes);
+        void EnsureKeyGeom(Uint32 winW, Uint32 winH);
         void Render();
 
     private:
@@ -46,6 +47,8 @@ class SDL_GPURenderer
         SDL_GPUTransferBuffer* m_noteTransfer       = nullptr;
         u32 m_noteCount                             = 0;
         u32 m_noteCapacityBytes                     = 0;
+        SDL_GPUBuffer* m_keyGeomBuffer              = nullptr;
+        u32 m_keyGeomCapacityBytes                  = 0;
         std::mutex m_pendingNotesMutex;
         std::vector<GpuNote> m_pendingNotes;
         bool m_hasPendingNotes = false;

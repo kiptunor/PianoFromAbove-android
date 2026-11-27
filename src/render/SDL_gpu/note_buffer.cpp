@@ -54,11 +54,10 @@ void GpuNoteBuffer::BuildFromMidi(NVnoteList& midi)
                 end = start + 0.001f;
             
             GpuNote gn{};
-            gn.start      = start;
-            gn.length     = std::max(0.001f, end - start);
-            gn.key        = n.key;
-            gn.colorIndex = static_cast<u8>(ColorIndexFor(n, colorMap, nextColor) % 255u); // or keep uint16
-            gn.flags      = 0;
+            gn.start           = start;
+            gn.length          = std::max(0.001f, end - start);
+            gn.key             = static_cast<u32>(n.key);
+            gn.colorIndexFlags = static_cast<u32>(ColorIndexFor(n, colorMap, nextColor) % 255u);
             notes.push_back(gn);
         }
     }
