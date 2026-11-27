@@ -7,7 +7,7 @@ struct GpuNote {
 
 StructuredBuffer<GpuNote> Notes : register(t0, space0);
 
-cbuffer NoteUniforms : register(b0, space1) {
+cbuffer NoteUniforms : register(b0, space2) {
     float tplay;
     float tscr;
     float winW;
