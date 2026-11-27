@@ -307,7 +307,9 @@ void SDL_GPURenderer::Render()
     // Draw notes before UI.
     if (notePipeline && m_noteBuffer && m_noteCount > 0 && m_keyGeomBuffer && MidiPlayer)
     {
-        const f32 tscr = static_cast<f32>(vis_Tscr);
+        f32 tscr = static_cast<f32>(vis_Tscr);
+        if (tscr <= 0.0f && gui && gui->live_note_speed > 0)
+                        tscr = static_cast<f32>(height) / static_cast<f32>(gui->live_note_speed);
                 if (tscr > 0.0f) {
                     NoteUniforms u{};
                     u.tplay = static_cast<f32>(MidiPlayer->Tplay);
@@ -375,6 +377,7 @@ SDL_GPUShader* SDL_GPURenderer::LoadShaderRaw(SDL_GPUDevice* dev, const void* co
 
 void SDL_GPURenderer::SetPendingNotes(std::vector<GpuNote>&& notes)
 {
+    Log::debug("", "GPU notes: SetPendingNotes count=%zu", notes.size());
     std::lock_guard<std::mutex> lock(m_pendingNotesMutex);
     m_pendingNotes = std::move(notes);
     m_hasPendingNotes = true;
@@ -405,6 +408,7 @@ void SDL_GPURenderer::PushNotes(std::vector<GpuNote>&& notes)
         }
     
         m_noteCount = static_cast<Uint32>(notes.size());
+        Log::debug("", "GPU notes: PushNotes count=%u", m_noteCount);
         if (m_noteCount == 0) return;
     
         Uint32 size = m_noteCount * static_cast<Uint32>(sizeof(GpuNote));
