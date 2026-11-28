@@ -155,7 +155,8 @@ void KeyboardVS() {
 
         // compute fCurX for this white key index by summing previous white key widths
         float fCurX = 0.0;
-        for (int k = 0; k < i; ++k) {
+        for(int k = 0; k < 75; ++k) {
+            if(k >= i) break;
             int jk = KeyMapArr[k];
             fCurX += float(keyWidthAt(jk, WinW));
         }

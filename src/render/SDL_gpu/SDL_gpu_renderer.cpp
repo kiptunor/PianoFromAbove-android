@@ -108,7 +108,8 @@ SDL_GPURenderer::SDL_GPURenderer(SDL_Window *window)
     }
 
     // Piano Keyboard
-    SDL_GPUShader* kbVS = LoadShaderRaw(device, keyboard_vs_raw, keyboard_vs_raw_len, SDL_GPU_SHADERSTAGE_VERTEX, "KeyboardVS", 0, 0, 1);
+    //SDL_GPUShader* kbVS = LoadShaderRaw(device, keyboard_vs_raw, keyboard_vs_raw_len, SDL_GPU_SHADERSTAGE_VERTEX, "KeyboardVS", 0, 1, 1);
+    SDL_GPUShader* kbVS = LoadShaderRaw(device, keyboard_vs_raw, keyboard_vs_raw_len, SDL_GPU_SHADERSTAGE_VERTEX, "main", 0, 1, 1);
     SDL_GPUShader* kbFS = LoadShaderRaw(device, keyboard_fs_raw, keyboard_fs_raw_len, SDL_GPU_SHADERSTAGE_FRAGMENT, "KeyboardFS", 0, 0, 0);
 
 
