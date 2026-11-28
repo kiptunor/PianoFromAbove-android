@@ -10,9 +10,20 @@
 #include "note_structs.h"
 
 
+
+
+
+
+
 class SDL_GPURenderer
 {
     public:
+        struct KbKeyStateGpu { u32 pressed; u32 color; u32 pad0; u32 pad1; };
+        struct KbUniformsGpu { f32 winW, winH, pad0, pad1; };
+
+        static constexpr u32 KB_TOTAL_PRIMS = 3 + 75*5 + 53*6; // 696
+        static constexpr u32 KB_TOTAL_VERTS = KB_TOTAL_PRIMS * 6;
+        
         static SDL_GPUDevice* device;
         static SDL_GPUTexture* swapchainTexture;
         
@@ -36,6 +47,8 @@ class SDL_GPURenderer
         void EnsureKeyGeom(u32 winW, u32 winH);
         void Render();
 
+
+
     private:
         bool is_init = false;
         SDL_Window            *current_window;
@@ -58,12 +71,19 @@ class SDL_GPURenderer
         std::vector<u32> m_startSortedIdx;
         f32 m_maxNoteLength                         = 0.0f;
 
+        SDL_GPUGraphicsPipeline* m_kbPipeline    = nullptr;
+        SDL_GPUBuffer* m_kbStateBuffer           = nullptr;
+        SDL_GPUTransferBuffer* m_kbStateTransfer = nullptr;
+
         f32 m_longNoteThresh                        = 10.0f;
         std::vector<u32> m_longNoteIdx;
 
         size_t m_sweepLo = 0;
         f32 m_lastTplay = -1.0f;
 
+
+        bool KeyPress[128];
+        u32  KeyColor[128];
         
         u32 m_whiteNoteCount                        = 0;
         std::vector<f32> m_noteStarts;

@@ -5,6 +5,8 @@
 #include "SDL_gpu_renderer.h"
 #include "shaders/note_fs.h"
 #include "shaders/note_vs.h"
+#include "shaders/keyboard_vs.h"
+#include "shaders/keyboard_fs.h"
 #include "../../globals.h"
 #include "../../logger.h"
 #include "../ui.h"
@@ -73,7 +75,7 @@ SDL_GPURenderer::SDL_GPURenderer(SDL_Window *window)
     pci.vertex_input_state.num_vertex_attributes = 0;
     
     SDL_GPUColorTargetDescription ctd{};
-    ctd.format = SDL_GetGPUSwapchainTextureFormat(device, window);
+    ctd.format                            = SDL_GetGPUSwapchainTextureFormat(device, window);
     ctd.blend_state.enable_blend          = true;
     ctd.blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA;
     ctd.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
@@ -90,6 +92,38 @@ SDL_GPURenderer::SDL_GPURenderer(SDL_Window *window)
     
     if(!notePipeline)
         Log::error("", "Failed to create graphics pipeline: %s", SDL_GetError());
+
+
+    m_kbStateBuffer = [&]{
+        SDL_GPUBufferCreateInfo bci{};
+        bci.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ;
+        bci.size = sizeof(KbKeyStateGpu) * 128;
+        return SDL_CreateGPUBuffer(device, &bci);
+    }();
+    {
+        SDL_GPUTransferBufferCreateInfo tci{};
+        tci.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+        tci.size = sizeof(KbKeyStateGpu) * 128;
+        m_kbStateTransfer = SDL_CreateGPUTransferBuffer(device, &tci);
+    }
+
+    // Piano Keyboard
+    SDL_GPUShader* kbVS = LoadShaderRaw(device, keyboard_vs_raw, keyboard_vs_raw_len, SDL_GPU_SHADERSTAGE_VERTEX, "KeyboardVS", 0, 0, 1);
+    SDL_GPUShader* kbFS = LoadShaderRaw(device, keyboard_fs_raw, keyboard_fs_raw_len, SDL_GPU_SHADERSTAGE_FRAGMENT, "KeyboardFS", 0, 0, 0);
+
+
+    SDL_GPUGraphicsPipelineCreateInfo kbPci{};
+    kbPci.vertex_shader                            = kbVS;
+    kbPci.fragment_shader                          = kbFS;
+    kbPci.primitive_type                           = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+    kbPci.vertex_input_state.num_vertex_buffers    = 0;
+    kbPci.vertex_input_state.num_vertex_attributes = 0;
+    kbPci.target_info.num_color_targets            = 1;
+    kbPci.target_info.color_target_descriptions    = &ctd;
+    m_kbPipeline                                   = SDL_CreateGPUGraphicsPipeline(device, &kbPci);
+
+    SDL_ReleaseGPUShader(device, kbVS);
+    SDL_ReleaseGPUShader(device, kbFS);
 
     is_init = true;
 }
@@ -122,6 +156,24 @@ SDL_GPURenderer::~SDL_GPURenderer()
         {
             SDL_ReleaseGPUGraphicsPipeline(device, notePipeline);
             notePipeline = nullptr;
+        }
+
+        if(m_kbPipeline)
+        {
+            SDL_ReleaseGPUGraphicsPipeline(device, m_kbPipeline);
+            m_kbPipeline = nullptr;
+        }
+
+        if(m_kbStateBuffer)
+        {
+            SDL_ReleaseGPUBuffer(device, m_kbStateBuffer);
+            m_kbStateBuffer = nullptr;
+        }
+
+        if(m_kbStateTransfer)
+        {
+            SDL_ReleaseGPUTransferBuffer(device, m_kbStateTransfer);
+            m_kbStateTransfer = nullptr;
         }
 
         if(current_window)
@@ -298,8 +350,8 @@ void SDL_GPURenderer::Render()
     SDL_GPUCommandBuffer* cmd_buf = SDL_AcquireGPUCommandBuffer(device);
 
     SDL_GPUTexture* target = nullptr;
-    Uint32 width = 0;
-    Uint32 height = 0;
+    u32 width = 0;
+    u32 height = 0;
     if(!SDL_WaitAndAcquireGPUSwapchainTexture(cmd_buf, current_window, &target, &width, &height) || !target)
     {
         // No swapchain texture was acquired, so the command buffer can be
@@ -320,7 +372,7 @@ void SDL_GPURenderer::Render()
         .texture              = swapchainTexture,
         .mip_level            = 0,
         .layer_or_depth_plane = 0,
-        .clear_color = SDL_FColor { gui->clear_color.x, gui->clear_color.y, gui->clear_color.z, gui->clear_color.w },
+        .clear_color          = SDL_FColor { gui->clear_color.x, gui->clear_color.y, gui->clear_color.z, gui->clear_color.w },
         .load_op              = SDL_GPU_LOADOP_CLEAR,
         .store_op             = SDL_GPU_STOREOP_STORE,
         .cycle                = false
@@ -334,6 +386,13 @@ void SDL_GPURenderer::Render()
         SDL_SubmitGPUCommandBuffer(cmd_buf);
         swapchainTexture = nullptr;
         return;
+    }
+
+    // Normal keyboard state
+    for(int i = 0; i < 128; ++i)
+    {
+        KeyPress[i] = false;
+        KeyColor[i] = 0xFFFFFFFF;
     }
 
     // Draw notes before UI.
@@ -396,6 +455,56 @@ void SDL_GPURenderer::Render()
             drawRange(0, m_whiteNoteCount);
             drawRange(m_whiteNoteCount, m_noteCount);
         }
+    }
+
+    KbKeyStateGpu states[128]{};
+    for(int i = 0; i < 128; ++i)
+    {
+        states[i].pressed = KeyPress[i] ? 1u : 0u;
+        states[i].color   = KeyColor[i]; // must be 0xAABBGGRR as in DrawKeyBoard
+    }
+    void* mapped = SDL_MapGPUTransferBuffer(device, m_kbStateTransfer, true);
+    SDL_memcpy(mapped, states, sizeof(states));
+    SDL_UnmapGPUTransferBuffer(device, m_kbStateTransfer);
+    
+    SDL_GPUCopyPass* copy = SDL_BeginGPUCopyPass(cmd_buf);
+    SDL_GPUTransferBufferLocation src{m_kbStateTransfer, 0};
+    SDL_GPUBufferRegion dst{m_kbStateBuffer, 0, sizeof(states)};
+    SDL_UploadToGPUBuffer(copy, &src, &dst, true);
+    SDL_EndGPUCopyPass(copy);
+
+    auto toABGR = [](us_int c) -> u32
+    {
+        u32 r = (c >> 16) & 0xFF;
+        u32 g = (c >> 8) & 0xFF;
+        u32 b = (c      ) & 0xFF;
+        return 0xFF000000u | (b << 16) | (g << 8) | r;
+    };
+
+    const f32 tplay = static_cast<f32>(MidiPlayer->Tplay);
+    for(u32 idx = 0; idx < 0 + 128; ++idx)
+    { // or iterate visible range
+        const GpuNote& n = m_notes[idx];
+        if(n.start <= tplay && tplay < n.start + n.length)
+        {
+            u32 k = n.key;
+            if(k < 128)
+            {
+                KeyPress[k] = true;
+                u32 ci      = n.colorIndexFlags & 0xFFu;
+                KeyColor[k] = toABGR(live_conf.channel_colors[ci % 16]);
+            }
+        }
+    }
+
+    if(m_kbPipeline && m_kbStateBuffer)
+    {
+        KbUniformsGpu ku{ (f32)width, (f32)height, 0, 0 };
+        SDL_PushGPUVertexUniformData(cmd_buf, 0, &ku, sizeof(ku));
+        SDL_BindGPUGraphicsPipeline(render_pass, m_kbPipeline);
+        SDL_GPUBuffer* sb[1] = { m_kbStateBuffer };
+        SDL_BindGPUVertexStorageBuffers(render_pass, 0, sb, 1);
+        SDL_DrawGPUPrimitives(render_pass, KB_TOTAL_VERTS, 1, 0, 0);
     }
 
     ImGui_ImplSDLGPU3_RenderDrawData(draw_data, cmd_buf, render_pass);
