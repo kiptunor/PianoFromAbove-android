@@ -71,9 +71,9 @@ class SDL_GPURenderer
         std::vector<u32> m_startSortedIdx;
         f32 m_maxNoteLength                         = 0.0f;
 
-        SDL_GPUGraphicsPipeline* m_kbPipeline    = nullptr;
-        SDL_GPUBuffer* m_kbStateBuffer           = nullptr;
-        SDL_GPUTransferBuffer* m_kbStateTransfer = nullptr;
+        SDL_GPUGraphicsPipeline* m_kbPipeline      = nullptr;
+        SDL_GPUBuffer* m_kbStateBuffer             = nullptr;
+        SDL_GPUTransferBuffer* m_kbStateTransfer   = nullptr;
 
         f32 m_longNoteThresh                        = 10.0f;
         std::vector<u32> m_longNoteIdx;

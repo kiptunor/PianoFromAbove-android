@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 
 #include <backend_render/imgui_impl_sdlgpu3.h>
 
@@ -97,19 +98,18 @@ SDL_GPURenderer::SDL_GPURenderer(SDL_Window *window)
     m_kbStateBuffer = [&]{
         SDL_GPUBufferCreateInfo bci{};
         bci.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ;
-        bci.size = sizeof(KbKeyStateGpu) * 128;
+        bci.size  = sizeof(KbKeyStateGpu) * 128;
         return SDL_CreateGPUBuffer(device, &bci);
     }();
     {
         SDL_GPUTransferBufferCreateInfo tci{};
         tci.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
-        tci.size = sizeof(KbKeyStateGpu) * 128;
+        tci.size  = sizeof(KbKeyStateGpu) * 128;
         m_kbStateTransfer = SDL_CreateGPUTransferBuffer(device, &tci);
     }
 
     // Piano Keyboard
-    //SDL_GPUShader* kbVS = LoadShaderRaw(device, keyboard_vs_raw, keyboard_vs_raw_len, SDL_GPU_SHADERSTAGE_VERTEX, "KeyboardVS", 0, 1, 1);
-    SDL_GPUShader* kbVS = LoadShaderRaw(device, keyboard_vs_raw, keyboard_vs_raw_len, SDL_GPU_SHADERSTAGE_VERTEX, "main", 0, 1, 1);
+    SDL_GPUShader* kbVS = LoadShaderRaw(device, keyboard_vs_raw, keyboard_vs_raw_len, SDL_GPU_SHADERSTAGE_VERTEX, "KeyboardVS", 0, 1, 1);
     SDL_GPUShader* kbFS = LoadShaderRaw(device, keyboard_fs_raw, keyboard_fs_raw_len, SDL_GPU_SHADERSTAGE_FRAGMENT, "KeyboardFS", 0, 0, 0);
 
 
@@ -336,6 +336,8 @@ void SDL_GPURenderer::EnsureKeyGeom(u32 winW, u32 winH)
     SDL_ReleaseGPUTransferBuffer(device, tbuf);
 }
 
+
+
 void SDL_GPURenderer::Render()
 {
     ImGui::Render();
@@ -379,6 +381,79 @@ void SDL_GPURenderer::Render()
         .cycle                = false
     };
 
+    // Normal keyboard state
+    for(int i = 0; i < 128; ++i)
+    {
+        KeyPress[i] = false;
+        KeyColor[i] = 0xFFFFFFFF;
+    }
+
+    const f32 tplay = MidiPlayer ? static_cast<f32>(MidiPlayer->Tplay) : 0.0f;
+
+    // Compute active key state from notes (GPU renderer owns this state).
+    {
+        auto toABGR = [](us_int c) -> u32
+        {
+            u32 r = (c >> 16) & 0xFF;
+            u32 g = (c >> 8) & 0xFF;
+            u32 b = (c      ) & 0xFF;
+            return 0xFF000000u | (b << 16) | (g << 8) | r;
+        };
+
+        const f32 minStart = tplay - m_maxNoteLength;
+        auto scanRange = [&](u32 begin, u32 end)
+        {
+            if(begin >= end)
+                return;
+            
+            auto itBegin = m_noteStarts.begin() + begin;
+            auto itEnd   = m_noteStarts.begin() + end;
+            auto lo = std::lower_bound(itBegin, itEnd, minStart);
+            auto hi = std::upper_bound(itBegin, itEnd, tplay);
+            
+            for(auto it = lo; it != hi; ++it)
+            {
+                const auto& n = m_notes[static_cast<u32>(it - m_noteStarts.begin())];
+                if(tplay < n.start + n.length)
+                {
+                    u32 k = n.key;
+                    if(k < 128)
+                    {
+                        KeyPress[k] = true;
+                        u32 ci      = n.colorIndexFlags & 0xFFu;
+                        KeyColor[k] = toABGR(live_conf.channel_colors[ci % 16]);
+                    }
+                }
+            }
+        };
+        scanRange(0, m_whiteNoteCount);
+        scanRange(m_whiteNoteCount, m_noteCount);
+    }
+
+    // Upload key state before the render pass (copy pass cannot be opened while a render pass is active).
+    const bool kbReady = m_kbPipeline && m_kbStateBuffer && m_kbStateTransfer;
+    if(kbReady)
+    {
+        KbKeyStateGpu states[128];
+        for(int i = 0; i < 128; ++i)
+        {
+            states[i].pressed = KeyPress[i] ? 1u : 0u;
+            states[i].color   = KeyColor[i];
+            states[i].pad0    = 0;
+            states[i].pad1    = 0;
+        }
+
+        void* mapped = SDL_MapGPUTransferBuffer(device, m_kbStateTransfer, true);
+        SDL_memcpy(mapped, states, sizeof(states));
+        SDL_UnmapGPUTransferBuffer(device, m_kbStateTransfer);
+
+        SDL_GPUCopyPass* copy = SDL_BeginGPUCopyPass(cmd_buf);
+        SDL_GPUTransferBufferLocation src{m_kbStateTransfer, 0};
+        SDL_GPUBufferRegion dst{m_kbStateBuffer, 0, static_cast<u32>(sizeof(states))};
+        SDL_UploadToGPUBuffer(copy, &src, &dst, true);
+        SDL_EndGPUCopyPass(copy);
+    }
+
     SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(cmd_buf, &target_info, 1, nullptr);
     if(!render_pass)
     {
@@ -387,13 +462,6 @@ void SDL_GPURenderer::Render()
         SDL_SubmitGPUCommandBuffer(cmd_buf);
         swapchainTexture = nullptr;
         return;
-    }
-
-    // Normal keyboard state
-    for(int i = 0; i < 128; ++i)
-    {
-        KeyPress[i] = false;
-        KeyColor[i] = 0xFFFFFFFF;
     }
 
     // Draw notes before UI.
@@ -407,7 +475,7 @@ void SDL_GPURenderer::Render()
         if(tscr > 0.0f)
         {
             NoteUniforms u{};
-            u.tplay = static_cast<f32>(MidiPlayer->Tplay);
+            u.tplay = tplay;
             u.tscr  = tscr;
             u.winW  = static_cast<f32>(width);
             u.winH  = static_cast<f32>(height);
@@ -430,7 +498,7 @@ void SDL_GPURenderer::Render()
             SDL_BindGPUGraphicsPipeline(render_pass, notePipeline);
             SDL_GPUBuffer* storageBufs[2] = { m_noteBuffer, m_keyGeomBuffer };
             SDL_BindGPUVertexStorageBuffers(render_pass, 0, storageBufs, 2);
-            //SDL_DrawGPUPrimitives(render_pass, 6, m_noteCount, 0, 0)
+
             const f32 minStart = u.tplay - m_maxNoteLength;
             const f32 maxStart = u.tplay + u.tscr;
             
@@ -458,47 +526,7 @@ void SDL_GPURenderer::Render()
         }
     }
 
-    KbKeyStateGpu states[128]{};
-    for(int i = 0; i < 128; ++i)
-    {
-        states[i].pressed = KeyPress[i] ? 1u : 0u;
-        states[i].color   = KeyColor[i]; // must be 0xAABBGGRR as in DrawKeyBoard
-    }
-    void* mapped = SDL_MapGPUTransferBuffer(device, m_kbStateTransfer, true);
-    SDL_memcpy(mapped, states, sizeof(states));
-    SDL_UnmapGPUTransferBuffer(device, m_kbStateTransfer);
-    
-    SDL_GPUCopyPass* copy = SDL_BeginGPUCopyPass(cmd_buf);
-    SDL_GPUTransferBufferLocation src{m_kbStateTransfer, 0};
-    SDL_GPUBufferRegion dst{m_kbStateBuffer, 0, sizeof(states)};
-    SDL_UploadToGPUBuffer(copy, &src, &dst, true);
-    SDL_EndGPUCopyPass(copy);
-
-    auto toABGR = [](us_int c) -> u32
-    {
-        u32 r = (c >> 16) & 0xFF;
-        u32 g = (c >> 8) & 0xFF;
-        u32 b = (c      ) & 0xFF;
-        return 0xFF000000u | (b << 16) | (g << 8) | r;
-    };
-
-    const f32 tplay = static_cast<f32>(MidiPlayer->Tplay);
-    for(u32 idx = 0; idx < 0 + 128; ++idx)
-    { // or iterate visible range
-        const GpuNote& n = m_notes[idx];
-        if(n.start <= tplay && tplay < n.start + n.length)
-        {
-            u32 k = n.key;
-            if(k < 128)
-            {
-                KeyPress[k] = true;
-                u32 ci      = n.colorIndexFlags & 0xFFu;
-                KeyColor[k] = toABGR(live_conf.channel_colors[ci % 16]);
-            }
-        }
-    }
-
-    if(m_kbPipeline && m_kbStateBuffer)
+    if(kbReady)
     {
         KbUniformsGpu ku{ (f32)width, (f32)height, 0, 0 };
         SDL_PushGPUVertexUniformData(cmd_buf, 0, &ku, sizeof(ku));
@@ -586,7 +614,10 @@ void SDL_GPURenderer::PushNotes(std::vector<GpuNote>&& notes)
     m_maxNoteLength = 0.0f;
     Log::debug("GPU notes: PushNotes count=%u", m_noteCount);
     if(m_noteCount == 0)
+    {
+        m_notes.clear();
         return;
+    }
 
     auto isSharpKey = [](u32 k)
     {
@@ -640,4 +671,5 @@ void SDL_GPURenderer::PushNotes(std::vector<GpuNote>&& notes)
     SDL_SubmitGPUCommandBuffer(cmd);
 
     SDL_ReleaseGPUTransferBuffer(device, tbuf);
+    m_notes = std::move(notes);
 }

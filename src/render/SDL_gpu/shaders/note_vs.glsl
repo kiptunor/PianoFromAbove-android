@@ -46,22 +46,24 @@ void NoteVS() {
 
     float start = n.start;
     float endT = n.start + n.noteLength;
-    float y0 = u.winH - (start - u.tplay) * u.pps; // bottom
-    float y1 = u.winH - (endT  - u.tplay) * u.pps; // top
+    float kbTop = u.winH - u.kbHeight;
+    float y0 = kbTop - (start - u.tplay) * u.pps; // bottom
+    float y1 = kbTop - (endT  - u.tplay) * u.pps; // top
 
     vec4 kg = keyGeom[n.key];
     float x = kg.x;
     float w = kg.y;
 
-    float px = x + q.x * w;
-    float py = mix(y1, y0, q.y); // top->bottom
-
-    if (endT < u.tplay || start > u.tplay + u.tscr) {
+    if (endT <= u.tplay || y1 >= kbTop || start > u.tplay + u.tscr) {
         gl_Position = vec4(2.0, 2.0, 0.0, 1.0);
         outColor = vec4(0.0);
         outLocal = vec2(0.0);
         return;
     }
+
+    float yb = min(y0, kbTop);
+    float px = x + q.x * w;
+    float py = mix(y1, yb, q.y); // top->bottom, clipped at keyboard top
 
     float ndcX = (px / u.winW) * 2.0 - 1.0;
     float ndcY = 1.0 - (py / u.winH) * 2.0;

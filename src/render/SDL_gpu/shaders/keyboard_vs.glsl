@@ -189,9 +189,9 @@ void KeyboardVS() {
                          0xFFCCCCCCu, 0xFFCCCCCCu, 0xFFCCCCCCu, 0xFFCCCCCCu); return;
             }
         } else {
-            uint r = (c >> 16u) & 0xFFu;
+            uint r = c & 0xFFu;
             uint g = (c >> 8u) & 0xFFu;
-            uint b = c & 0xFFu;
+            uint b = (c >> 16u) & 0xFFu;
             uint r2 = uint(float(r) * 0.6);
             uint g2 = uint(float(g) * 0.6);
             uint b2 = uint(float(b) * 0.6);
@@ -278,9 +278,9 @@ void KeyboardVS() {
         } else {
             float fNewNear = fNearCY * 0.25;
             uint c = keyState[j].color;
-            uint r = (c >> 16u) & 0xFFu;
+            uint r = c & 0xFFu;
             uint g = (c >> 8u) & 0xFFu;
-            uint b = c & 0xFFu;
+            uint b = (c >> 16u) & 0xFFu;
             uint r1 = uint(float(r) * 0.5);
             uint g1 = uint(float(g) * 0.5);
             uint b1 = uint(float(b) * 0.5);
